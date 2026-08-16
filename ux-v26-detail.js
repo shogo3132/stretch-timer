@@ -3,9 +3,11 @@
   var viewDate=new Date();
 
   var style=document.createElement('style');
-  style.setAttribute('data-routine-detail-v28','');
+  style.setAttribute('data-routine-detail-v29','');
   style.textContent='\
 .menu-card .edit{background:#fff!important;color:#5f6873!important;box-shadow:none!important;min-width:42px!important;padding:4px 8px!important;font-size:25px!important;line-height:1!important}\
+.menu-card .menu-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}\
+.menu-card .menu-actions .record-btn{background:#f0f3f5!important;color:#1b1f24!important}\
 #routineDetail{padding-top:18px}\
 .routine-detail-wrap{display:grid;gap:16px}\
 .detail-summary{display:flex;align-items:center;gap:14px;background:#fff;border-radius:20px;padding:15px 16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}\
@@ -82,34 +84,39 @@
   function openDetail(id){
     detailMenuId=id;viewDate=new Date();ensureScreen();
     if(typeof currentMenuId!=='undefined')currentMenuId=id;
-    if(typeof show==='function')show('routineDetail','カレンダー');
+    if(typeof show==='function')show('routineDetail','記録');
     renderDetail();window.scrollTo(0,0);
   }
   window.openRoutineDetail=openDetail;
 
-  function decorateDots(){
+  function decorateCards(){
     document.querySelectorAll('.menu-card').forEach(function(card){
-      var b=card.querySelector('.edit');if(!b)return;
-      if(b.textContent!=='⋯')b.textContent='⋯';
-      if(b.getAttribute('aria-label')!=='ルーティン設定')b.setAttribute('aria-label','ルーティン設定');
-      b.title='ルーティン設定';
+      var id=card.dataset.id;if(!id)return;
+      var edit=card.querySelector('.edit');
+      if(edit){edit.textContent='＋';edit.setAttribute('aria-label','ルーティン設定');edit.title='ルーティン設定'}
+      var actions=card.querySelector('.menu-actions');
+      if(actions&&!actions.querySelector('.record-btn')){
+        var record=document.createElement('button');record.type='button';record.className='btn record-btn';record.textContent='記録';record.setAttribute('aria-label','記録を表示');
+        record.onclick=function(e){e.preventDefault();e.stopPropagation();openDetail(id)};
+        actions.appendChild(record);
+      }
     });
   }
   var prevHome=typeof renderHome==='function'?renderHome:null;
-  if(prevHome){renderHome=function(){var r=prevHome.apply(this,arguments);setTimeout(decorateDots,0);return r}}
-  setTimeout(decorateDots,0);
+  if(prevHome){renderHome=function(){var r=prevHome.apply(this,arguments);setTimeout(decorateCards,0);return r}}
+  setTimeout(decorateCards,0);
 
   document.addEventListener('click',function(e){
     var card=e.target&&e.target.closest?e.target.closest('.menu-card'):null;if(!card||!card.dataset.id)return;
-    var id=card.dataset.id;
-    var button=e.target.closest('button');
+    var id=card.dataset.id,button=e.target.closest('button');
     if(button&&button.classList.contains('edit')){
-      e.preventDefault();e.stopImmediatePropagation();
-      if(typeof openMenu==='function')openMenu(id);
-      return;
+      e.preventDefault();e.stopImmediatePropagation();if(typeof openMenu==='function')openMenu(id);return;
+    }
+    if(button&&button.classList.contains('record-btn')){
+      e.preventDefault();e.stopImmediatePropagation();openDetail(id);return;
     }
     if(button)return;
-    e.preventDefault();e.stopImmediatePropagation();openDetail(id);
+    e.preventDefault();e.stopImmediatePropagation();
   },true);
 
   if(typeof finishTimer==='function'){
