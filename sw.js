@@ -1,13 +1,34 @@
-const CACHE='stretch-timer-v4';
+const CACHE='stretch-timer-v5';
 const APP_VERSION='0.12.7';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg'];
 
 function patchHtml(html){
-  if(html.includes('id="appVersion"')) return html;
-  html=html.replace(
-    '<h1 id="title">ホーム</h1>',
-    `<h1 id="title">ホーム</h1><span id="appVersion" style="font-size:11px;color:#8a929c;white-space:nowrap">v${APP_VERSION}</span>`
-  );
+  if(!html.includes('id="appVersion"')){
+    html=html.replace(
+      '<h1 id="title">ホーム</h1>',
+      `<h1 id="title">ホーム</h1><span id="appVersion" style="font-size:11px;color:#8a929c;white-space:nowrap">v${APP_VERSION}</span>`
+    );
+  }
+
+  if(!html.includes('data-keyboard-dismiss-patch')){
+    html=html.replace(
+      '</body>',
+      `<script data-keyboard-dismiss-patch>
+(function(){
+  function isTextEditor(el){
+    return !!el && (el.tagName==='INPUT' || el.tagName==='TEXTAREA' || el.isContentEditable);
+  }
+  document.addEventListener('pointerdown',function(e){
+    var active=document.activeElement;
+    if(!isTextEditor(active)) return;
+    if(e.target===active || active.contains(e.target)) return;
+    if(isTextEditor(e.target)) return;
+    active.blur();
+  },true);
+})();
+</script></body>`
+    );
+  }
   return html;
 }
 
