@@ -14,6 +14,7 @@ android {
         versionName '0.3.0'
     }
 
+    // Fixed signing baseline for all future APK updates.
     signingConfigs {
         fixed {
             storeFile file(System.getenv('STRETCH_KEYSTORE_PATH') ?: 'stretch-timer.jks')
