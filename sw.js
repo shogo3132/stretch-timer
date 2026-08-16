@@ -1,4 +1,4 @@
-const CACHE='stretch-timer-v6';
+const CACHE='stretch-timer-v7';
 const APP_VERSION='0.12.8';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg'];
 
@@ -29,6 +29,12 @@ function patchHtml(html){
 </script></body>`
     );
   }
+
+  html=html
+    .replaceAll('マイメニュー','マイルーティン')
+    .replaceAll('メニュー','ルーティン')
+    .replaceAll('項目','種目');
+
   return html;
 }
 
