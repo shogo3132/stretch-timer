@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#111111" />
+<link rel="manifest" href="manifest.webmanifest" />
+<title>Stretch Timer</title>
+<style>
+:root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#111;background:#f6f6f6}
+*{box-sizing:border-box}body{margin:0}button,input,textarea{font:inherit}.app{max-width:720px;margin:auto;min-height:100dvh;background:#fff}.top{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid #ddd;padding:14px 16px;display:flex;align-items:center;gap:10px}.top h1{font-size:20px;margin:0;flex:1}.screen{display:none;padding:16px}.screen.active{display:block}.btn{border:0;border-radius:12px;padding:12px 14px;background:#111;color:#fff}.btn.sub{background:#ececec;color:#111}.btn.danger{background:#eee;color:#b00020}.row{display:flex;gap:8px;align-items:center}.stack{display:grid;gap:12px}.card{border:1px solid #ddd;border-radius:16px;padding:14px;background:#fff}.card h3{margin:0 0 8px}.muted{color:#666;font-size:14px}.field{display:grid;gap:6px}.field input,.field textarea{width:100%;border:1px solid #ccc;border-radius:10px;padding:11px;background:#fff}.field textarea{min-height:88px;resize:vertical}.menu-card{display:grid;gap:10px}.menu-actions{display:flex;gap:8px;flex-wrap:wrap}.menu-actions button{flex:1}.items{display:grid;gap:10px}.item{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:center}.thumb{width:64px;height:64px;border-radius:12px;object-fit:cover;background:#eee}.item-title{font-weight:700}.pill{font-size:12px;padding:5px 8px;border-radius:999px;background:#eee}.timer-wrap{display:grid;gap:16px;text-align:center}.timer-img{width:100%;max-height:48vh;object-fit:contain;border-radius:18px;background:#f1f1f1}.timer-name{font-size:26px;font-weight:800}.timer-time{font-size:72px;font-weight:800;line-height:1}.timer-desc{white-space:pre-wrap;text-align:left;border:1px solid #ddd;border-radius:14px;padding:12px;min-height:52px}.timer-controls{display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:8px}.rest{padding:50px 10px}.rest .timer-name{font-size:34px}.rest .timer-time{font-size:84px}.empty{padding:30px 10px;text-align:center;color:#666}.photo-preview{width:100%;max-height:260px;object-fit:contain;border-radius:14px;background:#eee}.small{font-size:13px}.spacer{height:8px}@media(min-width:700px){.app{border-left:1px solid #ddd;border-right:1px solid #ddd}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top"><button id="backBtn" class="btn sub" style="display:none">←</button><h1 id="title">ストレッチ</h1><button id="topAction" class="btn">＋ メニュー</button></div>
+
+  <main id="home" class="screen active"><div id="menuList" class="stack"></div></main>
+
+  <main id="menuEdit" class="screen">
+    <div class="stack">
+      <label class="field">メニュー名<input id="menuName" /></label>
+      <label class="field">項目間のレスト秒数<input id="restSeconds" type="number" min="0" max="600" inputmode="numeric" /></label>
+      <div class="row"><button id="addItemBtn" class="btn">＋ 項目追加</button><button id="startMenuBtn" class="btn sub">▶ 開始</button></div>
+      <div id="itemList" class="items"></div>
+      <button id="deleteMenuBtn" class="btn danger">このメニューを削除</button>
+    </div>
+  </main>
+
+  <main id="itemEdit" class="screen">
+    <div class="stack">
+      <label class="field">項目名<input id="itemName" /></label>
+      <label class="field">秒数<input id="itemSeconds" type="number" min="1" max="3600" inputmode="numeric" /></label>
+      <label class="field">説明<textarea id="itemDesc" placeholder="姿勢や意識する点など"></textarea></label>
+      <div class="field"><span>写真</span><img id="photoPreview" class="photo-preview" alt="写真プレビュー" /><input id="photoInput" type="file" accept="image/*" capture="environment" /></div>
+      <div class="row"><button id="duplicateItemBtn" class="btn sub">複製</button><button id="deleteItemBtn" class="btn danger">削除</button></div>
+      <div class="row"><button id="moveUpBtn" class="btn sub">↑ 上へ</button><button id="moveDownBtn" class="btn sub">↓ 下へ</button></div>
+    </div>
+  </main>
+
+  <main id="timer" class="screen">
+    <div id="timerContent" class="timer-wrap"></div>
+  </main>
+</div>
+<script>
+const STORAGE='stretchTimer.v1';
+let state=load();
+let currentMenuId=null,currentItemId=null,timerState=null,wakeLock=null;
+const $=id=>document.getElementById(id);
+function load(){try{return JSON.parse(localStorage.getItem(STORAGE))||{menus:[]}}catch{return {menus:[]}}}
+function save(){localStorage.setItem(STORAGE,JSON.stringify(state))}
+function uid(){return crypto.randomUUID?crypto.randomUUID():Date.now()+Math.random().toString(16).slice(2)}
+function show(id,title,action){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');$('title').textContent=title;$('backBtn').style.display=id==='home'?'none':'inline-block';$('topAction').style.display=action?'inline-block':'none';if(action){$('topAction').textContent=action.label;$('topAction').onclick=action.fn}}
+function renderHome(){show('home','ストレッチ',{label:'＋ メニュー',fn:createMenu});const box=$('menuList');box.innerHTML='';if(!state.menus.length){box.innerHTML='<div class="empty">メニューがありません。<br>右上の「＋ メニュー」から作成できます。</div>';return}state.menus.forEach(m=>{const el=document.createElement('div');el.className='card menu-card';el.innerHTML=`<div><h3></h3><div class="muted"></div></div><div class="menu-actions"><button class="btn start">▶ 開始</button><button class="btn sub edit">編集</button></div>`;el.querySelector('h3').textContent=m.name;el.querySelector('.muted').textContent=`${m.items.length}項目 ・ レスト ${m.rest}s`;el.querySelector('.start').onclick=()=>startTimer(m.id);el.querySelector('.edit').onclick=()=>openMenu(m.id);box.appendChild(el)})}
+function createMenu(){const m={id:uid(),name:`メニュー${state.menus.length+1}`,rest:10,items:[]};state.menus.push(m);save();openMenu(m.id)}
+function menu(){return state.menus.find(x=>x.id===currentMenuId)}
+function item(){return menu()?.items.find(x=>x.id===currentItemId)}
+function openMenu(id){currentMenuId=id;const m=menu();if(!m)return renderHome();show('menuEdit','メニュー編集');$('menuName').value=m.name;$('restSeconds').value=m.rest;renderItems()}
+$('menuName').oninput=e=>{menu().name=e.target.value||'名称未設定';save()};$('restSeconds').oninput=e=>{menu().rest=Math.max(0,+e.target.value||0);save()};
+$('addItemBtn').onclick=()=>{const m=menu();const x={id:uid(),name:`項目${m.items.length+1}`,seconds:30,desc:'',photo:''};m.items.push(x);save();openItem(x.id)};
+$('startMenuBtn').onclick=()=>startTimer(currentMenuId);
+$('deleteMenuBtn').onclick=()=>{if(confirm('このメニューを削除しますか？')){state.menus=state.menus.filter(x=>x.id!==currentMenuId);save();renderHome()}};
+function renderItems(){const m=menu(),box=$('itemList');box.innerHTML='';if(!m.items.length){box.innerHTML='<div class="empty">まだ項目がありません。</div>';return}m.items.forEach((x,i)=>{const el=document.createElement('div');el.className='card item';el.innerHTML=`<img class="thumb"><div><div class="item-title"></div><div class="muted"></div></div><button class="btn sub">編集</button>`;el.querySelector('.thumb').src=x.photo||svgPlaceholder();el.querySelector('.item-title').textContent=`${i+1}. ${x.name}`;el.querySelector('.muted').textContent=`${x.seconds}秒`;el.querySelector('button').onclick=()=>openItem(x.id);box.appendChild(el)})}
+function openItem(id){currentItemId=id;const x=item();show('itemEdit','項目編集');$('itemName').value=x.name;$('itemSeconds').value=x.seconds;$('itemDesc').value=x.desc;$('photoPreview').src=x.photo||svgPlaceholder()}
+$('itemName').oninput=e=>{item().name=e.target.value||'名称未設定';save()};$('itemSeconds').oninput=e=>{item().seconds=Math.max(1,+e.target.value||1);save()};$('itemDesc').oninput=e=>{item().desc=e.target.value;save()};
+$('photoInput').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{item().photo=r.result;$('photoPreview').src=r.result;save()};r.readAsDataURL(f)};
+$('deleteItemBtn').onclick=()=>{if(confirm('この項目を削除しますか？')){const m=menu();m.items=m.items.filter(x=>x.id!==currentItemId);save();openMenu(m.id)}};
+$('duplicateItemBtn').onclick=()=>{const m=menu(),x=item();const copy={...x,id:uid(),name:x.name+' コピー'};const idx=m.items.findIndex(y=>y.id===x.id);m.items.splice(idx+1,0,copy);save();openItem(copy.id)};
+function move(dir){const m=menu(),idx=m.items.findIndex(x=>x.id===currentItemId),to=idx+dir;if(to<0||to>=m.items.length)return;[m.items[idx],m.items[to]]=[m.items[to],m.items[idx]];save()}
+$('moveUpBtn').onclick=()=>move(-1);$('moveDownBtn').onclick=()=>move(1);
+$('backBtn').onclick=()=>{if($('timer').classList.contains('active')){stopTimer();openMenu(currentMenuId)}else if($('itemEdit').classList.contains('active'))openMenu(currentMenuId);else renderHome()};
+function beep(freq=880,dur=.12){try{const c=new (window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.frequency.value=freq;o.connect(g);g.connect(c.destination);g.gain.value=.05;o.start();setTimeout(()=>{o.stop();c.close()},dur*1000)}catch{}}
+async function keepAwake(){try{if('wakeLock'in navigator)wakeLock=await navigator.wakeLock.request('screen')}catch{}}
+function releaseAwake(){try{wakeLock?.release()}catch{}wakeLock=null}
+function startTimer(menuId){const m=state.menus.find(x=>x.id===menuId);if(!m||!m.items.length){alert('項目を1つ以上追加してください。');return}currentMenuId=menuId;timerState={index:0,phase:'item',remaining:m.items[0].seconds,paused:false,interval:null};show('timer',m.name);keepAwake();renderTimer();runTick()}
+function runTick(){clearInterval(timerState.interval);timerState.interval=setInterval(()=>{if(timerState.paused)return;timerState.remaining--;if(timerState.remaining<=3&&timerState.remaining>0)beep(700);if(timerState.remaining<=0){beep(1000,.2);advance()}renderTimer()},1000)}
+function advance(){const m=menu();if(timerState.phase==='item'&&m.rest>0&&timerState.index<m.items.length-1){timerState.phase='rest';timerState.remaining=m.rest;return}timerState.index++;if(timerState.index>=m.items.length){finishTimer();return}timerState.phase='item';timerState.remaining=m.items[timerState.index].seconds}
+function skip(delta){const m=menu();timerState.index=Math.max(0,Math.min(m.items.length-1,timerState.index+delta));timerState.phase='item';timerState.remaining=m.items[timerState.index].seconds;renderTimer()}
+function finishTimer(){clearInterval(timerState.interval);timerState=null;releaseAwake();$('timerContent').innerHTML='<div class="rest"><div class="timer-name">完了</div><div class="spacer"></div><button class="btn" id="doneBtn">メニューへ戻る</button></div>';$('doneBtn').onclick=()=>openMenu(currentMenuId)}
+function stopTimer(){if(timerState)clearInterval(timerState.interval);timerState=null;releaseAwake()}
+function renderTimer(){if(!timerState)return;const m=menu(),box=$('timerContent');if(timerState.phase==='rest'){box.innerHTML=`<div class="rest"><div class="timer-name">REST</div><div class="timer-time">${timerState.remaining}</div><div class="muted">次：${escapeHtml(m.items[timerState.index+1]?.name||'')}</div></div><div class="timer-controls"><button class="btn sub prev">← 前</button><button class="btn pause">${timerState.paused?'再開':'一時停止'}</button><button class="btn sub next">次 →</button></div>`}else{const x=m.items[timerState.index];box.innerHTML=`<img class="timer-img" src="${x.photo||svgPlaceholder()}"><div class="timer-name">${escapeHtml(x.name)}</div><div class="timer-time">${timerState.remaining}</div><div class="muted">${timerState.index+1} / ${m.items.length}</div><div class="timer-desc">${escapeHtml(x.desc)||'<span class="muted">説明なし</span>'}</div><div class="timer-controls"><button class="btn sub prev">← 前</button><button class="btn pause">${timerState.paused?'再開':'一時停止'}</button><button class="btn sub next">次 →</button></div>`}box.querySelector('.pause').onclick=()=>{timerState.paused=!timerState.paused;renderTimer()};box.querySelector('.prev').onclick=()=>skip(-1);box.querySelector('.next').onclick=()=>skip(1)}
+function escapeHtml(s=''){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+function svgPlaceholder(){return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="100%" height="100%" fill="#eeeeee"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#777" font-size="32">NO PHOTO</text></svg>`)}
+renderHome();
+if('serviceWorker'in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
+</script>
+</body>
+</html>
