@@ -8,9 +8,8 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.view.Window;
+import android.view.View;
 import android.view.WindowInsets;
-import android.view.WindowInsetsController;
 import android.webkit.CookieManager;
 import android.webkit.SafeBrowsingResponse;
 import android.webkit.ValueCallback;
@@ -19,11 +18,8 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.Toast;
-
-import com.dropbox.core.oauth.DbxCredential;
-
-import org.json.JSONObject;
 
 public class MainActivity extends Activity {
     private static final String APP_URL = "https://shogo3132.github.io/stretch-timer/";
@@ -37,27 +33,30 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Window window = getWindow();
-        window.setStatusBarColor(Color.rgb(247, 248, 250));
-        window.setNavigationBarColor(Color.rgb(247, 248, 250));
-        if (android.os.Build.VERSION.SDK_INT >= 30) {
-            WindowInsetsController controller = window.getInsetsController();
-            if (controller != null) {
-                controller.setSystemBarsAppearance(
-                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
-                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
-                );
-            }
-        }
+        getWindow().setStatusBarColor(Color.rgb(247, 248, 250));
+        getWindow().setNavigationBarColor(Color.rgb(247, 248, 250));
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+        );
+
+        FrameLayout shell = new FrameLayout(this);
+        shell.setBackgroundColor(Color.rgb(247, 248, 250));
+        shell.setOnApplyWindowInsetsListener((v, insets) -> {
+            android.graphics.Insets bars = insets.getInsets(
+                    WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout()
+            );
+            v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+            return insets;
+        });
 
         webView = new WebView(this);
         webView.setBackgroundColor(Color.rgb(247, 248, 250));
-        webView.setOnApplyWindowInsetsListener((v, insets) -> {
-            android.graphics.Insets bars = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
-            v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
-            return WindowInsets.CONSUMED;
-        });
-        setContentView(webView);
+        shell.addView(webView, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+        ));
+        setContentView(shell);
+        shell.requestApplyInsets();
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -79,15 +78,9 @@ public class MainActivity extends Activity {
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
                 String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
-                String path = uri.getPath() == null ? "" : uri.getPath();
-
-                if ((host.equals("www.dropbox.com") || host.equals("dropbox.com")) && path.startsWith("/oauth2/authorize")) {
-                    DropboxSync.startAuth(MainActivity.this);
-                    return true;
+                if (host.equals("shogo3132.github.io") || host.equals("www.dropbox.com") || host.equals("dropbox.com")) {
+                    return false;
                 }
-
-                if (host.equals("shogo3132.github.io")) return false;
-
                 try {
                     startActivity(new Intent(Intent.ACTION_VIEW, uri));
                 } catch (Exception ignored) {}
@@ -152,24 +145,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void deliverDropboxCredential(DbxCredential credential) {
-        if (credential == null || webView == null) return;
-        try {
-            JSONObject auth = new JSONObject();
-            if (credential.getAccessToken() != null) auth.put("access_token", credential.getAccessToken());
-            if (credential.getRefreshToken() != null) auth.put("refresh_token", credential.getRefreshToken());
-            if (credential.getExpiresAt() != null) auth.put("expires_at", credential.getExpiresAt());
-            String json = JSONObject.quote(auth.toString());
-            String js = "localStorage.setItem('stretchTimer.dropboxAuth'," + json + ");"
-                    + "sessionStorage.removeItem('dbx_verifier');sessionStorage.removeItem('dbx_state');"
-                    + "if(typeof renderSettings==='function'){renderSettings();}else if(typeof renderHome==='function'){renderHome();}";
-            webView.evaluateJavascript(js, null);
-            Toast.makeText(this, "Dropboxに接続しました", Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Toast.makeText(this, "Dropbox接続情報の保存に失敗しました", Toast.LENGTH_LONG).show();
-        }
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -210,8 +185,6 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         if (webView != null) webView.onResume();
-        DbxCredential credential = DropboxSync.captureAuthResult(this);
-        if (credential != null) deliverDropboxCredential(credential);
     }
 
     @Override
