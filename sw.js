@@ -1,4 +1,4 @@
-const CACHE='stretch-timer-v9';
+const CACHE='stretch-timer-v10';
 const APP_VERSION='0.12.8';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg'];
 
@@ -49,6 +49,9 @@ function patchHtml(html){
 .menu-card.swipe-open>*:not(.swipe-delete),.item.swipe-open>*:not(.swipe-delete){transform:translateX(-82px)}
 .swipe-delete{position:absolute;right:-2px;top:0;bottom:0;width:76px;border:0;background:#d9535f;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;transform:translateX(100%);opacity:0;transition:transform .18s ease,opacity .08s ease;z-index:2}
 .swipe-open>.swipe-delete{transform:translateX(0);opacity:1}
+.menu-card.over,.item.over{overflow:visible;outline:none!important}
+.menu-card.over::before,.item.over::before{content:'';position:absolute;left:8px;right:8px;top:-9px;height:3px;border-radius:3px;background:#27ae8b;box-shadow:0 0 0 1px rgba(39,174,139,.08);z-index:20;pointer-events:none}
+.menu-card.over::after,.item.over::after{content:'';position:absolute;left:3px;top:-12px;width:9px;height:9px;border-radius:50%;background:#27ae8b;z-index:21;pointer-events:none}
 </style>
 <script data-refresh-swipe-patch>
 (function(){
