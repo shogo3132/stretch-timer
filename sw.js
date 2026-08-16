@@ -1,4 +1,4 @@
-const CACHE='stretch-timer-v7';
+const CACHE='stretch-timer-v8';
 const APP_VERSION='0.12.8';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg'];
 
@@ -34,6 +34,178 @@ function patchHtml(html){
     .replaceAll('マイメニュー','マイルーティン')
     .replaceAll('メニュー','ルーティン')
     .replaceAll('項目','種目');
+
+  if(!html.includes('data-refresh-swipe-patch')){
+    html=html.replace(
+      '</body>',
+      `<style data-refresh-swipe-patch>
+#refreshBtn.refreshing{animation:spinRefresh .7s linear infinite}
+@keyframes spinRefresh{to{transform:rotate(360deg)}}
+#pullRefreshIndicator{position:fixed;left:50%;top:62px;z-index:30;transform:translate(-50%,-70px);width:38px;height:38px;border-radius:50%;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.14);display:grid;place-items:center;font-size:21px;color:#65707c;transition:transform .14s ease,opacity .14s ease;opacity:0;pointer-events:none}
+#pullRefreshIndicator.visible{opacity:1}
+#pullRefreshIndicator.ready{color:#27ae8b}
+.menu-card,.item{position:relative;overflow:hidden}
+.menu-card>*:not(.swipe-delete),.item>*:not(.swipe-delete){transition:transform .18s ease}
+.menu-card.swipe-open>*:not(.swipe-delete),.item.swipe-open>*:not(.swipe-delete){transform:translateX(-82px)}
+.swipe-delete{position:absolute;right:0;top:0;bottom:0;width:74px;border:0;background:#d9535f;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;transform:translateX(100%);transition:transform .18s ease;z-index:2}
+.swipe-open>.swipe-delete{transform:translateX(0)}
+</style>
+<script data-refresh-swipe-patch>
+(function(){
+  var refreshing=false;
+
+  function closeSwipes(except){
+    document.querySelectorAll('.swipe-open').forEach(function(el){if(el!==except)el.classList.remove('swipe-open')});
+  }
+
+  async function unifiedRefresh(){
+    if(refreshing) return;
+    refreshing=true;
+    var btn=document.getElementById('refreshBtn');
+    if(btn) btn.classList.add('refreshing');
+    try{
+      if(typeof hasDropboxAuth==='function' && hasDropboxAuth() && typeof syncNow==='function'){
+        try{await syncNow(true)}catch(e){console.error(e)}
+      }
+      if('serviceWorker' in navigator){
+        try{
+          var reg=await navigator.serviceWorker.getRegistration();
+          if(reg) await reg.update();
+        }catch(e){console.error(e)}
+      }
+      if('caches' in window){
+        try{
+          var keys=await caches.keys();
+          await Promise.all(keys.filter(function(k){return k.indexOf('stretch-timer-')===0}).map(function(k){return caches.delete(k)}));
+        }catch(e){console.error(e)}
+      }
+      setTimeout(function(){location.reload()},120);
+    }finally{
+      setTimeout(function(){refreshing=false;if(btn)btn.classList.remove('refreshing')},900);
+    }
+  }
+  window.unifiedRefresh=unifiedRefresh;
+
+  function ensureRefreshButton(){
+    var top=document.getElementById('topBar'),settings=document.getElementById('topAction');
+    if(!top||!settings) return;
+    var btn=document.getElementById('refreshBtn');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.id='refreshBtn';
+      btn.className='btn sub icon';
+      btn.setAttribute('aria-label','更新');
+      btn.title='更新';
+      btn.textContent='↻';
+      btn.onclick=unifiedRefresh;
+      settings.insertAdjacentElement('afterend',btn);
+    }
+    btn.style.display=(window.currentScreen==='home')?'inline-block':'none';
+  }
+
+  function addSwipeDelete(el,type){
+    if(!el||el.dataset.swipeDeleteReady==='1') return;
+    var id=el.dataset.id;
+    if(!id) return;
+    el.dataset.swipeDeleteReady='1';
+    var del=document.createElement('button');
+    del.className='swipe-delete';
+    del.type='button';
+    del.textContent='削除';
+    del.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(type==='routine'){
+        if(!confirm('このルーティンを削除しますか？')) return;
+        var i=state.menus.findIndex(function(x){return x.id===id});
+        if(i>=0){state.menus.splice(i,1);save();renderHome()}
+      }else{
+        if(!confirm('この種目を削除しますか？')) return;
+        var m=typeof menu==='function'?menu():null;
+        if(!m) return;
+        var j=m.items.findIndex(function(x){return x.id===id});
+        if(j>=0){m.items.splice(j,1);save();renderItems();if(typeof updateDuration==='function')updateDuration()}
+      }
+    });
+    el.appendChild(del);
+
+    var sx=0,sy=0,moved=false;
+    el.addEventListener('touchstart',function(e){
+      if(e.touches.length!==1) return;
+      var t=e.touches[0];sx=t.clientX;sy=t.clientY;moved=false;
+    },{passive:true});
+    el.addEventListener('touchmove',function(e){
+      if(e.touches.length!==1) return;
+      var t=e.touches[0],dx=t.clientX-sx,dy=t.clientY-sy;
+      if(Math.abs(dx)>22 && Math.abs(dx)>Math.abs(dy)*1.35) moved=true;
+    },{passive:true});
+    el.addEventListener('touchend',function(e){
+      if(!moved||!e.changedTouches.length) return;
+      var t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;
+      if(Math.abs(dx)<=45||Math.abs(dx)<=Math.abs(dy)*1.35) return;
+      if(dx<0){closeSwipes(el);el.classList.add('swipe-open')}
+      else el.classList.remove('swipe-open');
+    },{passive:true});
+  }
+
+  function decorateRoutineCards(){
+    document.querySelectorAll('.menu-card').forEach(function(el){addSwipeDelete(el,'routine')});
+  }
+  function decorateExerciseCards(){
+    document.querySelectorAll('.item').forEach(function(el){addSwipeDelete(el,'exercise')});
+  }
+
+  if(typeof renderHome==='function'){
+    var originalRenderHome=renderHome;
+    renderHome=function(){var r=originalRenderHome.apply(this,arguments);ensureRefreshButton();decorateRoutineCards();return r};
+  }
+  if(typeof renderItems==='function'){
+    var originalRenderItems=renderItems;
+    renderItems=function(){var r=originalRenderItems.apply(this,arguments);decorateExerciseCards();return r};
+  }
+  if(typeof show==='function'){
+    var originalShow=show;
+    show=function(){var r=originalShow.apply(this,arguments);setTimeout(ensureRefreshButton,0);return r};
+  }
+
+  document.addEventListener('pointerdown',function(e){
+    if(!e.target.closest('.menu-card,.item')) closeSwipes();
+  },true);
+
+  var indicator=document.createElement('div');
+  indicator.id='pullRefreshIndicator';
+  indicator.textContent='↻';
+  document.body.appendChild(indicator);
+  var pullStart=0,pullActive=false,pullReady=false;
+  document.addEventListener('touchstart',function(e){
+    if(window.currentScreen!=='home'||window.scrollY>0||e.touches.length!==1) return;
+    if(e.target.closest('button,input,textarea,select,a')) return;
+    pullStart=e.touches[0].clientY;pullActive=true;pullReady=false;
+  },{passive:true});
+  document.addEventListener('touchmove',function(e){
+    if(!pullActive||e.touches.length!==1) return;
+    var dy=e.touches[0].clientY-pullStart;
+    if(dy<=0){pullActive=false;indicator.classList.remove('visible','ready');return}
+    if(dy>10){
+      indicator.classList.add('visible');
+      indicator.style.transform='translate(-50%,'+Math.min(28,dy*.28-55)+'px)';
+    }
+    pullReady=dy>=85;
+    indicator.classList.toggle('ready',pullReady);
+  },{passive:true});
+  document.addEventListener('touchend',function(){
+    if(!pullActive) return;
+    pullActive=false;
+    indicator.style.transform='translate(-50%,-70px)';
+    indicator.classList.remove('visible','ready');
+    if(pullReady) unifiedRefresh();
+    pullReady=false;
+  },{passive:true});
+
+  setTimeout(function(){ensureRefreshButton();decorateRoutineCards();decorateExerciseCards()},0);
+})();
+</script></body>`
+    );
+  }
 
   return html;
 }
