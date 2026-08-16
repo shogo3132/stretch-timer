@@ -3,7 +3,7 @@
   var viewDate=new Date();
 
   var style=document.createElement('style');
-  style.setAttribute('data-routine-detail-v26','');
+  style.setAttribute('data-routine-detail-v27','');
   style.textContent='\
 .menu-card .edit{background:#fff!important;color:#5f6873!important;box-shadow:none!important;min-width:42px!important;padding:4px 8px!important;font-size:25px!important;line-height:1!important}\
 #routineDetail{padding-top:18px}\
@@ -34,7 +34,8 @@
     if(s)return s;
     s=document.createElement('main');s.id='routineDetail';s.className='screen';
     s.innerHTML='<div class="routine-detail-wrap"><div class="detail-summary"><div id="detailRing" class="detail-ring"></div><div id="detailRoutineName" class="detail-routine-name"></div></div><div class="detail-calendar-card"><div class="detail-cal-head"><button id="detailPrevMonth" class="detail-cal-nav" type="button">‹</button><div id="detailMonthTitle" class="detail-cal-title"></div><button id="detailNextMonth" class="detail-cal-nav" type="button">›</button></div><div class="detail-week"><div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div></div><div id="detailDays" class="detail-days"></div></div><div id="detailCompleteCount" class="detail-complete"></div></div>';
-    var timer=document.getElementById('timer');timer.parentNode.insertBefore(s,timer);
+    var timer=document.getElementById('timer');
+    if(timer&&timer.parentNode)timer.parentNode.insertBefore(s,timer);else document.querySelector('.app').appendChild(s);
     document.getElementById('detailPrevMonth').onclick=function(){viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()-1,1);renderDetail()};
     document.getElementById('detailNextMonth').onclick=function(){viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()+1,1);renderDetail()};
     return s;
@@ -54,8 +55,8 @@
     var d=new Date(times[0]);var html='<div class="detail-pop-date">'+(d.getMonth()+1)+'月'+d.getDate()+'日</div>';
     times.sort(function(a,b){return a-b}).forEach(function(ts){var x=new Date(ts);html+='<div class="detail-pop-time">'+String(x.getHours()).padStart(2,'0')+':'+String(x.getMinutes()).padStart(2,'0')+'</div>'});
     p.innerHTML=html;document.body.appendChild(p);
-    var r=btn.getBoundingClientRect(),w=Math.min(190,Math.max(105,p.getBoundingClientRect().width));var x=Math.max(w/2+8,Math.min(innerWidth-w/2-8,r.left+r.width/2));var y=r.top-8;
-    p.style.left=x+'px';p.style.top=y+'px';
+    var r=btn.getBoundingClientRect(),w=Math.min(190,Math.max(105,p.getBoundingClientRect().width));var x=Math.max(w/2+8,Math.min(innerWidth-w/2-8,r.left+r.width/2));
+    p.style.left=x+'px';p.style.top=(r.top-8)+'px';
     setTimeout(function(){document.addEventListener('pointerdown',closePop,{once:true,capture:true})},0);
   }
 
@@ -88,10 +89,15 @@
 
   function decorateDots(){
     document.querySelectorAll('.menu-card').forEach(function(card){
-      var b=card.querySelector('.edit');if(!b)return;b.textContent='⋯';b.setAttribute('aria-label','詳細');b.title='詳細';
+      var b=card.querySelector('.edit');if(!b)return;
+      if(b.textContent!=='⋯')b.textContent='⋯';
+      if(b.getAttribute('aria-label')!=='詳細')b.setAttribute('aria-label','詳細');
+      b.title='詳細';
     });
   }
-  var obs=new MutationObserver(function(){decorateDots()});obs.observe(document.body,{childList:true,subtree:true});decorateDots();
+  var prevHome=typeof renderHome==='function'?renderHome:null;
+  if(prevHome){renderHome=function(){var r=prevHome.apply(this,arguments);setTimeout(decorateDots,0);return r}}
+  setTimeout(decorateDots,0);
 
   document.addEventListener('click',function(e){
     var b=e.target&&e.target.closest?e.target.closest('.menu-card .edit'):null;if(!b)return;
