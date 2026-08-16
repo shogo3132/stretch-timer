@@ -59,7 +59,7 @@ public class MainActivity extends Activity {
         currentMenu=null;currentItem=null;clear("ホーム",false);action.setVisibility(View.VISIBLE);action.setText("＋ メニュー");
         action.setOnClickListener(v->{Menu m=new Menu();m.id=id();m.name="メニュー"+(menus.size()+1);menus.add(m);save();showMenu(m);});
         TextView intro=tv("マイメニュー",28);intro.setTypeface(Typeface.DEFAULT_BOLD);add(intro);
-        TextView sub=tv("メニューの中に運動項目をまとめて登録できます。",15);sub.setTextColor(Color.rgb(110,118,128));sub.setPadding(0,0,0,dp(18));add(sub);
+        TextView sub=tv("メニューを選んで開始します。",15);sub.setTextColor(Color.rgb(110,118,128));sub.setPadding(0,0,0,dp(18));add(sub);
         if(menus.isEmpty()){TextView empty=tv("まだメニューがありません。\n右上の「＋ メニュー」から作成してください。",17);empty.setTextColor(Color.rgb(110,118,128));empty.setGravity(Gravity.CENTER);empty.setPadding(0,dp(70),0,dp(70));add(empty);}
         for(Menu m:menus){
             LinearLayout card=new LinearLayout(this);card.setOrientation(LinearLayout.VERTICAL);card.setPadding(dp(18),dp(16),dp(18),dp(16));card.setBackground(bg(Color.WHITE,20));
@@ -67,10 +67,7 @@ public class MainActivity extends Activity {
             TextView t=tv(m.name,21);t.setTypeface(Typeface.DEFAULT_BOLD);top.addView(t,new LinearLayout.LayoutParams(0,-2,1));
             Button ed=btn("設定");ed.setOnClickListener(v->showMenu(m));top.addView(ed,new LinearLayout.LayoutParams(dp(78),-2));card.addView(top);
             TextView meta=tv(m.items.size()+"項目  ・  休憩 "+m.rest+"秒",14);meta.setTextColor(Color.rgb(110,118,128));meta.setPadding(0,0,0,dp(8));card.addView(meta);
-            if(m.items.isEmpty()){TextView no=tv("┗ 項目なし",15);no.setTextColor(Color.rgb(160,166,174));card.addView(no);} else {
-                for(int i=0;i<m.items.size();i++){Item x=m.items.get(i); LinearLayout ir=row();ir.setGravity(Gravity.CENTER_VERTICAL);ir.setPadding(dp(4),dp(5),0,dp(5)); TextView branch=tv(i==m.items.size()-1?"┗":"┣",17);branch.setTextColor(Color.rgb(145,153,164));ir.addView(branch,new LinearLayout.LayoutParams(dp(28),-2)); if(!x.photo.isEmpty()){ImageView im=new ImageView(this);im.setScaleType(ImageView.ScaleType.CENTER_CROP);setImage(im,x.photo);LinearLayout.LayoutParams ip=new LinearLayout.LayoutParams(dp(42),dp(42));ip.setMargins(0,0,dp(10),0);ir.addView(im,ip);} TextView xn=tv(x.name,16);xn.setTextColor(Color.rgb(48,54,61));ir.addView(xn,new LinearLayout.LayoutParams(0,-2,1)); TextView xs=tv(x.seconds+"秒",14);xs.setTextColor(Color.rgb(110,118,128));ir.addView(xs); final Item item=x; ir.setOnClickListener(v->{currentMenu=m;showItem(item);});card.addView(ir); }
-            }
-            Button st=btn("▶  このメニューを開始");st.setTextSize(16);st.setTextColor(Color.WHITE);st.setBackground(bg(Color.rgb(39,174,139),16));st.setOnClickListener(v->startTimer(m));LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,-2);sp.setMargins(0,dp(12),0,0);card.addView(st,sp);
+            Button st=btn("▶  このメニューを開始");st.setTextSize(16);st.setTextColor(Color.WHITE);st.setBackground(bg(Color.rgb(39,174,139),16));st.setOnClickListener(v->startTimer(m));LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,-2);sp.setMargins(0,dp(10),0,0);card.addView(st,sp);
             LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,-2);cp.setMargins(0,0,0,dp(16));content.addView(card,cp);
         }
     }
