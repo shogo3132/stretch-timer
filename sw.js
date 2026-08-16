@@ -1,4 +1,4 @@
-const CACHE='stretch-timer-v18';
+const CACHE='stretch-timer-v19';
 const APP_VERSION='0.12.8';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./ux-v16.js','./ux-v17.js'];
 
