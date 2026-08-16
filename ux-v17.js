@@ -1,4 +1,5 @@
 (function(){
+  var CURRENT_BUILD='stretch-timer-v19';
   function activeScreenId(){var el=document.querySelector('.screen.active');return el?el.id:''}
   var PULL_SCREENS=['home','menuEdit','itemEdit'];
 
@@ -10,6 +11,8 @@
 .menu-card.swipe-copy-open>*:not(.swipe-delete):not(.swipe-duplicate),.item.swipe-copy-open>*:not(.swipe-delete):not(.swipe-duplicate){transform:translateX(76px)!important}\
 .swipe-delete{border-radius:0 20px 20px 0!important}\
 .swipe-duplicate{border-radius:20px 0 0 20px!important}\
+@keyframes cardAdded{0%{opacity:0;transform:translateY(7px) scale(.99)}100%{opacity:1;transform:translateY(0) scale(1)}}\
+.card-added{animation:cardAdded .22s ease-out both}\
 ';
   document.head.appendChild(style);
 
@@ -36,11 +39,14 @@
   document.addEventListener('touchend',function(e){if(!candidate)return;if(e.cancelable&&ready)e.preventDefault();fire()},{passive:false,capture:true});
   document.addEventListener('touchcancel',function(){if(!candidate)return;fire()},{passive:true,capture:true});
 
-  function scrollCardIntoView(selector){
+  function revealNewCard(selector,id){
     setTimeout(function(){
-      var cards=document.querySelectorAll(selector);var card=cards[cards.length-1];
-      if(card&&card.scrollIntoView)card.scrollIntoView({behavior:'smooth',block:'nearest'});
-    },40);
+      var card=document.querySelector(selector+'[data-id="'+id+'"]');
+      if(!card)return;
+      card.classList.remove('card-added');void card.offsetWidth;card.classList.add('card-added');
+      if(card.scrollIntoView)card.scrollIntoView({behavior:'smooth',block:'nearest'});
+      setTimeout(function(){card.classList.remove('card-added')},280);
+    },50);
   }
 
   function installAddBehavior(){
@@ -55,7 +61,7 @@
         state.menus.push(m);
         if(typeof save==='function')save();
         if(typeof renderHome==='function')renderHome();
-        scrollCardIntoView('.menu-card');
+        revealNewCard('.menu-card',id);
       };
     }
 
@@ -70,7 +76,7 @@
         if(typeof save==='function')save();
         if(typeof renderItems==='function')renderItems();
         if(typeof updateDuration==='function')updateDuration();
-        scrollCardIntoView('.item');
+        revealNewCard('.item',id);
       };
     }
   }
