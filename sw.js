@@ -1,4 +1,4 @@
-const CACHE='stretch-timer-v8';
+const CACHE='stretch-timer-v9';
 const APP_VERSION='0.12.8';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg'];
 
@@ -47,12 +47,17 @@ function patchHtml(html){
 .menu-card,.item{position:relative;overflow:hidden}
 .menu-card>*:not(.swipe-delete),.item>*:not(.swipe-delete){transition:transform .18s ease}
 .menu-card.swipe-open>*:not(.swipe-delete),.item.swipe-open>*:not(.swipe-delete){transform:translateX(-82px)}
-.swipe-delete{position:absolute;right:0;top:0;bottom:0;width:74px;border:0;background:#d9535f;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;transform:translateX(100%);transition:transform .18s ease;z-index:2}
-.swipe-open>.swipe-delete{transform:translateX(0)}
+.swipe-delete{position:absolute;right:-2px;top:0;bottom:0;width:76px;border:0;background:#d9535f;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;transform:translateX(100%);opacity:0;transition:transform .18s ease,opacity .08s ease;z-index:2}
+.swipe-open>.swipe-delete{transform:translateX(0);opacity:1}
 </style>
 <script data-refresh-swipe-patch>
 (function(){
   var refreshing=false;
+
+  function isHomeScreen(){
+    var home=document.getElementById('home');
+    return !!home && home.classList.contains('active');
+  }
 
   function closeSwipes(except){
     document.querySelectorAll('.swipe-open').forEach(function(el){if(el!==except)el.classList.remove('swipe-open')});
@@ -100,7 +105,7 @@ function patchHtml(html){
       btn.onclick=unifiedRefresh;
       settings.insertAdjacentElement('afterend',btn);
     }
-    btn.style.display=(window.currentScreen==='home')?'inline-block':'none';
+    btn.style.display=isHomeScreen()?'inline-block':'none';
   }
 
   function addSwipeDelete(el,type){
@@ -177,7 +182,7 @@ function patchHtml(html){
   document.body.appendChild(indicator);
   var pullStart=0,pullActive=false,pullReady=false;
   document.addEventListener('touchstart',function(e){
-    if(window.currentScreen!=='home'||window.scrollY>0||e.touches.length!==1) return;
+    if(!isHomeScreen()||window.scrollY>0||e.touches.length!==1) return;
     if(e.target.closest('button,input,textarea,select,a')) return;
     pullStart=e.touches[0].clientY;pullActive=true;pullReady=false;
   },{passive:true});
