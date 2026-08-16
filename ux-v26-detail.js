@@ -3,7 +3,7 @@
   var viewDate=new Date();
 
   var style=document.createElement('style');
-  style.setAttribute('data-routine-detail-v29','');
+  style.setAttribute('data-routine-detail-v30','');
   style.textContent='\
 .menu-card .edit{background:#fff!important;color:#5f6873!important;box-shadow:none!important;min-width:42px!important;padding:4px 8px!important;font-size:25px!important;line-height:1!important}\
 .menu-card .menu-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}\
@@ -43,92 +43,22 @@
     return s;
   }
 
-  function getMenu(){
-    if(typeof state==='undefined'||!state||!Array.isArray(state.menus))return null;
-    return state.menus.find(function(m){return m.id===detailMenuId})||null;
-  }
+  function getMenu(){if(typeof state==='undefined'||!state||!Array.isArray(state.menus))return null;return state.menus.find(function(m){return m.id===detailMenuId})||null}
   function logs(m){return Array.isArray(m&&m.completions)?m.completions.filter(function(x){return Number.isFinite(+x)}).map(Number):[]}
   function dayKey(ts){var d=new Date(ts);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
   function monthMap(m,y,mo){var map={};logs(m).forEach(function(ts){var d=new Date(ts);if(d.getFullYear()!==y||d.getMonth()!==mo)return;var k=dayKey(ts);(map[k]||(map[k]=[])).push(ts)});return map}
   function closePop(){var p=document.getElementById('detailPop');if(p)p.remove()}
-  function showPop(btn,times){
-    closePop();if(!times||!times.length)return;
-    var p=document.createElement('div');p.id='detailPop';p.className='detail-pop';
-    var d=new Date(times[0]);var html='<div class="detail-pop-date">'+(d.getMonth()+1)+'月'+d.getDate()+'日</div>';
-    times.sort(function(a,b){return a-b}).forEach(function(ts){var x=new Date(ts);html+='<div class="detail-pop-time">'+String(x.getHours()).padStart(2,'0')+':'+String(x.getMinutes()).padStart(2,'0')+'</div>'});
-    p.innerHTML=html;document.body.appendChild(p);
-    var r=btn.getBoundingClientRect(),w=Math.min(190,Math.max(105,p.getBoundingClientRect().width));var x=Math.max(w/2+8,Math.min(innerWidth-w/2-8,r.left+r.width/2));
-    p.style.left=x+'px';p.style.top=(r.top-8)+'px';
-    setTimeout(function(){document.addEventListener('pointerdown',closePop,{once:true,capture:true})},0);
-  }
+  function showPop(btn,times){closePop();if(!times||!times.length)return;var p=document.createElement('div');p.id='detailPop';p.className='detail-pop';var d=new Date(times[0]);var html='<div class="detail-pop-date">'+(d.getMonth()+1)+'月'+d.getDate()+'日</div>';times.sort(function(a,b){return a-b}).forEach(function(ts){var x=new Date(ts);html+='<div class="detail-pop-time">'+String(x.getHours()).padStart(2,'0')+':'+String(x.getMinutes()).padStart(2,'0')+'</div>'});p.innerHTML=html;document.body.appendChild(p);var r=btn.getBoundingClientRect(),w=Math.min(190,Math.max(105,p.getBoundingClientRect().width));var x=Math.max(w/2+8,Math.min(innerWidth-w/2-8,r.left+r.width/2));p.style.left=x+'px';p.style.top=(r.top-8)+'px';setTimeout(function(){document.addEventListener('pointerdown',closePop,{once:true,capture:true})},0)}
 
-  function renderDetail(){
-    ensureScreen();var m=getMenu();if(!m)return;
-    closePop();document.getElementById('detailRoutineName').textContent=m.name||'ルーティン';
-    var y=viewDate.getFullYear(),mo=viewDate.getMonth(),daysInMonth=new Date(y,mo+1,0).getDate(),map=monthMap(m,y,mo);
-    var activeDays=Object.keys(map).length,pct=daysInMonth?activeDays/daysInMonth:0;
-    document.getElementById('detailRing').style.setProperty('--p',(pct*360)+'deg');
-    document.getElementById('detailRing').title=Math.round(pct*100)+'%';
-    document.getElementById('detailMonthTitle').textContent=y+'年 '+(mo+1)+'月';
-    var box=document.getElementById('detailDays');box.innerHTML='';
-    var first=new Date(y,mo,1).getDay();for(var i=0;i<first;i++){var blank=document.createElement('div');blank.className='detail-day blank';box.appendChild(blank)}
-    for(var day=1;day<=daysInMonth;day++){
-      var k=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(day).padStart(2,'0'),arr=map[k]||[];
-      var b=document.createElement('button');b.type='button';b.className='detail-day'+(arr.length>=2?' done2':arr.length===1?' done1':'')+(arr.length?' has-log':'');b.textContent=day;
-      if(arr.length)(function(btn,t){btn.onclick=function(e){e.stopPropagation();showPop(btn,t.slice())}})(b,arr);
-      box.appendChild(b);
-    }
-    document.getElementById('detailCompleteCount').textContent='完走 '+logs(m).length+'回';
-  }
+  function renderDetail(){ensureScreen();var m=getMenu();if(!m)return;closePop();document.getElementById('detailRoutineName').textContent=m.name||'ルーティン';var y=viewDate.getFullYear(),mo=viewDate.getMonth(),daysInMonth=new Date(y,mo+1,0).getDate(),map=monthMap(m,y,mo);var activeDays=Object.keys(map).length,pct=daysInMonth?activeDays/daysInMonth:0;document.getElementById('detailRing').style.setProperty('--p',(pct*360)+'deg');document.getElementById('detailRing').title=Math.round(pct*100)+'%';document.getElementById('detailMonthTitle').textContent=y+'年 '+(mo+1)+'月';var box=document.getElementById('detailDays');box.innerHTML='';var first=new Date(y,mo,1).getDay();for(var i=0;i<first;i++){var blank=document.createElement('div');blank.className='detail-day blank';box.appendChild(blank)}for(var day=1;day<=daysInMonth;day++){var k=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(day).padStart(2,'0'),arr=map[k]||[];var b=document.createElement('button');b.type='button';b.className='detail-day'+(arr.length>=2?' done2':arr.length===1?' done1':'')+(arr.length?' has-log':'');b.textContent=day;if(arr.length)(function(btn,t){btn.onclick=function(e){e.stopPropagation();showPop(btn,t.slice())}})(b,arr);box.appendChild(b)}document.getElementById('detailCompleteCount').textContent='完走 '+logs(m).length+'回'}
 
-  function openDetail(id){
-    detailMenuId=id;viewDate=new Date();ensureScreen();
-    if(typeof currentMenuId!=='undefined')currentMenuId=id;
-    if(typeof show==='function')show('routineDetail','記録');
-    renderDetail();window.scrollTo(0,0);
-  }
+  function openDetail(id){detailMenuId=id;viewDate=new Date();ensureScreen();if(typeof currentMenuId!=='undefined')currentMenuId=id;if(typeof show==='function')show('routineDetail','記録');renderDetail();window.scrollTo(0,0)}
   window.openRoutineDetail=openDetail;
 
-  function decorateCards(){
-    document.querySelectorAll('.menu-card').forEach(function(card){
-      var id=card.dataset.id;if(!id)return;
-      var edit=card.querySelector('.edit');
-      if(edit){edit.textContent='＋';edit.setAttribute('aria-label','ルーティン設定');edit.title='ルーティン設定'}
-      var actions=card.querySelector('.menu-actions');
-      if(actions&&!actions.querySelector('.record-btn')){
-        var record=document.createElement('button');record.type='button';record.className='btn record-btn';record.textContent='記録';record.setAttribute('aria-label','記録を表示');
-        record.onclick=function(e){e.preventDefault();e.stopPropagation();openDetail(id)};
-        actions.appendChild(record);
-      }
-    });
-  }
-  var prevHome=typeof renderHome==='function'?renderHome:null;
-  if(prevHome){renderHome=function(){var r=prevHome.apply(this,arguments);setTimeout(decorateCards,0);return r}}
-  setTimeout(decorateCards,0);
+  function decorateCards(){document.querySelectorAll('.menu-card').forEach(function(card){var id=card.dataset.id;if(!id)return;var edit=card.querySelector('.edit');if(edit){edit.textContent='＋';edit.setAttribute('aria-label','ルーティン設定');edit.title='ルーティン設定'}var actions=card.querySelector('.menu-actions');if(actions){var start=actions.querySelector('.start');if(start)start.textContent='▶開始';if(!actions.querySelector('.record-btn')){var record=document.createElement('button');record.type='button';record.className='btn record-btn';record.textContent='▣ 記録';record.setAttribute('aria-label','記録を表示');record.onclick=function(e){e.preventDefault();e.stopPropagation();openDetail(id)};actions.appendChild(record)}}})}
+  var prevHome=typeof renderHome==='function'?renderHome:null;if(prevHome){renderHome=function(){var r=prevHome.apply(this,arguments);setTimeout(decorateCards,0);return r}}setTimeout(decorateCards,0);
 
-  document.addEventListener('click',function(e){
-    var card=e.target&&e.target.closest?e.target.closest('.menu-card'):null;if(!card||!card.dataset.id)return;
-    var id=card.dataset.id,button=e.target.closest('button');
-    if(button&&button.classList.contains('edit')){
-      e.preventDefault();e.stopImmediatePropagation();if(typeof openMenu==='function')openMenu(id);return;
-    }
-    if(button&&button.classList.contains('record-btn')){
-      e.preventDefault();e.stopImmediatePropagation();openDetail(id);return;
-    }
-    if(button)return;
-    e.preventDefault();e.stopImmediatePropagation();
-  },true);
+  document.addEventListener('click',function(e){var card=e.target&&e.target.closest?e.target.closest('.menu-card'):null;if(!card||!card.dataset.id)return;var id=card.dataset.id,button=e.target.closest('button');if(button&&button.classList.contains('edit')){e.preventDefault();e.stopImmediatePropagation();if(typeof openMenu==='function')openMenu(id);return}if(button&&button.classList.contains('record-btn')){e.preventDefault();e.stopImmediatePropagation();openDetail(id);return}if(button)return;e.preventDefault();e.stopImmediatePropagation()},true);
 
-  if(typeof finishTimer==='function'){
-    var originalFinish=finishTimer;
-    finishTimer=function(){
-      try{
-        if(typeof state!=='undefined'&&state&&Array.isArray(state.menus)&&typeof currentMenuId!=='undefined'){
-          var m=state.menus.find(function(x){return x.id===currentMenuId});
-          if(m){if(!Array.isArray(m.completions))m.completions=[];m.completions.push(Date.now());if(typeof save==='function')save()}
-        }
-      }catch(err){console.error(err)}
-      return originalFinish.apply(this,arguments);
-    };
-  }
+  if(typeof finishTimer==='function'){var originalFinish=finishTimer;finishTimer=function(){try{if(typeof state!=='undefined'&&state&&Array.isArray(state.menus)&&typeof currentMenuId!=='undefined'){var m=state.menus.find(function(x){return x.id===currentMenuId});if(m){if(!Array.isArray(m.completions))m.completions=[];m.completions.push(Date.now());if(typeof save==='function')save()}}}catch(err){console.error(err)}return originalFinish.apply(this,arguments)}}
 })();
