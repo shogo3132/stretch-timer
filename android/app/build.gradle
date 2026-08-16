@@ -10,8 +10,8 @@ android {
         applicationId 'com.shogo.stretchtimer'
         minSdk 26
         targetSdk 35
-        versionCode 7
-        versionName '0.7.0'
+        versionCode 8
+        versionName '0.8.0'
     }
 
     // Fixed signing baseline for all future APK updates.
@@ -29,4 +29,8 @@ android {
             signingConfig signingConfigs.fixed
         }
     }
+}
+
+dependencies {
+    implementation 'com.dropbox.core:dropbox-android-sdk:7.0.0'
 }
