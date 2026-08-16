@@ -3,8 +3,9 @@
   function currentMenu(){try{return typeof menu==='function'?menu():null}catch(e){return null}}
 
   var style=document.createElement('style');
-  style.setAttribute('data-card-motion-reorder-v25','');
+  style.setAttribute('data-card-motion-reorder-v30','');
   style.textContent='\
+.menu-card,.item{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important;-webkit-tap-highlight-color:transparent!important}\
 .menu-card.reorder-before,.item.reorder-before,.menu-card.reorder-after,.item.reorder-after{overflow:visible!important}\
 .menu-card.reorder-before::before,.item.reorder-before::before,.menu-card.reorder-after::before,.item.reorder-after::before{content:"";position:absolute;left:8px;right:8px;height:3px;border-radius:3px;background:#27ae8b;z-index:80;pointer-events:none}\
 .menu-card.reorder-before::after,.item.reorder-before::after,.menu-card.reorder-after::after,.item.reorder-after::after{content:"";position:absolute;left:3px;width:9px;height:9px;border-radius:50%;background:#27ae8b;z-index:81;pointer-events:none}\
@@ -36,10 +37,14 @@
   var held=null,holdTimer=null,dragging=false,target=null,before=true,startX=0,startY=0,type='',selector='';
   function resetGesture(){clearTimeout(holdTimer);holdTimer=null;clearTargets();if(held)held.classList.remove('reorder-held');held=null;target=null;dragging=false;type='';selector=''}
 
+  document.addEventListener('dragstart',function(e){if(e.target&&e.target.closest&&e.target.closest('.menu-card,.item'))e.preventDefault()},true);
+  document.addEventListener('selectstart',function(e){if(e.target&&e.target.closest&&e.target.closest('.menu-card,.item'))e.preventDefault()},true);
+
   document.addEventListener('touchstart',function(e){
     if(e.touches.length!==1)return;
     var card=e.target&&e.target.closest?e.target.closest('.menu-card,.item'):null;
     if(!card||e.target.closest('button'))return;
+    card.draggable=false;card.removeAttribute('draggable');
     resetGesture();held=card;type=card.classList.contains('menu-card')?'menu':'item';selector=type==='menu'?'.menu-card':'.item';startX=e.touches[0].clientX;startY=e.touches[0].clientY;
     holdTimer=setTimeout(function(){if(!held)return;dragging=true;held.classList.remove('swipe-open','swipe-copy-open');held.classList.add('reorder-held');if(navigator.vibrate)navigator.vibrate(25)},420);
   },{passive:true,capture:true});
