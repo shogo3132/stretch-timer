@@ -1,4 +1,4 @@
-const CACHE='stretch-timer-v10';
+const CACHE='stretch-timer-v11';
 const APP_VERSION='0.12.8';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg'];
 
@@ -39,6 +39,7 @@ function patchHtml(html){
     html=html.replace(
       '</body>',
       `<style data-refresh-swipe-patch>
+#homeSyncRow{display:none!important}
 #refreshBtn.refreshing{animation:spinRefresh .7s linear infinite}
 @keyframes spinRefresh{to{transform:rotate(360deg)}}
 #pullRefreshIndicator{position:fixed;left:50%;top:62px;z-index:30;transform:translate(-50%,-70px);width:38px;height:38px;border-radius:50%;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.14);display:grid;place-items:center;font-size:21px;color:#65707c;transition:transform .14s ease,opacity .14s ease;opacity:0;pointer-events:none}
@@ -49,6 +50,7 @@ function patchHtml(html){
 .menu-card.swipe-open>*:not(.swipe-delete),.item.swipe-open>*:not(.swipe-delete){transform:translateX(-82px)}
 .swipe-delete{position:absolute;right:-2px;top:0;bottom:0;width:76px;border:0;background:#d9535f;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;transform:translateX(100%);opacity:0;transition:transform .18s ease,opacity .08s ease;z-index:2}
 .swipe-open>.swipe-delete{transform:translateX(0);opacity:1}
+.menu-card .edit{flex:0 0 46px!important;min-width:46px;min-height:42px;padding:5px 10px;font-size:21px;line-height:1}
 .menu-card.over,.item.over{overflow:visible;outline:none!important}
 .menu-card.over::before,.item.over::before{content:'';position:absolute;left:8px;right:8px;top:-9px;height:3px;border-radius:3px;background:#27ae8b;box-shadow:0 0 0 1px rgba(39,174,139,.08);z-index:20;pointer-events:none}
 .menu-card.over::after,.item.over::after{content:'';position:absolute;left:3px;top:-12px;width:9px;height:9px;border-radius:50%;background:#27ae8b;z-index:21;pointer-events:none}
@@ -111,6 +113,14 @@ function patchHtml(html){
     btn.style.display=isHomeScreen()?'inline-block':'none';
   }
 
+  function gearRoutineSettings(){
+    document.querySelectorAll('.menu-card .edit').forEach(function(btn){
+      btn.textContent='⚙';
+      btn.setAttribute('aria-label','ルーティン設定');
+      btn.title='ルーティン設定';
+    });
+  }
+
   function addSwipeDelete(el,type){
     if(!el||el.dataset.swipeDeleteReady==='1') return;
     var id=el.dataset.id;
@@ -156,6 +166,7 @@ function patchHtml(html){
   }
 
   function decorateRoutineCards(){
+    gearRoutineSettings();
     document.querySelectorAll('.menu-card').forEach(function(el){addSwipeDelete(el,'routine')});
   }
   function decorateExerciseCards(){
