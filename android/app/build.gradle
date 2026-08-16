@@ -10,8 +10,8 @@ android {
         applicationId 'com.shogo.stretchtimer'
         minSdk 26
         targetSdk 35
-        versionCode 18
-        versionName '0.12.6'
+        versionCode 19
+        versionName '0.12.7'
     }
 
     signingConfigs {
@@ -26,6 +26,12 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.fixed
+        }
+    }
+
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            outputFileName = "app-${variant.buildType.name}-v${variant.versionName}.apk"
         }
     }
 }
