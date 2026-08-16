@@ -1,6 +1,6 @@
-const CACHE='stretch-timer-v27';
-const APP_VERSION='0.12.13';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./ux-v22.js?v=27','./ux-v18.js?v=27','./ux-v26-detail.js?v=27'];
+const CACHE='stretch-timer-v28';
+const APP_VERSION='0.12.14';
+const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./ux-v22.js?v=28','./ux-v18.js?v=28','./ux-v26-detail.js?v=28'];
 
 function patchHtml(html){
   if(!html.includes('id="appVersion"')){
@@ -37,14 +37,12 @@ function patchHtml(html){
     .replaceAll('メニュー','ルーティン')
     .replaceAll('項目','種目');
 
-  // Remove every UX bundle previously injected by an older service worker.
-  // This prevents old and new controllers from executing together after an update.
   html=html.replace(/<script\s+src="\.\/ux-v[^"?]+\.js(?:\?v=\d+)?"><\/script>/g,'');
 
   html=html.replace('</body>',
-    '<script src="./ux-v22.js?v=27"></script>'+
-    '<script src="./ux-v18.js?v=27"></script>'+
-    '<script src="./ux-v26-detail.js?v=27"></script></body>'
+    '<script src="./ux-v22.js?v=28"></script>'+
+    '<script src="./ux-v18.js?v=28"></script>'+
+    '<script src="./ux-v26-detail.js?v=28"></script></body>'
   );
   return html;
 }
