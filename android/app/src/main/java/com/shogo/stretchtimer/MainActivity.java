@@ -169,7 +169,7 @@ public class MainActivity extends Activity {
             Auth.startOAuth2PKCE(
                     this,
                     DROPBOX_APP_KEY,
-                    DbxRequestConfig.newBuilder("stretch-timer/0.12.6").build(),
+                    DbxRequestConfig.newBuilder("stretch-timer/0.12.8").build(),
                     Arrays.asList("files.metadata.read", "files.content.read", "files.content.write")
             );
         } catch (Exception e) {
@@ -222,10 +222,26 @@ public class MainActivity extends Activity {
         cameraOutputUri = null;
     }
 
-    @Override
-    public void onBackPressed() {
+    private void performSystemBackFallback() {
         if (webView != null && webView.canGoBack()) webView.goBack();
         else super.onBackPressed();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (webView == null) {
+            super.onBackPressed();
+            return;
+        }
+
+        webView.evaluateJavascript(
+                "(function(){var b=document.getElementById('backBtn');"
+                        + "if(b&&getComputedStyle(b).display!=='none'){b.click();return true;}"
+                        + "return false;})()",
+                result -> {
+                    if (!"true".equals(result)) performSystemBackFallback();
+                }
+        );
     }
 
     @Override
