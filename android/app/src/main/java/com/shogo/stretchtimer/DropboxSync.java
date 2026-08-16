@@ -18,26 +18,41 @@ final class DropboxSync {
     private DropboxSync() {}
 
     static DbxRequestConfig config() {
-        return DbxRequestConfig.newBuilder("stretch-timer/0.12.2").build();
+        return DbxRequestConfig.newBuilder("stretch-timer/0.12.3").build();
     }
 
     static void startAuth(Activity activity) {
         activity.getSharedPreferences(PREF, Context.MODE_PRIVATE)
                 .edit().putBoolean(K_PENDING, true).apply();
-        Auth.startOAuth2PKCE(
-                activity,
-                APP_KEY,
-                config(),
-                Arrays.asList("files.metadata.read", "files.content.read", "files.content.write")
-        );
+        try {
+            Auth.startOAuth2PKCE(
+                    activity,
+                    APP_KEY,
+                    config(),
+                    Arrays.asList("files.metadata.read", "files.content.read", "files.content.write")
+            );
+        } catch (Exception e) {
+            clearPending(activity);
+            throw e;
+        }
     }
 
     static DbxCredential captureAuthResult(Context context) {
         SharedPreferences p = context.getSharedPreferences(PREF, Context.MODE_PRIVATE);
         if (!p.getBoolean(K_PENDING, false)) return null;
-        DbxCredential credential = Auth.getDbxCredential();
-        if (credential == null) return null;
-        p.edit().putBoolean(K_PENDING, false).apply();
-        return credential;
+        try {
+            DbxCredential credential = Auth.getDbxCredential();
+            if (credential == null) return null;
+            p.edit().putBoolean(K_PENDING, false).apply();
+            return credential;
+        } catch (Exception e) {
+            p.edit().putBoolean(K_PENDING, false).apply();
+            return null;
+        }
+    }
+
+    static void clearPending(Context context) {
+        context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
+                .edit().putBoolean(K_PENDING, false).apply();
     }
 }
