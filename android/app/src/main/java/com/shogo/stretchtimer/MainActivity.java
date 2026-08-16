@@ -38,7 +38,7 @@ public class MainActivity extends Activity {
     String id(){ return UUID.randomUUID().toString(); }
     int dp(int n){ return (int)(n*getResources().getDisplayMetrics().density+.5f); }
     TextView tv(String s,int sp){ TextView v=new TextView(this); v.setText(s); v.setTextSize(sp); v.setTextColor(Color.rgb(27,31,36)); v.setPadding(0,dp(8),0,dp(8)); return v; }
-    Button btn(String s){ Button b=new Button(this); b.setText(s); b.setTextAllCaps(false); b.setTextSize(14); b.setMinHeight(dp(44)); b.setBackground(bg(Color.rgb(234,238,242),14)); return b; }
+    Button btn(String s){ Button b=new Button(this); b.setText(s); b.setTextSize(14); b.setMinHeight(dp(44)); b.setBackground(bg(Color.rgb(234,238,242),14)); return b; }
     EditText field(String s){ EditText e=new EditText(this); e.setHint(s); e.setTextSize(18); e.setPadding(dp(14),dp(12),dp(14),dp(12)); e.setBackground(bg(Color.WHITE,14)); return e; }
     LinearLayout row(){ LinearLayout l=new LinearLayout(this); l.setOrientation(LinearLayout.HORIZONTAL); return l; }
     void add(View v){ content.addView(v,new LinearLayout.LayoutParams(-1,-2)); }
