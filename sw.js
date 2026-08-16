@@ -1,6 +1,6 @@
-const CACHE='stretch-timer-v25';
-const APP_VERSION='0.12.11';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./ux-v22.js?v=25','./ux-v18.js?v=25'];
+const CACHE='stretch-timer-v26';
+const APP_VERSION='0.12.12';
+const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./ux-v22.js?v=26','./ux-v18.js?v=26','./ux-v26-detail.js?v=26'];
 
 function patchHtml(html){
   if(!html.includes('id="appVersion"')){
@@ -35,11 +35,14 @@ function patchHtml(html){
     .replaceAll('メニュー','ルーティン')
     .replaceAll('項目','種目');
 
-  if(!html.includes('src="./ux-v22.js?v=25"')){
-    html=html.replace('</body>','<script src="./ux-v22.js?v=25"></script></body>');
+  if(!html.includes('src="./ux-v22.js?v=26"')){
+    html=html.replace('</body>','<script src="./ux-v22.js?v=26"></script></body>');
   }
-  if(!html.includes('src="./ux-v18.js?v=25"')){
-    html=html.replace('</body>','<script src="./ux-v18.js?v=25"></script></body>');
+  if(!html.includes('src="./ux-v18.js?v=26"')){
+    html=html.replace('</body>','<script src="./ux-v18.js?v=26"></script></body>');
+  }
+  if(!html.includes('src="./ux-v26-detail.js?v=26"')){
+    html=html.replace('</body>','<script src="./ux-v26-detail.js?v=26"></script></body>');
   }
 
   return html;
