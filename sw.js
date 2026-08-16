@@ -1,6 +1,6 @@
-const CACHE='stretch-timer-v23';
-const APP_VERSION='0.12.9';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./ux-v22.js?v=23','./ux-v18.js?v=23'];
+const CACHE='stretch-timer-v24';
+const APP_VERSION='0.12.10';
+const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./ux-v22.js?v=24','./ux-v18.js?v=24'];
 
 function patchHtml(html){
   if(!html.includes('id="appVersion"')){
@@ -35,11 +35,11 @@ function patchHtml(html){
     .replaceAll('メニュー','ルーティン')
     .replaceAll('項目','種目');
 
-  if(!html.includes('src="./ux-v22.js?v=23"')){
-    html=html.replace('</body>','<script src="./ux-v22.js?v=23"></script></body>');
+  if(!html.includes('src="./ux-v22.js?v=24"')){
+    html=html.replace('</body>','<script src="./ux-v22.js?v=24"></script></body>');
   }
-  if(!html.includes('src="./ux-v18.js?v=23"')){
-    html=html.replace('</body>','<script src="./ux-v18.js?v=23"></script></body>');
+  if(!html.includes('src="./ux-v18.js?v=24"')){
+    html=html.replace('</body>','<script src="./ux-v18.js?v=24"></script></body>');
   }
 
   return html;
