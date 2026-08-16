@@ -10,10 +10,12 @@ import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.util.Base64;
 import android.view.*;
 import android.widget.*;
 import org.json.*;
 import java.util.*;
+import java.io.*;
 
 public class MainActivity extends Activity {
     static class Item { String id,name,desc,photo=""; int seconds=30; }
@@ -32,9 +34,11 @@ public class MainActivity extends Activity {
     CountDownTimer timer; boolean paused=false,restPhase=false; long remainingMs,totalPhaseMs; int timerIndex=0,lastBeep=-1;
     Uri pendingCameraUri; ToneGenerator tone; String pendingPhotoItemId="";
     final int PICK_IMAGE=10, TAKE_PHOTO=11, REQ_CAMERA=12;
+    Handler syncHandler=new Handler(Looper.getMainLooper()); Runnable queuedSync; boolean syncing=false,applyingRemote=false;
 
     @Override public void onCreate(Bundle b){ super.onCreate(b); tone=new ToneGenerator(AudioManager.STREAM_MUSIC,70); load(); recoverPhotoState(); buildShell(); showHome(); }
-    @Override protected void onDestroy(){ stopTimer(); if(tone!=null)tone.release(); super.onDestroy(); }
+    @Override protected void onResume(){super.onResume();if(DropboxSync.captureAuthResult(this)){Toast.makeText(this,"Dropboxに接続しました",Toast.LENGTH_SHORT).show();showHome();syncNow(true);}else if(DropboxSync.isConnected(this)&&!syncing){queueSync(700);}}
+    @Override protected void onDestroy(){ stopTimer(); if(queuedSync!=null)syncHandler.removeCallbacks(queuedSync); if(tone!=null)tone.release(); super.onDestroy(); }
     String id(){ return UUID.randomUUID().toString(); }
     int dp(int n){ return (int)(n*getResources().getDisplayMetrics().density+.5f); }
     GradientDrawable bg(int c,int r){GradientDrawable g=new GradientDrawable();g.setColor(c);g.setCornerRadius(dp(r));return g;}
@@ -71,10 +75,18 @@ public class MainActivity extends Activity {
         card.setOnDragListener((v,e)->{if(e.getAction()==DragEvent.ACTION_DRAG_ENTERED){v.setAlpha(.72f);return true;}if(e.getAction()==DragEvent.ACTION_DRAG_EXITED){v.setAlpha(1f);return true;}if(e.getAction()==DragEvent.ACTION_DROP){v.setAlpha(1f);String sid=e.getClipData().getItemAt(0).getText().toString();Item src=null;for(Item xx:menu.items)if(xx.id.equals(sid))src=xx;if(src!=null&&src!=target){int from=menu.items.indexOf(src),to=menu.items.indexOf(target);menu.items.remove(from);if(from<to)to--;menu.items.add(Math.max(0,Math.min(to,menu.items.size())),src);save();showMenu(menu);}return true;}if(e.getAction()==DragEvent.ACTION_DRAG_ENDED){v.setAlpha(1f);return true;}return true;});
     }
 
+    void addSyncCard(){
+        LinearLayout card=new LinearLayout(this);card.setOrientation(LinearLayout.VERTICAL);card.setPadding(dp(16),dp(14),dp(16),dp(14));card.setBackground(bg(Color.rgb(238,247,244),18));
+        boolean connected=DropboxSync.isConnected(this);TextView t=tv(connected?"Dropbox 同期：接続済み":"PCと同期",16);t.setTypeface(Typeface.DEFAULT_BOLD);card.addView(t);
+        TextView s=tv(connected?"変更は自動同期されます。必要なら今すぐ同期できます。":"Dropboxに接続するとPC版と同じメニュー・写真を使えます。",13);s.setTextColor(Color.rgb(92,104,104));s.setPadding(0,0,0,dp(10));card.addView(s);
+        if(connected){LinearLayout r=row();Button now=btn("今すぐ同期"),off=btn("切断");now.setOnClickListener(v->syncNow(true));off.setOnClickListener(v->new AlertDialog.Builder(this).setMessage("Dropboxとの接続を解除しますか？端末内のデータは残ります。").setPositiveButton("切断",(d,w)->{DropboxSync.disconnect(this);showHome();}).setNegativeButton("キャンセル",null).show());rowGap(now,off,r);card.addView(r);}else{Button connect=btn("Dropboxと接続");connect.setTextColor(Color.WHITE);connect.setBackground(bg(Color.rgb(39,174,139),15));connect.setOnClickListener(v->DropboxSync.startAuth(this));card.addView(connect);}
+        addM(card,0,18);
+    }
+
     void showHome(){
         currentMenu=null;currentItem=null;clear("ホーム",false);action.setVisibility(View.VISIBLE);action.setText("＋ メニュー");action.setOnClickListener(v->{Menu m=new Menu();m.id=id();m.name="メニュー"+(menus.size()+1);menus.add(m);save();showMenu(m);});
-        TextView h=tv("マイメニュー",28);h.setTypeface(Typeface.DEFAULT_BOLD);add(h);TextView sub=tv("メニューを選んで開始します。長押しして並び替えできます。",15);sub.setTextColor(Color.rgb(110,118,128));sub.setPadding(0,0,0,dp(18));add(sub);
-        if(menus.isEmpty()){TextView e=tv("まだメニューがありません。\n右上の「＋ メニュー」から作成してください。",17);e.setTextColor(Color.rgb(110,118,128));e.setGravity(Gravity.CENTER);e.setPadding(0,dp(72),0,dp(72));add(e);}
+        TextView h=tv("マイメニュー",28);h.setTypeface(Typeface.DEFAULT_BOLD);add(h);TextView sub=tv("メニューを選んで開始します。長押しして並び替えできます。",15);sub.setTextColor(Color.rgb(110,118,128));sub.setPadding(0,0,0,dp(16));add(sub);addSyncCard();
+        if(menus.isEmpty()){TextView e=tv("まだメニューがありません。\n右上の「＋ メニュー」から作成してください。",17);e.setTextColor(Color.rgb(110,118,128));e.setGravity(Gravity.CENTER);e.setPadding(0,dp(52),0,dp(52));add(e);}
         for(Menu m:menus){LinearLayout card=new LinearLayout(this);card.setOrientation(LinearLayout.VERTICAL);card.setPadding(dp(18),dp(18),dp(18),dp(18));card.setBackground(bg(Color.WHITE,20));LinearLayout top=row();TextView t=tv(m.name,21);t.setTypeface(Typeface.DEFAULT_BOLD);top.addView(t,new LinearLayout.LayoutParams(0,-2,1));Button ed=btn("設定");ed.setOnClickListener(v->showMenu(m));top.addView(ed,new LinearLayout.LayoutParams(dp(82),-2));card.addView(top);if(!m.desc.trim().isEmpty()){TextView d=tv(m.desc,14);d.setTextColor(Color.rgb(92,100,110));d.setMaxLines(2);d.setPadding(0,dp(2),0,dp(8));card.addView(d);}TextView meta=tv(m.items.size()+"項目  ・  休憩 "+m.rest+"秒",14);meta.setTextColor(Color.rgb(110,118,128));meta.setPadding(0,dp(2),0,dp(12));card.addView(meta);Button st=btn("▶  このメニューを開始");st.setTextSize(16);st.setTextColor(Color.WHITE);st.setBackground(bg(Color.rgb(39,174,139),16));st.setOnClickListener(v->startTimer(m));card.addView(st,new LinearLayout.LayoutParams(-1,dp(52)));enableMenuDrag(card,m);LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,-2);cp.setMargins(0,0,0,dp(18));content.addView(card,cp);}
     }
 
@@ -133,6 +145,53 @@ public class MainActivity extends Activity {
     void goBack(){stopTimer();getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);if(currentItem!=null){currentItem=null;showMenu(currentMenu);}else if(currentMenu!=null){currentMenu=null;showHome();}else showHome();}
     @Override public void onBackPressed(){goBack();}
 
-    void save(){try{JSONArray a=new JSONArray();for(Menu m:menus){JSONObject mo=new JSONObject();mo.put("id",m.id);mo.put("name",m.name);mo.put("desc",m.desc);mo.put("rest",m.rest);JSONArray ia=new JSONArray();for(Item x:m.items){JSONObject io=new JSONObject();io.put("id",x.id);io.put("name",x.name);io.put("seconds",x.seconds);io.put("desc",x.desc);io.put("photo",x.photo);ia.put(io);}mo.put("items",ia);a.put(mo);}getSharedPreferences("data",0).edit().putString("menus",a.toString()).apply();}catch(Exception ignored){}}
-    void load(){try{String s=getSharedPreferences("data",0).getString("menus","[]");JSONArray a=new JSONArray(s);for(int i=0;i<a.length();i++){JSONObject mo=a.getJSONObject(i);Menu m=new Menu();m.id=mo.optString("id",id());m.name=mo.optString("name","メニュー");m.desc=mo.optString("desc","");m.rest=mo.optInt("rest",15);JSONArray ia=mo.optJSONArray("items");if(ia!=null)for(int j=0;j<ia.length();j++){JSONObject io=ia.getJSONObject(j);Item x=new Item();x.id=io.optString("id",id());x.name=io.optString("name","項目");x.seconds=io.optInt("seconds",30);x.desc=io.optString("desc","");x.photo=io.optString("photo","");m.items.add(x);}menus.add(m);}}catch(Exception ignored){}}
+    void queueSync(long delay){if(!DropboxSync.isConnected(this)||applyingRemote)return;if(queuedSync!=null)syncHandler.removeCallbacks(queuedSync);queuedSync=()->syncNow(false);syncHandler.postDelayed(queuedSync,delay);}
+
+    long localUpdated(){return getSharedPreferences("data",0).getLong("localUpdatedAt",0L);}
+    void setLocalUpdated(long t){getSharedPreferences("data",0).edit().putLong("localUpdatedAt",t).apply();}
+
+    String photoToDataUrl(String p){
+        if(p==null||p.isEmpty())return "";if(p.startsWith("data:"))return p;
+        InputStream in=null;try{Uri u=Uri.parse(p);in=getContentResolver().openInputStream(u);if(in==null)return "";ByteArrayOutputStream out=new ByteArrayOutputStream();byte[] b=new byte[8192];int n;while((n=in.read(b))>0)out.write(b,0,n);String mime=getContentResolver().getType(u);if(mime==null||!mime.startsWith("image/"))mime="image/jpeg";return "data:"+mime+";base64,"+Base64.encodeToString(out.toByteArray(),Base64.NO_WRAP);}catch(Exception e){return "";}finally{try{if(in!=null)in.close();}catch(Exception ignored){}}}
+
+    String syncJson() throws Exception{
+        JSONObject rootObj=new JSONObject();long updated=localUpdated();if(updated<=0){updated=System.currentTimeMillis();setLocalUpdated(updated);}rootObj.put("schemaVersion",2);rootObj.put("updatedAt",updated);JSONArray a=new JSONArray();
+        for(Menu m:menus){JSONObject mo=new JSONObject();mo.put("id",m.id);mo.put("name",m.name);mo.put("desc",m.desc);mo.put("rest",m.rest);JSONArray ia=new JSONArray();for(Item x:m.items){JSONObject io=new JSONObject();io.put("id",x.id);io.put("name",x.name);io.put("seconds",x.seconds);io.put("desc",x.desc);io.put("photoData",photoToDataUrl(x.photo));ia.put(io);}mo.put("items",ia);a.put(mo);}rootObj.put("menus",a);return rootObj.toString();
+    }
+
+    long remoteUpdated(String json){try{return new JSONObject(json).optLong("updatedAt",0L);}catch(Exception e){return 0L;}}
+    boolean remoteHasMenus(String json){try{return new JSONObject(json).optJSONArray("menus").length()>0;}catch(Exception e){return false;}}
+
+    String savePhotoData(String itemId,String data){
+        if(data==null||data.isEmpty())return "";try{int comma=data.indexOf(',');if(!data.startsWith("data:")||comma<0)return "";String head=data.substring(0,comma);String ext=head.contains("png")?".png":head.contains("webp")?".webp":".jpg";byte[] bytes=Base64.decode(data.substring(comma+1),Base64.DEFAULT);File dir=new File(getFilesDir(),"sync_photos");if(!dir.exists())dir.mkdirs();File f=new File(dir,itemId+ext);FileOutputStream out=new FileOutputStream(f);out.write(bytes);out.close();return Uri.fromFile(f).toString();}catch(Exception e){return "";}
+    }
+
+    void applyRemoteJson(String json,long updated){
+        try{JSONObject ro=new JSONObject(json);JSONArray a=ro.optJSONArray("menus");if(a==null)return;ArrayList<Menu> next=new ArrayList<>();for(int i=0;i<a.length();i++){JSONObject mo=a.getJSONObject(i);Menu m=new Menu();m.id=mo.optString("id",id());m.name=mo.optString("name","メニュー");m.desc=mo.optString("desc","");m.rest=mo.optInt("rest",15);JSONArray ia=mo.optJSONArray("items");if(ia!=null)for(int j=0;j<ia.length();j++){JSONObject io=ia.getJSONObject(j);Item x=new Item();x.id=io.optString("id",id());x.name=io.optString("name","項目");x.seconds=io.optInt("seconds",30);x.desc=io.optString("desc","");x.photo=savePhotoData(x.id,io.optString("photoData",io.optString("photo","")));m.items.add(x);}next.add(m);}menus=next;applyingRemote=true;persistLocalOnly();setLocalUpdated(updated);DropboxSync.setLastSync(this,updated);applyingRemote=false;showHome();Toast.makeText(this,"Dropbox版を反映しました",Toast.LENGTH_SHORT).show();}catch(Exception e){Toast.makeText(this,"同期データを読み込めませんでした",Toast.LENGTH_LONG).show();}
+    }
+
+    void uploadLocal(String json,long updated,boolean showToast){new Thread(()->{try{DropboxSync.upload(this,json);DropboxSync.setLastSync(this,updated);runOnUiThread(()->{syncing=false;if(showToast)Toast.makeText(this,"Dropboxへ同期しました",Toast.LENGTH_SHORT).show();});}catch(Exception e){runOnUiThread(()->{syncing=false;if(showToast)Toast.makeText(this,"Dropbox同期に失敗しました",Toast.LENGTH_LONG).show();});}}).start();}
+
+    void showSyncConflict(String remote,long remoteTime,String local,long localTime){
+        syncing=false;new AlertDialog.Builder(this).setTitle("同期する内容を選択").setMessage("この端末とDropboxの両方に新しい変更があります。どちらを残しますか？")
+                .setPositiveButton("この端末を使う",(d,w)->{syncing=true;uploadLocal(local,localTime,true);})
+                .setNegativeButton("Dropbox版を使う",(d,w)->applyRemoteJson(remote,remoteTime))
+                .setNeutralButton("今はしない",null).show();
+    }
+
+    void syncNow(boolean userInitiated){
+        if(!DropboxSync.isConnected(this)){DropboxSync.startAuth(this);return;}if(syncing)return;syncing=true;
+        new Thread(()->{try{String local=syncJson();long localTime=localUpdated();String remote=DropboxSync.download(this);long last=DropboxSync.getLastSync(this);if(remote==null){DropboxSync.upload(this,local);DropboxSync.setLastSync(this,localTime);runOnUiThread(()->{syncing=false;if(userInitiated)Toast.makeText(this,"Dropboxへ初回同期しました",Toast.LENGTH_SHORT).show();});return;}long remoteTime=remoteUpdated(remote);boolean localChanged=localTime>last;boolean remoteChanged=remoteTime>last;
+            if(last==0&&remoteHasMenus(remote)&&!menus.isEmpty()){runOnUiThread(()->showSyncConflict(remote,remoteTime,local,localTime));return;}
+            if(remoteChanged&&localChanged&&remoteTime!=localTime){runOnUiThread(()->showSyncConflict(remote,remoteTime,local,localTime));return;}
+            if(remoteChanged&&!localChanged){runOnUiThread(()->{syncing=false;applyRemoteJson(remote,remoteTime);});return;}
+            if(localChanged){DropboxSync.upload(this,local);DropboxSync.setLastSync(this,localTime);}
+            runOnUiThread(()->{syncing=false;if(userInitiated)Toast.makeText(this,"同期は最新です",Toast.LENGTH_SHORT).show();});
+        }catch(Exception e){runOnUiThread(()->{syncing=false;if(userInitiated)Toast.makeText(this,"Dropbox同期に失敗しました",Toast.LENGTH_LONG).show();});}}).start();
+    }
+
+    String localArrayJson(){try{JSONArray a=new JSONArray();for(Menu m:menus){JSONObject mo=new JSONObject();mo.put("id",m.id);mo.put("name",m.name);mo.put("desc",m.desc);mo.put("rest",m.rest);JSONArray ia=new JSONArray();for(Item x:m.items){JSONObject io=new JSONObject();io.put("id",x.id);io.put("name",x.name);io.put("seconds",x.seconds);io.put("desc",x.desc);io.put("photo",x.photo);ia.put(io);}mo.put("items",ia);a.put(mo);}return a.toString();}catch(Exception e){return "[]";}}
+    void persistLocalOnly(){getSharedPreferences("data",0).edit().putString("menus",localArrayJson()).apply();}
+    void save(){persistLocalOnly();if(!applyingRemote){setLocalUpdated(System.currentTimeMillis());queueSync(3500);}}
+    void load(){try{String s=getSharedPreferences("data",0).getString("menus","[]");JSONArray a=new JSONArray(s);for(int i=0;i<a.length();i++){JSONObject mo=a.getJSONObject(i);Menu m=new Menu();m.id=mo.optString("id",id());m.name=mo.optString("name","メニュー");m.desc=mo.optString("desc","");m.rest=mo.optInt("rest",15);JSONArray ia=mo.optJSONArray("items");if(ia!=null)for(int j=0;j<ia.length();j++){JSONObject io=ia.getJSONObject(j);Item x=new Item();x.id=io.optString("id",id());x.name=io.optString("name","項目");x.seconds=io.optInt("seconds",30);x.desc=io.optString("desc","");x.photo=io.optString("photo","");m.items.add(x);}menus.add(m);}if(getSharedPreferences("data",0).getLong("localUpdatedAt",0L)==0&&menus.size()>0)setLocalUpdated(System.currentTimeMillis());}catch(Exception ignored){}}
 }
