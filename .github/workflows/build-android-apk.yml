@@ -33,12 +33,28 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Build debug APK
-        run: gradle -p android :app:assembleDebug
+      - name: Restore fixed signing key
+        env:
+          STRETCH_KEYSTORE_BASE64: ${{ secrets.STRETCH_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$STRETCH_KEYSTORE_BASE64"
+          echo "$STRETCH_KEYSTORE_BASE64" | base64 --decode > android/app/stretch-timer.jks
+
+      - name: Build fixed-signed debug APK
+        env:
+          STRETCH_KEYSTORE_PATH: stretch-timer.jks
+          STRETCH_KEYSTORE_PASSWORD: ${{ secrets.STRETCH_KEYSTORE_PASSWORD }}
+          STRETCH_KEY_ALIAS: ${{ secrets.STRETCH_KEY_ALIAS }}
+          STRETCH_KEY_PASSWORD: ${{ secrets.STRETCH_KEY_PASSWORD }}
+        run: |
+          test -n "$STRETCH_KEYSTORE_PASSWORD"
+          test -n "$STRETCH_KEY_ALIAS"
+          test -n "$STRETCH_KEY_PASSWORD"
+          gradle -p android :app:assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: stretch-timer-debug-apk
+          name: stretch-timer-fixed-signed-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
