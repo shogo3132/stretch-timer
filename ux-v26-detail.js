@@ -3,7 +3,7 @@
   var viewDate=new Date();
 
   var style=document.createElement('style');
-  style.setAttribute('data-routine-detail-v27','');
+  style.setAttribute('data-routine-detail-v28','');
   style.textContent='\
 .menu-card .edit{background:#fff!important;color:#5f6873!important;box-shadow:none!important;min-width:42px!important;padding:4px 8px!important;font-size:25px!important;line-height:1!important}\
 #routineDetail{padding-top:18px}\
@@ -82,7 +82,7 @@
   function openDetail(id){
     detailMenuId=id;viewDate=new Date();ensureScreen();
     if(typeof currentMenuId!=='undefined')currentMenuId=id;
-    if(typeof show==='function')show('routineDetail','詳細');
+    if(typeof show==='function')show('routineDetail','カレンダー');
     renderDetail();window.scrollTo(0,0);
   }
   window.openRoutineDetail=openDetail;
@@ -91,8 +91,8 @@
     document.querySelectorAll('.menu-card').forEach(function(card){
       var b=card.querySelector('.edit');if(!b)return;
       if(b.textContent!=='⋯')b.textContent='⋯';
-      if(b.getAttribute('aria-label')!=='詳細')b.setAttribute('aria-label','詳細');
-      b.title='詳細';
+      if(b.getAttribute('aria-label')!=='ルーティン設定')b.setAttribute('aria-label','ルーティン設定');
+      b.title='ルーティン設定';
     });
   }
   var prevHome=typeof renderHome==='function'?renderHome:null;
@@ -100,9 +100,16 @@
   setTimeout(decorateDots,0);
 
   document.addEventListener('click',function(e){
-    var b=e.target&&e.target.closest?e.target.closest('.menu-card .edit'):null;if(!b)return;
-    var card=b.closest('.menu-card');if(!card||!card.dataset.id)return;
-    e.preventDefault();e.stopImmediatePropagation();openDetail(card.dataset.id);
+    var card=e.target&&e.target.closest?e.target.closest('.menu-card'):null;if(!card||!card.dataset.id)return;
+    var id=card.dataset.id;
+    var button=e.target.closest('button');
+    if(button&&button.classList.contains('edit')){
+      e.preventDefault();e.stopImmediatePropagation();
+      if(typeof openMenu==='function')openMenu(id);
+      return;
+    }
+    if(button)return;
+    e.preventDefault();e.stopImmediatePropagation();openDetail(id);
   },true);
 
   if(typeof finishTimer==='function'){
