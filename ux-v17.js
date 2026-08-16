@@ -35,4 +35,53 @@
 
   document.addEventListener('touchend',function(e){if(!candidate)return;if(e.cancelable&&ready)e.preventDefault();fire()},{passive:false,capture:true});
   document.addEventListener('touchcancel',function(){if(!candidate)return;fire()},{passive:true,capture:true});
+
+  function scrollCardIntoView(selector){
+    setTimeout(function(){
+      var cards=document.querySelectorAll(selector);var card=cards[cards.length-1];
+      if(card&&card.scrollIntoView)card.scrollIntoView({behavior:'smooth',block:'nearest'});
+    },40);
+  }
+
+  function installAddBehavior(){
+    var addRoutine=document.getElementById('addMenuHome');
+    if(addRoutine&&!addRoutine.dataset.stayHereReady){
+      addRoutine.dataset.stayHereReady='1';
+      addRoutine.onclick=function(e){
+        e.preventDefault();e.stopPropagation();
+        if(typeof state==='undefined'||!state||!Array.isArray(state.menus))return;
+        var id=typeof uid==='function'?uid():(Date.now()+Math.random().toString(16).slice(2));
+        var m={id:id,name:'ルーティン'+(state.menus.length+1),desc:'',rest:15,items:[]};
+        state.menus.push(m);
+        if(typeof save==='function')save();
+        if(typeof renderHome==='function')renderHome();
+        scrollCardIntoView('.menu-card');
+      };
+    }
+
+    var addItem=document.getElementById('addItemBtn');
+    if(addItem&&!addItem.dataset.stayHereReady){
+      addItem.dataset.stayHereReady='1';
+      addItem.onclick=function(e){
+        e.preventDefault();e.stopPropagation();
+        var m=typeof menu==='function'?menu():null;if(!m)return;
+        var id=typeof uid==='function'?uid():(Date.now()+Math.random().toString(16).slice(2));
+        m.items.push({id:id,name:'新しい種目',seconds:30,desc:'',photo:''});
+        if(typeof save==='function')save();
+        if(typeof renderItems==='function')renderItems();
+        if(typeof updateDuration==='function')updateDuration();
+        scrollCardIntoView('.item');
+      };
+    }
+  }
+
+  if(typeof show==='function'){
+    var prevShow=show;
+    show=function(){var r=prevShow.apply(this,arguments);setTimeout(installAddBehavior,0);return r};
+  }
+  if(typeof renderHome==='function'){
+    var prevRenderHome=renderHome;
+    renderHome=function(){var r=prevRenderHome.apply(this,arguments);setTimeout(installAddBehavior,0);return r};
+  }
+  setTimeout(installAddBehavior,0);
 })();
