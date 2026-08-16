@@ -1,6 +1,6 @@
-const CACHE='stretch-timer-v22';
-const APP_VERSION='0.12.8';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./ux-v22.js','./ux-v18.js'];
+const CACHE='stretch-timer-v23';
+const APP_VERSION='0.12.9';
+const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./ux-v22.js?v=23','./ux-v18.js?v=23'];
 
 function patchHtml(html){
   if(!html.includes('id="appVersion"')){
@@ -35,11 +35,11 @@ function patchHtml(html){
     .replaceAll('メニュー','ルーティン')
     .replaceAll('項目','種目');
 
-  if(!html.includes('src="./ux-v22.js"')){
-    html=html.replace('</body>','<script src="./ux-v22.js"></script></body>');
+  if(!html.includes('src="./ux-v22.js?v=23"')){
+    html=html.replace('</body>','<script src="./ux-v22.js?v=23"></script></body>');
   }
-  if(!html.includes('src="./ux-v18.js"')){
-    html=html.replace('</body>','<script src="./ux-v18.js"></script></body>');
+  if(!html.includes('src="./ux-v18.js?v=23"')){
+    html=html.replace('</body>','<script src="./ux-v18.js?v=23"></script></body>');
   }
 
   return html;
@@ -73,7 +73,7 @@ self.addEventListener('fetch',e=>{
 
   if(isAppHtml){
     e.respondWith(
-      fetch(e.request)
+      fetch(e.request,{cache:'no-store'})
         .then(async r=>{
           const patched=await patchedResponse(r);
           caches.open(CACHE).then(c=>c.put(e.request,patched.clone()));
@@ -85,7 +85,7 @@ self.addEventListener('fetch',e=>{
   }
 
   e.respondWith(
-    fetch(e.request)
+    fetch(e.request,{cache:'no-store'})
       .then(r=>{const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy));return r})
       .catch(()=>caches.match(e.request).then(r=>r||caches.match('./index.html')))
   );
