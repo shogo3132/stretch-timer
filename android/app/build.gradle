@@ -10,11 +10,10 @@ android {
         applicationId 'com.shogo.stretchtimer'
         minSdk 26
         targetSdk 35
-        versionCode 17
-        versionName '0.12.5'
+        versionCode 18
+        versionName '0.12.6'
     }
 
-    // Fixed signing baseline for all future APK updates.
     signingConfigs {
         fixed {
             storeFile file(System.getenv('STRETCH_KEYSTORE_PATH') ?: 'stretch-timer.jks')
@@ -32,4 +31,5 @@ android {
 }
 
 dependencies {
+    implementation 'com.dropbox.core:dropbox-android-sdk:7.0.0'
 }
