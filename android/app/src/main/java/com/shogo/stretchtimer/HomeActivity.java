@@ -34,7 +34,6 @@ public class HomeActivity extends MainActivity {
         currentMenu=null;currentItem=null;
         clear("ホーム",false);
 
-        // App-wide action belongs in the app header.
         action.setVisibility(View.VISIBLE);
         action.setText("⚙");
         action.setTextSize(21);
@@ -43,7 +42,6 @@ public class HomeActivity extends MainActivity {
         action.setContentDescription("設定");
         action.setOnClickListener(v->showSettings());
 
-        // Menu creation belongs next to the My Menu section heading.
         LinearLayout heading=row();
         TextView h=tv("マイメニュー",28);h.setTypeface(Typeface.DEFAULT_BOLD);
         heading.addView(h,new LinearLayout.LayoutParams(0,-2,1));
@@ -56,7 +54,6 @@ public class HomeActivity extends MainActivity {
         TextView sub=tv("メニューを選んで開始します。長押しして並び替えできます。",15);
         sub.setTextColor(Color.rgb(110,118,128));sub.setPadding(0,0,0,DropboxSync.isConnected(this)?dp(5):dp(18));add(sub);
 
-        // Manual sync is a secondary action: visible but compact.
         if(DropboxSync.isConnected(this)){
             LinearLayout syncRow=row();
             TextView filler=tv("",1);syncRow.addView(filler,new LinearLayout.LayoutParams(0,1,1));
@@ -77,7 +74,7 @@ public class HomeActivity extends MainActivity {
             LinearLayout top=row();TextView t=tv(m.name,21);t.setTypeface(Typeface.DEFAULT_BOLD);top.addView(t,new LinearLayout.LayoutParams(0,-2,1));
             Button ed=btn("設定");ed.setOnClickListener(v->showMenu(m));top.addView(ed,new LinearLayout.LayoutParams(dp(82),-2));card.addView(top);
             if(!m.desc.trim().isEmpty()){TextView d=tv(m.desc,14);d.setTextColor(Color.rgb(92,100,110));d.setMaxLines(2);d.setPadding(0,dp(2),0,dp(8));card.addView(d);}
-            TextView meta=tv(m.items.size()+"項目  ・  休憩 "+m.rest+"秒",14);meta.setTextColor(Color.rgb(110,118,128));meta.setPadding(0,dp(2),0,dp(12));card.addView(meta);
+            TextView meta=tv(m.items.size()+"項目  ・  合計 "+durationText(m),14);meta.setTextColor(Color.rgb(110,118,128));meta.setPadding(0,dp(2),0,dp(12));card.addView(meta);
             Button st=btn("▶  このメニューを開始");st.setTextSize(16);st.setTextColor(Color.WHITE);st.setBackground(bg(Color.rgb(39,174,139),16));st.setOnClickListener(v->startTimer(m));card.addView(st,new LinearLayout.LayoutParams(-1,dp(52)));
             enableMenuDrag(card,m);LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,-2);cp.setMargins(0,0,0,dp(18));content.addView(card,cp);
         }
