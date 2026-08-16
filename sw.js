@@ -1,6 +1,6 @@
-const CACHE='stretch-timer-v19';
+const CACHE='stretch-timer-v20';
 const APP_VERSION='0.12.8';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./ux-v16.js','./ux-v17.js'];
+const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./ux-v16.js','./ux-v17.js','./ux-v18.js'];
 
 function patchHtml(html){
   if(!html.includes('id="appVersion"')){
@@ -40,6 +40,9 @@ function patchHtml(html){
   }
   if(!html.includes('src="./ux-v17.js"')){
     html=html.replace('</body>','<script src="./ux-v17.js"></script></body>');
+  }
+  if(!html.includes('src="./ux-v18.js"')){
+    html=html.replace('</body>','<script src="./ux-v18.js"></script></body>');
   }
 
   return html;
