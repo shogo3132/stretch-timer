@@ -1,4 +1,4 @@
-const CACHE='stretch-timer-v14';
+const CACHE='stretch-timer-v15';
 const APP_VERSION='0.12.8';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./ux-v14.js'];
 
@@ -40,6 +40,7 @@ function patchHtml(html){
       '</body>',
       `<style data-refresh-swipe-patch>
 #homeSyncRow{display:none!important}
+#home .headline,#menuEdit>.stack>.headline,#itemEdit>.stack>.headline{display:none!important}
 #refreshBtn.refreshing{animation:spinRefresh .7s linear infinite}
 @keyframes spinRefresh{to{transform:rotate(360deg)}}
 #pullRefreshIndicator{position:fixed;left:50%;top:62px;z-index:30;transform:translate(-50%,-70px);width:38px;height:38px;border-radius:50%;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.14);display:grid;place-items:center;font-size:21px;color:#65707c;transition:transform .14s ease,opacity .14s ease;opacity:0;pointer-events:none}
