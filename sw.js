@@ -1,5 +1,5 @@
-const CACHE='stretch-timer-v5';
-const APP_VERSION='0.12.7';
+const CACHE='stretch-timer-v6';
+const APP_VERSION='0.12.8';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg'];
 
 function patchHtml(html){
