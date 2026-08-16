@@ -10,8 +10,8 @@ android {
         applicationId 'com.shogo.stretchtimer'
         minSdk 26
         targetSdk 35
-        versionCode 9
-        versionName '0.9.0'
+        versionCode 10
+        versionName '0.10.0'
     }
 
     // Fixed signing baseline for all future APK updates.
