@@ -1,6 +1,6 @@
-const CACHE='stretch-timer-v12';
+const CACHE='stretch-timer-v13';
 const APP_VERSION='0.12.8';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./ux-v12.js'];
+const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./ux-v13.js'];
 
 function patchHtml(html){
   if(!html.includes('id="appVersion"')){
@@ -57,8 +57,6 @@ function patchHtml(html){
 </style>
 <script data-refresh-swipe-patch>
 (function(){
-  var refreshing=false;
-
   function isHomeScreen(){
     var home=document.getElementById('home');
     return !!home && home.classList.contains('active');
@@ -68,37 +66,9 @@ function patchHtml(html){
     document.querySelectorAll('.swipe-open').forEach(function(el){if(el!==except)el.classList.remove('swipe-open')});
   }
 
-  async function unifiedRefresh(){
-    if(refreshing) return;
-    refreshing=true;
-    var btn=document.getElementById('refreshBtn');
-    if(btn) btn.classList.add('refreshing');
-    try{
-      if(typeof hasDropboxAuth==='function' && hasDropboxAuth() && typeof syncNow==='function'){
-        try{await syncNow(true)}catch(e){console.error(e)}
-      }
-      if('serviceWorker' in navigator){
-        try{
-          var reg=await navigator.serviceWorker.getRegistration();
-          if(reg) await reg.update();
-        }catch(e){console.error(e)}
-      }
-      if('caches' in window){
-        try{
-          var keys=await caches.keys();
-          await Promise.all(keys.filter(function(k){return k.indexOf('stretch-timer-')===0}).map(function(k){return caches.delete(k)}));
-        }catch(e){console.error(e)}
-      }
-      setTimeout(function(){location.reload()},120);
-    }finally{
-      setTimeout(function(){refreshing=false;if(btn)btn.classList.remove('refreshing')},900);
-    }
-  }
-  window.unifiedRefresh=unifiedRefresh;
-
   function ensureRefreshButton(){
-    var top=document.getElementById('topBar'),settings=document.getElementById('topAction');
-    if(!top||!settings) return;
+    var settings=document.getElementById('topAction');
+    if(!settings) return;
     var btn=document.getElementById('refreshBtn');
     if(!btn){
       btn=document.createElement('button');
@@ -107,7 +77,7 @@ function patchHtml(html){
       btn.setAttribute('aria-label','更新');
       btn.title='更新';
       btn.textContent='↻';
-      btn.onclick=unifiedRefresh;
+      btn.onclick=function(){if(typeof window.unifiedRefresh==='function')window.unifiedRefresh()};
       settings.insertAdjacentElement('afterend',btn);
     }
     btn.style.display=isHomeScreen()?'inline-block':'none';
@@ -131,7 +101,7 @@ function patchHtml(html){
     del.type='button';
     del.textContent='削除';
     del.addEventListener('click',function(e){
-      e.stopPropagation();
+      e.preventDefault();e.stopPropagation();
       if(type==='routine'){
         if(!confirm('このルーティンを削除しますか？')) return;
         var i=state.menus.findIndex(function(x){return x.id===id});
@@ -194,31 +164,6 @@ function patchHtml(html){
   indicator.id='pullRefreshIndicator';
   indicator.textContent='↻';
   document.body.appendChild(indicator);
-  var pullStart=0,pullActive=false,pullReady=false;
-  document.addEventListener('touchstart',function(e){
-    if(!isHomeScreen()||window.scrollY>0||e.touches.length!==1) return;
-    if(e.target.closest('button,input,textarea,select,a')) return;
-    pullStart=e.touches[0].clientY;pullActive=true;pullReady=false;
-  },{passive:true});
-  document.addEventListener('touchmove',function(e){
-    if(!pullActive||e.touches.length!==1) return;
-    var dy=e.touches[0].clientY-pullStart;
-    if(dy<=0){pullActive=false;indicator.classList.remove('visible','ready');return}
-    if(dy>10){
-      indicator.classList.add('visible');
-      indicator.style.transform='translate(-50%,'+Math.min(28,dy*.28-55)+'px)';
-    }
-    pullReady=dy>=85;
-    indicator.classList.toggle('ready',pullReady);
-  },{passive:true});
-  document.addEventListener('touchend',function(){
-    if(!pullActive) return;
-    pullActive=false;
-    indicator.style.transform='translate(-50%,-70px)';
-    indicator.classList.remove('visible','ready');
-    if(pullReady) unifiedRefresh();
-    pullReady=false;
-  },{passive:true});
 
   setTimeout(function(){ensureRefreshButton();decorateRoutineCards();decorateExerciseCards()},0);
 })();
@@ -226,8 +171,8 @@ function patchHtml(html){
     );
   }
 
-  if(!html.includes('src="./ux-v12.js"')){
-    html=html.replace('</body>','<script src="./ux-v12.js"></script></body>');
+  if(!html.includes('src="./ux-v13.js"')){
+    html=html.replace('</body>','<script src="./ux-v13.js"></script></body>');
   }
 
   return html;
