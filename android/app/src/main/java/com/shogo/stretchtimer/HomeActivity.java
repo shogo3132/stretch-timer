@@ -16,36 +16,59 @@ import java.util.Locale;
 public class HomeActivity extends MainActivity {
     boolean settingsOpen=false;
 
+    @Override Button btn(String s){
+        Button b=super.btn(s);
+        if(s!=null&&s.contains("削除")){
+            b.setTextColor(Color.rgb(174,55,66));
+            b.setBackground(bg(Color.rgb(252,236,239),15));
+        }
+        return b;
+    }
+
+    void createNewMenu(){
+        Menu m=new Menu();m.id=id();m.name="メニュー"+(menus.size()+1);menus.add(m);save();showMenu(m);
+    }
+
     @Override void showHome(){
         settingsOpen=false;
         currentMenu=null;currentItem=null;
         clear("ホーム",false);
-        action.setVisibility(View.VISIBLE);
-        action.setText("＋ メニュー");
-        action.setOnClickListener(v->{Menu m=new Menu();m.id=id();m.name="メニュー"+(menus.size()+1);menus.add(m);save();showMenu(m);});
 
+        // App-wide action belongs in the app header.
+        action.setVisibility(View.VISIBLE);
+        action.setText("⚙");
+        action.setTextSize(21);
+        action.setMinWidth(dp(48));
+        action.setPadding(dp(11),dp(6),dp(11),dp(6));
+        action.setContentDescription("設定");
+        action.setOnClickListener(v->showSettings());
+
+        // Menu creation belongs next to the My Menu section heading.
         LinearLayout heading=row();
         TextView h=tv("マイメニュー",28);h.setTypeface(Typeface.DEFAULT_BOLD);
         heading.addView(h,new LinearLayout.LayoutParams(0,-2,1));
-
-        if(DropboxSync.isConnected(this)){
-            Button sync=btn("↻ 同期");
-            sync.setTextSize(12);sync.setMinHeight(dp(40));sync.setPadding(dp(11),dp(5),dp(11),dp(5));
-            sync.setOnClickListener(v->syncNow(true));
-            LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-2,dp(40));sp.setMargins(dp(8),0,dp(8),0);heading.addView(sync,sp);
-        }
-
-        Button settings=btn("設定");
-        settings.setTextSize(12);settings.setMinHeight(dp(40));settings.setPadding(dp(11),dp(5),dp(11),dp(5));
-        settings.setOnClickListener(v->showSettings());
-        heading.addView(settings,new LinearLayout.LayoutParams(-2,dp(40)));
+        Button plus=btn("＋");
+        plus.setTextSize(23);plus.setMinHeight(dp(42));plus.setMinWidth(dp(46));plus.setPadding(dp(9),dp(4),dp(9),dp(4));
+        plus.setContentDescription("メニューを追加");plus.setOnClickListener(v->createNewMenu());
+        heading.addView(plus,new LinearLayout.LayoutParams(dp(48),dp(42)));
         add(heading);
 
         TextView sub=tv("メニューを選んで開始します。長押しして並び替えできます。",15);
-        sub.setTextColor(Color.rgb(110,118,128));sub.setPadding(0,0,0,dp(18));add(sub);
+        sub.setTextColor(Color.rgb(110,118,128));sub.setPadding(0,0,0,DropboxSync.isConnected(this)?dp(5):dp(18));add(sub);
+
+        // Manual sync is a secondary action: visible but compact.
+        if(DropboxSync.isConnected(this)){
+            LinearLayout syncRow=row();
+            TextView filler=tv("",1);syncRow.addView(filler,new LinearLayout.LayoutParams(0,1,1));
+            Button sync=btn("↻ 同期");
+            sync.setTextSize(12);sync.setMinHeight(dp(38));sync.setPadding(dp(11),dp(4),dp(11),dp(4));
+            sync.setContentDescription("Dropboxと今すぐ同期");sync.setOnClickListener(v->syncNow(true));
+            syncRow.addView(sync,new LinearLayout.LayoutParams(dp(88),dp(38)));
+            addM(syncRow,0,14);
+        }
 
         if(menus.isEmpty()){
-            TextView e=tv("まだメニューがありません。\n右上の「＋ メニュー」から作成してください。",17);
+            TextView e=tv("まだメニューがありません。\n「マイメニュー」横の「＋」から作成してください。",17);
             e.setTextColor(Color.rgb(110,118,128));e.setGravity(Gravity.CENTER);e.setPadding(0,dp(60),0,dp(60));add(e);
         }
 
@@ -83,7 +106,7 @@ public class HomeActivity extends MainActivity {
         }
         add(card);
 
-        TextView note=tv("同期は普段、自動で行われます。ホームの「↻ 同期」は手動で最新版を確認したいときだけ使えば大丈夫です。",13);
+        TextView note=tv("同期は普段、自動で行われます。ホームの小さな「↻ 同期」は、手動で最新版を確認したいときだけ使えば大丈夫です。",13);
         note.setTextColor(Color.rgb(120,128,138));note.setPadding(dp(2),dp(14),dp(2),0);add(note);
     }
 
