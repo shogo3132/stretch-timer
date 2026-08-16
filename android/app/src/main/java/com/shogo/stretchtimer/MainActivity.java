@@ -21,13 +21,23 @@ import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
+import com.dropbox.core.DbxRequestConfig;
+import com.dropbox.core.android.Auth;
+import com.dropbox.core.oauth.DbxCredential;
+
+import org.json.JSONObject;
+
+import java.util.Arrays;
+
 public class MainActivity extends Activity {
     private static final String APP_URL = "https://shogo3132.github.io/stretch-timer/";
+    private static final String DROPBOX_APP_KEY = "yf8bmab58g823cb";
     private static final int FILE_CHOOSER_REQUEST = 501;
 
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
     private Uri cameraOutputUri;
+    private boolean nativeDropboxPending = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +88,14 @@ public class MainActivity extends Activity {
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
                 String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
+                String path = uri.getPath() == null ? "" : uri.getPath();
+
+                if ((host.equals("www.dropbox.com") || host.equals("dropbox.com"))
+                        && path.startsWith("/oauth2/authorize")) {
+                    startDropboxBrowserAuth();
+                    return true;
+                }
+
                 if (host.equals("shogo3132.github.io") || host.equals("www.dropbox.com") || host.equals("dropbox.com")) {
                     return false;
                 }
@@ -145,6 +163,41 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void startDropboxBrowserAuth() {
+        try {
+            nativeDropboxPending = true;
+            Auth.startOAuth2PKCE(
+                    this,
+                    DROPBOX_APP_KEY,
+                    DbxRequestConfig.newBuilder("stretch-timer/0.12.6").build(),
+                    Arrays.asList("files.metadata.read", "files.content.read", "files.content.write")
+            );
+        } catch (Exception e) {
+            nativeDropboxPending = false;
+            Toast.makeText(this, "Dropboxログインを開けませんでした", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void deliverDropboxCredential(DbxCredential credential) {
+        if (credential == null || webView == null) return;
+        try {
+            JSONObject auth = new JSONObject();
+            if (credential.getAccessToken() != null) auth.put("access_token", credential.getAccessToken());
+            if (credential.getRefreshToken() != null) auth.put("refresh_token", credential.getRefreshToken());
+            if (credential.getExpiresAt() != null) auth.put("expires_at", credential.getExpiresAt());
+
+            String json = JSONObject.quote(auth.toString());
+            String js = "localStorage.setItem('stretchTimer.dropboxAuth'," + json + ");"
+                    + "sessionStorage.removeItem('dbx_verifier');sessionStorage.removeItem('dbx_state');"
+                    + "if(typeof renderSettings==='function'){renderSettings();}"
+                    + "if(typeof syncNow==='function'){setTimeout(function(){syncNow(false);},300);}";
+            webView.evaluateJavascript(js, null);
+            Toast.makeText(this, "Dropboxに接続しました", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "Dropbox接続情報の保存に失敗しました", Toast.LENGTH_LONG).show();
+        }
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -185,6 +238,15 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         if (webView != null) webView.onResume();
+        if (!nativeDropboxPending) return;
+        try {
+            DbxCredential credential = Auth.getDbxCredential();
+            if (credential != null) {
+                nativeDropboxPending = false;
+                deliverDropboxCredential(credential);
+            }
+        } catch (Exception ignored) {
+        }
     }
 
     @Override
