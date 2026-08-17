@@ -1,6 +1,6 @@
-const CACHE='stretch-timer-v39';
-const APP_VERSION='0.12.25';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./ux-v22.js?v=39','./ux-v18.js?v=39','./ux-v26-detail.js?v=39','./ux-v34-timer.js?v=39','./ux-v35-history.js?v=39','./ux-v36-sample.js?v=39','./ux-v38-polish.js?v=39','./ux-v39-item-actions.js?v=39'];
+const CACHE='stretch-timer-v40';
+const APP_VERSION='0.12.26';
+const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./ux-v22.js?v=40','./ux-v18.js?v=40','./ux-v26-detail.js?v=40','./ux-v34-timer.js?v=40','./ux-v35-history.js?v=40','./ux-v36-sample.js?v=40','./ux-v38-polish.js?v=40','./ux-v39-item-actions.js?v=40'];
 
 function patchHtml(html){
   if(!html.includes('id="appVersion"')){
@@ -37,14 +37,14 @@ function patchHtml(html){
 
   html=html.replace(/<script\s+src="\.\/ux-v[^"?]+\.js(?:\?v=\d+)?"><\/script>/g,'');
   html=html.replace('</body>',
-    '<script src="./ux-v22.js?v=39"></script>'+
-    '<script src="./ux-v18.js?v=39"></script>'+
-    '<script src="./ux-v26-detail.js?v=39"></script>'+
-    '<script src="./ux-v34-timer.js?v=39"></script>'+
-    '<script src="./ux-v35-history.js?v=39"></script>'+
-    '<script src="./ux-v36-sample.js?v=39"></script>'+
-    '<script src="./ux-v38-polish.js?v=39"></script>'+
-    '<script src="./ux-v39-item-actions.js?v=39"></script></body>'
+    '<script src="./ux-v22.js?v=40"></script>'+
+    '<script src="./ux-v18.js?v=40"></script>'+
+    '<script src="./ux-v26-detail.js?v=40"></script>'+
+    '<script src="./ux-v34-timer.js?v=40"></script>'+
+    '<script src="./ux-v35-history.js?v=40"></script>'+
+    '<script src="./ux-v36-sample.js?v=40"></script>'+
+    '<script src="./ux-v38-polish.js?v=40"></script>'+
+    '<script src="./ux-v39-item-actions.js?v=40"></script></body>'
   );
   return html;
 }
