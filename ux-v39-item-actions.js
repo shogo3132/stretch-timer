@@ -6,7 +6,7 @@
   style.setAttribute('data-item-actions-v39','');
   style.textContent='\
 #menuEdit .item{grid-template-columns:78px 1fr auto!important;gap:14px!important}\
-#menuEdit .item-more{width:38px;height:38px;min-width:38px;border:0;border-radius:11px;background:#f0f3f5;color:#5f6873;font-size:22px;line-height:1;display:grid;place-items:center;padding:0;align-self:center}\
+#menuEdit .item-more{width:38px;height:38px;min-width:38px;border:0;border-radius:11px;background:#fff;color:#5f6873;font-size:22px;line-height:1;display:grid;place-items:center;padding:0;align-self:center;box-shadow:none}\
 ';
   document.head.appendChild(style);
 
