@@ -1,10 +1,24 @@
 (function(){
-  var FLAG='stretchTimer.sampleRoutine5.v36';
+  var FLAG='stretchTimer.sampleRoutine5.v37';
   if(localStorage.getItem(FLAG)==='done')return;
 
   function keyOf(ts){
     var d=new Date(ts);
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+
+  function seedMonth(m,y,mo,lastDay,skip,morning){
+    var existing={};m.completions.forEach(function(ts){existing[keyOf(+ts)]=true});
+    var added=0;
+    for(var day=1;day<=lastDay;day++){
+      if(skip[day])continue;
+      var k=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+      if(existing[k])continue;
+      var hm=morning[(day-1)%morning.length];
+      m.completions.push(new Date(y,mo,day,hm[0],hm[1],0,0).getTime());
+      added++;
+    }
+    return added;
   }
 
   function seed(){
@@ -13,21 +27,15 @@
       var m=state.menus.find(function(x){return String(x&&x.name||'').trim()==='ルーティン5'});
       if(!m)return false;
 
-      var now=new Date();
-      var y=now.getFullYear(),mo=now.getMonth(),today=now.getDate();
-      var skip={4:true,10:true,15:true};
-      var morning=[[7,12],[7,28],[6,58],[7,41],[8,6],[7,19],[7,53],[8,22],[7,34],[6,49],[7,16],[8,3],[7,45],[7,8],[8,31],[7,24],[7,57],[8,11],[7,38],[6,55],[7,29],[8,18],[7,6],[7,51],[8,27],[7,33],[6,52],[7,21],[8,8],[7,47],[7,14]];
       if(!Array.isArray(m.completions))m.completions=[];
-      var existing={};m.completions.forEach(function(ts){existing[keyOf(+ts)]=true});
+      var morning=[[7,12],[7,28],[6,58],[7,41],[8,6],[7,19],[7,53],[8,22],[7,34],[6,49],[7,16],[8,3],[7,45],[7,8],[8,31],[7,24],[7,57],[8,11],[7,38],[6,55],[7,29],[8,18],[7,6],[7,51],[8,27],[7,33],[6,52],[7,21],[8,8],[7,47],[7,14]];
       var added=0;
-      for(var day=1;day<=today;day++){
-        if(skip[day])continue;
-        var k=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
-        if(existing[k])continue;
-        var hm=morning[(day-1)%morning.length];
-        m.completions.push(new Date(y,mo,day,hm[0],hm[1],0,0).getTime());
-        added++;
-      }
+
+      added+=seedMonth(m,2026,6,31,{5:true,13:true,22:true},morning);
+
+      var now=new Date(),y=now.getFullYear(),mo=now.getMonth(),today=now.getDate();
+      if(y===2026&&mo===7){added+=seedMonth(m,y,mo,today,{4:true,10:true,15:true},morning)}
+
       m.completions.sort(function(a,b){return a-b});
       localStorage.setItem(FLAG,'done');
       if(added&&typeof save==='function')save();
