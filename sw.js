@@ -1,12 +1,12 @@
-const CACHE='stretch-timer-v46';
-const APP_VERSION='0.12.32';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./favicon.svg','./ux-v22.js?v=46','./ux-v18.js?v=46','./ux-v26-detail.js?v=46','./ux-v34-timer.js?v=46','./ux-v35-history.js?v=46','./ux-v36-sample.js?v=46','./ux-v38-polish.js?v=46','./ux-v39-item-actions.js?v=46','./ux-v41-timer-compact.js?v=46','./ux-v43-timer-back.js?v=46','./ux-v46-desktop-dnd.js?v=46'];
+const CACHE='stretch-timer-v47';
+const APP_VERSION='0.12.33';
+const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./favicon.svg','./ux-v22.js?v=47','./ux-v18.js?v=47','./ux-v26-detail.js?v=47','./ux-v34-timer.js?v=47','./ux-v35-history.js?v=47','./ux-v36-sample.js?v=47','./ux-v38-polish.js?v=47','./ux-v39-item-actions.js?v=47','./ux-v41-timer-compact.js?v=47','./ux-v43-timer-back.js?v=47','./ux-v46-desktop-dnd.js?v=47'];
 
 function patchHtml(html){
   if(!html.includes('rel="icon"')){
     html=html.replace(
       '<link rel="manifest" href="manifest.webmanifest">',
-      '<link rel="manifest" href="manifest.webmanifest">\n<link rel="icon" type="image/svg+xml" href="./favicon.svg?v=46">'
+      '<link rel="manifest" href="manifest.webmanifest">\n<link rel="icon" type="image/svg+xml" href="./favicon.svg?v=47">'
     );
   }
 
@@ -44,17 +44,17 @@ function patchHtml(html){
 
   html=html.replace(/<script\s+src="\.\/ux-v[^"?]+\.js(?:\?v=\d+)?"><\/script>/g,'');
   html=html.replace('</body>',
-    '<script src="./ux-v22.js?v=46"></script>'+
-    '<script src="./ux-v18.js?v=46"></script>'+
-    '<script src="./ux-v26-detail.js?v=46"></script>'+
-    '<script src="./ux-v34-timer.js?v=46"></script>'+
-    '<script src="./ux-v35-history.js?v=46"></script>'+
-    '<script src="./ux-v36-sample.js?v=46"></script>'+
-    '<script src="./ux-v38-polish.js?v=46"></script>'+
-    '<script src="./ux-v39-item-actions.js?v=46"></script>'+
-    '<script src="./ux-v41-timer-compact.js?v=46"></script>'+
-    '<script src="./ux-v43-timer-back.js?v=46"></script>'+
-    '<script src="./ux-v46-desktop-dnd.js?v=46"></script></body>'
+    '<script src="./ux-v22.js?v=47"></script>'+
+    '<script src="./ux-v18.js?v=47"></script>'+
+    '<script src="./ux-v26-detail.js?v=47"></script>'+
+    '<script src="./ux-v34-timer.js?v=47"></script>'+
+    '<script src="./ux-v35-history.js?v=47"></script>'+
+    '<script src="./ux-v36-sample.js?v=47"></script>'+
+    '<script src="./ux-v38-polish.js?v=47"></script>'+
+    '<script src="./ux-v39-item-actions.js?v=47"></script>'+
+    '<script src="./ux-v41-timer-compact.js?v=47"></script>'+
+    '<script src="./ux-v43-timer-back.js?v=47"></script>'+
+    '<script src="./ux-v46-desktop-dnd.js?v=47"></script></body>'
   );
   return html;
 }
