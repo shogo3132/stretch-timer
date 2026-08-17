@@ -3,7 +3,7 @@
   function currentMenu(){try{return typeof menu==='function'?menu():null}catch(e){return null}}
 
   var style=document.createElement('style');
-  style.setAttribute('data-card-motion-reorder-v30','');
+  style.setAttribute('data-card-motion-reorder-v31','');
   style.textContent='\
 .menu-card,.item{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important;-webkit-tap-highlight-color:transparent!important}\
 .menu-card.reorder-before,.item.reorder-before,.menu-card.reorder-after,.item.reorder-after{overflow:visible!important}\
@@ -13,8 +13,8 @@
 .menu-card.reorder-before::after,.item.reorder-before::after{top:-11px}\
 .menu-card.reorder-after::before,.item.reorder-after::before{bottom:-8px}\
 .menu-card.reorder-after::after,.item.reorder-after::after{bottom:-11px}\
-.menu-card.reorder-held,.item.reorder-held{opacity:.72;transform:scale(.99)!important;transition:opacity .12s ease,transform .12s ease;z-index:70}\
-@keyframes reorderSettle{0%{opacity:.72;transform:translateY(5px) scale(.995)}100%{opacity:1;transform:translateY(0) scale(1)}}\
+.menu-card.reorder-held,.item.reorder-held{opacity:.94!important;transform:translateY(-3px) scale(1.015)!important;box-shadow:0 10px 24px rgba(20,28,36,.16),0 2px 7px rgba(20,28,36,.10)!important;outline:2px solid rgba(39,174,139,.16);transition:opacity .12s ease,transform .12s ease,box-shadow .12s ease,outline-color .12s ease;z-index:70}\
+@keyframes reorderSettle{0%{opacity:.9;transform:translateY(4px) scale(1.008);box-shadow:0 7px 18px rgba(20,28,36,.12)}100%{opacity:1;transform:translateY(0) scale(1);box-shadow:0 1px 2px rgba(0,0,0,.04)}}\
 .reorder-settle{animation:reorderSettle .20s ease-out both}\
 .card-removing{overflow:hidden!important;transition:height .18s ease,opacity .15s ease,transform .18s ease,padding .18s ease,margin .18s ease!important}\
 .card-removing>*{pointer-events:none}\
