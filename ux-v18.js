@@ -37,7 +37,7 @@
   var held=null,holdTimer=null,dragging=false,target=null,before=true,startX=0,startY=0,type='',selector='';
   function resetGesture(){clearTimeout(holdTimer);holdTimer=null;clearTargets();if(held)held.classList.remove('reorder-held');held=null;target=null;dragging=false;type='';selector=''}
 
-  document.addEventListener('dragstart',function(e){if(e.target&&e.target.closest&&e.target.closest('.menu-card,.item'))e.preventDefault()},true);
+  document.addEventListener('dragstart',function(e){var card=e.target&&e.target.closest&&e.target.closest('.menu-card,.item');if(card&&!card.classList.contains('desktop-dnd-ready'))e.preventDefault()},true);
   document.addEventListener('selectstart',function(e){if(e.target&&e.target.closest&&e.target.closest('.menu-card,.item'))e.preventDefault()},true);
 
   document.addEventListener('touchstart',function(e){
