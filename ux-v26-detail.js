@@ -1,9 +1,10 @@
 (function(){
   var detailMenuId=null;
   var viewDate=new Date();
+  var suppressDayTapUntil=0;
 
   var style=document.createElement('style');
-  style.setAttribute('data-routine-detail-v30','');
+  style.setAttribute('data-routine-detail-v32','');
   style.textContent='\
 .menu-card .edit{background:#fff!important;color:#5f6873!important;box-shadow:none!important;min-width:42px!important;padding:4px 8px!important;font-size:25px!important;line-height:1!important}\
 .menu-card .menu-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}\
@@ -14,7 +15,11 @@
 .detail-ring{--p:0deg;width:54px;height:54px;border-radius:50%;background:conic-gradient(#27ae8b var(--p),#e6e9ed 0);position:relative;flex:0 0 auto}\
 .detail-ring::after{content:"";position:absolute;inset:6px;border-radius:50%;background:#fff}\
 .detail-routine-name{font-size:19px;font-weight:800;line-height:1.25;min-width:0;word-break:break-word}\
-.detail-calendar-card{background:#fff;border-radius:20px;padding:15px;box-shadow:0 1px 2px rgba(0,0,0,.04)}\
+.detail-calendar-card{background:#fff;border-radius:20px;padding:15px;box-shadow:0 1px 2px rgba(0,0,0,.04);touch-action:pan-y;overflow:hidden}\
+.detail-calendar-card.slide-next{animation:calNext .20s ease-out}\
+.detail-calendar-card.slide-prev{animation:calPrev .20s ease-out}\
+@keyframes calNext{0%{transform:translateX(12px);opacity:.72}100%{transform:translateX(0);opacity:1}}\
+@keyframes calPrev{0%{transform:translateX(-12px);opacity:.72}100%{transform:translateX(0);opacity:1}}\
 .detail-cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}\
 .detail-cal-title{font-size:17px;font-weight:800}\
 .detail-cal-nav{border:0;background:#f2f4f6;border-radius:11px;width:36px;height:34px;font-size:18px;color:#4e5863}\
@@ -31,15 +36,30 @@
 ';
   document.head.appendChild(style);
 
+  function closePop(){var p=document.getElementById('detailPop');if(p)p.remove()}
+  function animateMonth(cls){var card=document.querySelector('.detail-calendar-card');if(!card)return;card.classList.remove('slide-next','slide-prev');void card.offsetWidth;card.classList.add(cls);setTimeout(function(){card.classList.remove(cls)},230)}
+  function changeMonth(delta){closePop();viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()+delta,1);renderDetail();animateMonth(delta>0?'slide-next':'slide-prev')}
+
+  function wireCalendarSwipe(card){
+    if(!card||card.dataset.swipeReady==='1')return;
+    card.dataset.swipeReady='1';
+    var x0=0,y0=0,tracking=false,horizontal=false;
+    card.addEventListener('touchstart',function(e){if(e.touches.length!==1)return;x0=e.touches[0].clientX;y0=e.touches[0].clientY;tracking=true;horizontal=false},{passive:true});
+    card.addEventListener('touchmove',function(e){if(!tracking||e.touches.length!==1)return;var dx=e.touches[0].clientX-x0,dy=e.touches[0].clientY-y0;if(Math.abs(dx)>18&&Math.abs(dx)>Math.abs(dy)*1.25){horizontal=true;if(e.cancelable)e.preventDefault()}},{passive:false});
+    card.addEventListener('touchend',function(e){if(!tracking||!e.changedTouches.length){tracking=false;return}var dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;tracking=false;if(horizontal&&Math.abs(dx)>=42&&Math.abs(dx)>Math.abs(dy)*1.25){suppressDayTapUntil=Date.now()+450;if(dx<0)changeMonth(1);else changeMonth(-1)}},{passive:true});
+    card.addEventListener('touchcancel',function(){tracking=false;horizontal=false},{passive:true});
+  }
+
   function ensureScreen(){
     var s=document.getElementById('routineDetail');
-    if(s)return s;
+    if(s){wireCalendarSwipe(s.querySelector('.detail-calendar-card'));return s}
     s=document.createElement('main');s.id='routineDetail';s.className='screen';
     s.innerHTML='<div class="routine-detail-wrap"><div class="detail-summary"><div id="detailRing" class="detail-ring"></div><div id="detailRoutineName" class="detail-routine-name"></div></div><div class="detail-calendar-card"><div class="detail-cal-head"><button id="detailPrevMonth" class="detail-cal-nav" type="button">‹</button><div id="detailMonthTitle" class="detail-cal-title"></div><button id="detailNextMonth" class="detail-cal-nav" type="button">›</button></div><div class="detail-week"><div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div></div><div id="detailDays" class="detail-days"></div></div><div id="detailCompleteCount" class="detail-complete"></div></div>';
     var timer=document.getElementById('timer');
     if(timer&&timer.parentNode)timer.parentNode.insertBefore(s,timer);else document.querySelector('.app').appendChild(s);
-    document.getElementById('detailPrevMonth').onclick=function(){viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()-1,1);renderDetail()};
-    document.getElementById('detailNextMonth').onclick=function(){viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()+1,1);renderDetail()};
+    document.getElementById('detailPrevMonth').onclick=function(){changeMonth(-1)};
+    document.getElementById('detailNextMonth').onclick=function(){changeMonth(1)};
+    wireCalendarSwipe(s.querySelector('.detail-calendar-card'));
     return s;
   }
 
@@ -47,10 +67,9 @@
   function logs(m){return Array.isArray(m&&m.completions)?m.completions.filter(function(x){return Number.isFinite(+x)}).map(Number):[]}
   function dayKey(ts){var d=new Date(ts);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
   function monthMap(m,y,mo){var map={};logs(m).forEach(function(ts){var d=new Date(ts);if(d.getFullYear()!==y||d.getMonth()!==mo)return;var k=dayKey(ts);(map[k]||(map[k]=[])).push(ts)});return map}
-  function closePop(){var p=document.getElementById('detailPop');if(p)p.remove()}
   function showPop(btn,times){closePop();if(!times||!times.length)return;var p=document.createElement('div');p.id='detailPop';p.className='detail-pop';var d=new Date(times[0]);var html='<div class="detail-pop-date">'+(d.getMonth()+1)+'月'+d.getDate()+'日</div>';times.sort(function(a,b){return a-b}).forEach(function(ts){var x=new Date(ts);html+='<div class="detail-pop-time">'+String(x.getHours()).padStart(2,'0')+':'+String(x.getMinutes()).padStart(2,'0')+'</div>'});p.innerHTML=html;document.body.appendChild(p);var r=btn.getBoundingClientRect(),w=Math.min(190,Math.max(105,p.getBoundingClientRect().width));var x=Math.max(w/2+8,Math.min(innerWidth-w/2-8,r.left+r.width/2));p.style.left=x+'px';p.style.top=(r.top-8)+'px';setTimeout(function(){document.addEventListener('pointerdown',closePop,{once:true,capture:true})},0)}
 
-  function renderDetail(){ensureScreen();var m=getMenu();if(!m)return;closePop();document.getElementById('detailRoutineName').textContent=m.name||'ルーティン';var y=viewDate.getFullYear(),mo=viewDate.getMonth(),daysInMonth=new Date(y,mo+1,0).getDate(),map=monthMap(m,y,mo);var activeDays=Object.keys(map).length,pct=daysInMonth?activeDays/daysInMonth:0;document.getElementById('detailRing').style.setProperty('--p',(pct*360)+'deg');document.getElementById('detailRing').title=Math.round(pct*100)+'%';document.getElementById('detailMonthTitle').textContent=y+'年 '+(mo+1)+'月';var box=document.getElementById('detailDays');box.innerHTML='';var first=new Date(y,mo,1).getDay();for(var i=0;i<first;i++){var blank=document.createElement('div');blank.className='detail-day blank';box.appendChild(blank)}for(var day=1;day<=daysInMonth;day++){var k=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(day).padStart(2,'0'),arr=map[k]||[];var b=document.createElement('button');b.type='button';b.className='detail-day'+(arr.length>=2?' done2':arr.length===1?' done1':'')+(arr.length?' has-log':'');b.textContent=day;if(arr.length)(function(btn,t){btn.onclick=function(e){e.stopPropagation();showPop(btn,t.slice())}})(b,arr);box.appendChild(b)}document.getElementById('detailCompleteCount').textContent='完走 '+logs(m).length+'回'}
+  function renderDetail(){ensureScreen();var m=getMenu();if(!m)return;closePop();document.getElementById('detailRoutineName').textContent=m.name||'ルーティン';var y=viewDate.getFullYear(),mo=viewDate.getMonth(),daysInMonth=new Date(y,mo+1,0).getDate(),map=monthMap(m,y,mo);var activeDays=Object.keys(map).length,pct=daysInMonth?activeDays/daysInMonth:0;document.getElementById('detailRing').style.setProperty('--p',(pct*360)+'deg');document.getElementById('detailRing').title=Math.round(pct*100)+'%';document.getElementById('detailMonthTitle').textContent=y+'年 '+(mo+1)+'月';var box=document.getElementById('detailDays');box.innerHTML='';var first=new Date(y,mo,1).getDay();for(var i=0;i<first;i++){var blank=document.createElement('div');blank.className='detail-day blank';box.appendChild(blank)}for(var day=1;day<=daysInMonth;day++){var k=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(day).padStart(2,'0'),arr=map[k]||[];var b=document.createElement('button');b.type='button';b.className='detail-day'+(arr.length>=2?' done2':arr.length===1?' done1':'')+(arr.length?' has-log':'');b.textContent=day;if(arr.length)(function(btn,t){btn.onclick=function(e){if(Date.now()<suppressDayTapUntil){e.preventDefault();e.stopPropagation();return}e.stopPropagation();showPop(btn,t.slice())}})(b,arr);box.appendChild(b)}document.getElementById('detailCompleteCount').textContent='完走 '+logs(m).length+'回'}
 
   function openDetail(id){detailMenuId=id;viewDate=new Date();ensureScreen();if(typeof currentMenuId!=='undefined')currentMenuId=id;if(typeof show==='function')show('routineDetail','記録');renderDetail();window.scrollTo(0,0)}
   window.openRoutineDetail=openDetail;
