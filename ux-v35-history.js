@@ -1,15 +1,15 @@
 (function(){
-  if(window.__executionTimeGraphV37)return;
-  window.__executionTimeGraphV37=true;
+  if(window.__executionTimeGraphV39)return;
+  window.__executionTimeGraphV39=true;
 
   var NS='http://www.w3.org/2000/svg';
   var style=document.createElement('style');
-  style.setAttribute('data-execution-time-graph-v37','');
+  style.setAttribute('data-execution-time-graph-v39','');
   style.textContent='\
 .detail-time-card{background:#fff;border-radius:20px;padding:15px 14px 12px;box-shadow:0 1px 2px rgba(0,0,0,.04);overflow:visible}\
 .detail-time-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}\
 .detail-time-title{font-size:17px;font-weight:800;color:#1b1f24}\
-.detail-time-empty{height:207px;display:grid;place-items:center;color:#9aa1aa;font-size:13px}\
+.detail-time-empty{height:270px;display:grid;place-items:center;color:#9aa1aa;font-size:13px}\
 .detail-time-chart{display:block;width:100%;height:auto;overflow:visible}\
 .detail-time-grid{stroke:#e8ecef;stroke-width:1}\
 .detail-time-axis{fill:#8a929c;font-size:13px;font-weight:400;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}\
@@ -83,20 +83,20 @@
     if(!logs.length){box.innerHTML='<div class="detail-time-empty">この月の実行記録はありません</div>';return}
 
     var pts=logs.map(function(ts){var d=new Date(ts);return {ts:ts,day:d.getDate(),month:d.getMonth(),serial:dayNumber(ts),hour:hourValue(ts)}}),b=bounds(pts);
-    var W=640,H=330,L=58,R=14,T=16,B=42,pw=W-L-R,ph=H-T-B;
+    var W=640,H=430,L=58,R=14,T=18,B=48,pw=W-L-R,ph=H-T-B;
     function x(day){return L+(day-1)/(Math.max(1,daysInMonth-1))*pw}
-    function y(hour){return T+(hour-b.lo)/(b.hi-b.lo)*ph}
+    function y(hour){return T+(b.hi-hour)/(b.hi-b.lo)*ph}
 
     var svg=svgEl('svg',{viewBox:'0 0 '+W+' '+H,class:'detail-time-chart','aria-label':'日ごとの実行時間グラフ',role:'img'});
     var tickCount=3;
     for(var i=0;i<=tickCount;i++){
       var hv=b.lo+(b.hi-b.lo)*i/tickCount,yy=y(hv);
       svg.appendChild(svgEl('line',{x1:L,y1:yy,x2:W-R,y2:yy,class:'detail-time-grid'}));
-      svg.appendChild(svgEl('text',{x:L-10,y:yy+4,'text-anchor':'end',class:'detail-time-axis'},String(Math.round(hv))+':00'));
+      svg.appendChild(svgEl('text',{x:L-10,y:yy+5,'text-anchor':'end',class:'detail-time-axis'},String(Math.round(hv))+':00'));
     }
 
     var xticks=[1,5,10,15,20,25,daysInMonth].filter(function(v,idx,a){return v<=daysInMonth&&a.indexOf(v)===idx});
-    xticks.forEach(function(day){svg.appendChild(svgEl('text',{x:x(day),y:H-10,'text-anchor':'middle',class:'detail-time-axis'},String(day)))});
+    xticks.forEach(function(day){svg.appendChild(svgEl('text',{x:x(day),y:H-12,'text-anchor':'middle',class:'detail-time-axis'},String(day)))});
 
     var dstr='';
     pts.forEach(function(p,idx){
