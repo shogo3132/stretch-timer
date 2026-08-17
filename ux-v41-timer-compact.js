@@ -24,13 +24,13 @@ body.timer-active .compact-time.paused .compact-seconds{color:#6f7882}\
 body.timer-active .compact-progress{height:7px;border-radius:999px;background:#e8ecef;overflow:hidden;margin:0 2px}\
 body.timer-active .compact-progress-fill{height:100%;background:#27ae8b;border-radius:999px;transition:width .15s linear}\
 body.timer-active .compact-meta{display:grid;gap:4px;min-height:0;align-content:start;text-align:center;margin-top:0}\
-body.timer-active .timer-desc{font-size:15px!important;line-height:1.45!important;color:#5f6873!important;padding:0 8px!important;margin:2px 0 0!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}\
+body.timer-active .timer-desc{font-size:15px!important;line-height:1.45!important;color:#5f6873!important;padding:0 8px!important;margin:2px 0 0!important;display:block!important;overflow:visible!important;white-space:pre-wrap!important}\
 body.timer-active .timer-count{font-size:12px!important;color:#a0a7af!important;margin:2px 0 0!important;order:2}\
 body.timer-active .compact-rest-next{font-size:15px;color:#5f6873;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px}\
 body.timer-active .prestart{padding:44px 12px!important;color:#1b1f24!important}\
 body.timer-active .prestart .num{color:#1b1f24!important}\
 body.timer-active .prestart .first{color:#27ae8b!important}\
-@media(max-height:760px){body.timer-active #timer{padding-top:7px!important}body.timer-active #timerContent{gap:7px!important}body.timer-active .timer-img{height:clamp(155px,26vh,185px)!important}body.timer-active .compact-time{min-height:88px!important}body.timer-active .compact-seconds{font-size:56px!important}body.timer-active .compact-skip{min-height:70px!important}body.timer-active .timer-desc{-webkit-line-clamp:1}}\
+@media(max-height:760px){body.timer-active #timer{padding-top:7px!important}body.timer-active #timerContent{gap:7px!important}body.timer-active .timer-img{height:clamp(145px,23vh,175px)!important}body.timer-active .compact-time{min-height:84px!important}body.timer-active .compact-seconds{font-size:56px!important}body.timer-active .compact-skip{min-height:66px!important}}\
 ';
   document.head.appendChild(style);
 
