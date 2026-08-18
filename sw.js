@@ -1,12 +1,12 @@
-const CACHE='stretch-timer-v79';
-const APP_VERSION='0.12.65';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./favicon.svg','./ux-v22.js?v=79','./ux-v18.js?v=79','./ux-v26-detail.js?v=79','./ux-v34-timer.js?v=79','./ux-v35-history.js?v=79','./ux-v36-sample.js?v=79','./ux-v38-polish.js?v=79','./ux-v41-timer-compact.js?v=79','./ux-v43-timer-back.js?v=79','./ux-v46-desktop-dnd.js?v=79','./ux-v79-item-editor-core.js?v=79','./ux-v79-item-card-sync.js?v=79','./ux-v52-scroll-restore.js?v=79','./ux-v51-update-watch.js?v=79','./ux-v54-refresh-motion.js?v=79','./ux-v79-transition-stability.js?v=79','./ux-v56-browser-history.js?v=79'];
+const CACHE='stretch-timer-v80';
+const APP_VERSION='0.12.66';
+const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./favicon.svg','./ux-v22.js?v=80','./ux-v18.js?v=80','./ux-v26-detail.js?v=80','./ux-v34-timer.js?v=80','./ux-v35-history.js?v=80','./ux-v36-sample.js?v=80','./ux-v38-polish.js?v=80','./ux-v41-timer-compact.js?v=80','./ux-v43-timer-back.js?v=80','./ux-v46-desktop-dnd.js?v=80','./ux-v79-item-editor-core.js?v=80','./ux-v79-item-card-sync.js?v=80','./ux-v52-scroll-restore.js?v=80','./ux-v51-update-watch.js?v=80','./ux-v54-refresh-motion.js?v=80','./ux-v79-transition-stability.js?v=80','./ux-v56-browser-history.js?v=80'];
 
 function patchHtml(html){
   if(!html.includes('rel="icon"')){
     html=html.replace(
       '<link rel="manifest" href="manifest.webmanifest">',
-      '<link rel="manifest" href="manifest.webmanifest">\n<link rel="icon" type="image/svg+xml" href="./favicon.svg?v=79">'
+      '<link rel="manifest" href="manifest.webmanifest">\n<link rel="icon" type="image/svg+xml" href="./favicon.svg?v=80">'
     );
   }
 
@@ -44,23 +44,23 @@ function patchHtml(html){
 
   html=html.replace(/<script\s+src="\.\/ux-v[^"?]+\.js(?:\?v=\d+)?"><\/script>/g,'');
   html=html.replace('</body>',
-    '<script src="./ux-v22.js?v=79"></script>'+
-    '<script src="./ux-v18.js?v=79"></script>'+
-    '<script src="./ux-v26-detail.js?v=79"></script>'+
-    '<script src="./ux-v34-timer.js?v=79"></script>'+
-    '<script src="./ux-v35-history.js?v=79"></script>'+
-    '<script src="./ux-v36-sample.js?v=79"></script>'+
-    '<script src="./ux-v38-polish.js?v=79"></script>'+
-    '<script src="./ux-v41-timer-compact.js?v=79"></script>'+
-    '<script src="./ux-v43-timer-back.js?v=79"></script>'+
-    '<script src="./ux-v46-desktop-dnd.js?v=79"></script>'+
-    '<script src="./ux-v79-item-editor-core.js?v=79"></script>'+
-    '<script src="./ux-v79-item-card-sync.js?v=79"></script>'+
-    '<script src="./ux-v52-scroll-restore.js?v=79"></script>'+
-    '<script src="./ux-v51-update-watch.js?v=79"></script>'+
-    '<script src="./ux-v54-refresh-motion.js?v=79"></script>'+
-    '<script src="./ux-v79-transition-stability.js?v=79"></script>'+
-    '<script src="./ux-v56-browser-history.js?v=79"></script></body>'
+    '<script src="./ux-v22.js?v=80"></script>'+
+    '<script src="./ux-v18.js?v=80"></script>'+
+    '<script src="./ux-v26-detail.js?v=80"></script>'+
+    '<script src="./ux-v34-timer.js?v=80"></script>'+
+    '<script src="./ux-v35-history.js?v=80"></script>'+
+    '<script src="./ux-v36-sample.js?v=80"></script>'+
+    '<script src="./ux-v38-polish.js?v=80"></script>'+
+    '<script src="./ux-v41-timer-compact.js?v=80"></script>'+
+    '<script src="./ux-v43-timer-back.js?v=80"></script>'+
+    '<script src="./ux-v46-desktop-dnd.js?v=80"></script>'+
+    '<script src="./ux-v79-item-editor-core.js?v=80"></script>'+
+    '<script src="./ux-v79-item-card-sync.js?v=80"></script>'+
+    '<script src="./ux-v52-scroll-restore.js?v=80"></script>'+
+    '<script src="./ux-v51-update-watch.js?v=80"></script>'+
+    '<script src="./ux-v54-refresh-motion.js?v=80"></script>'+
+    '<script src="./ux-v79-transition-stability.js?v=80"></script>'+
+    '<script src="./ux-v56-browser-history.js?v=80"></script></body>'
   );
   return html;
 }
