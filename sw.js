@@ -1,12 +1,12 @@
-const CACHE='stretch-timer-v66';
-const APP_VERSION='0.12.52';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./favicon.svg','./ux-v22.js?v=66','./ux-v18.js?v=66','./ux-v26-detail.js?v=66','./ux-v34-timer.js?v=66','./ux-v35-history.js?v=66','./ux-v36-sample.js?v=66','./ux-v38-polish.js?v=66','./ux-v39-item-actions.js?v=66','./ux-v41-timer-compact.js?v=66','./ux-v43-timer-back.js?v=66','./ux-v46-desktop-dnd.js?v=66','./ux-v48-image-storage.js?v=66','./ux-v49-photo-remove.js?v=66','./ux-v50-live-edit.js?v=66','./ux-v52-scroll-restore.js?v=66','./ux-v51-update-watch.js?v=66','./ux-v54-refresh-motion.js?v=66','./ux-v56-browser-history.js?v=66','./ux-v59-item-rest.js?v=66','./ux-v62-item-layout.js?v=66'];
+const CACHE='stretch-timer-v67';
+const APP_VERSION='0.12.53';
+const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./favicon.svg','./ux-v22.js?v=67','./ux-v18.js?v=67','./ux-v26-detail.js?v=67','./ux-v34-timer.js?v=67','./ux-v35-history.js?v=67','./ux-v36-sample.js?v=67','./ux-v38-polish.js?v=67','./ux-v39-item-actions.js?v=67','./ux-v41-timer-compact.js?v=67','./ux-v43-timer-back.js?v=67','./ux-v46-desktop-dnd.js?v=67','./ux-v48-image-storage.js?v=67','./ux-v49-photo-remove.js?v=67','./ux-v50-live-edit.js?v=67','./ux-v52-scroll-restore.js?v=67','./ux-v51-update-watch.js?v=67','./ux-v54-refresh-motion.js?v=67','./ux-v56-browser-history.js?v=67','./ux-v59-item-rest.js?v=67','./ux-v62-item-layout.js?v=67'];
 
 function patchHtml(html){
   if(!html.includes('rel="icon"')){
     html=html.replace(
       '<link rel="manifest" href="manifest.webmanifest">',
-      '<link rel="manifest" href="manifest.webmanifest">\n<link rel="icon" type="image/svg+xml" href="./favicon.svg?v=66">'
+      '<link rel="manifest" href="manifest.webmanifest">\n<link rel="icon" type="image/svg+xml" href="./favicon.svg?v=67">'
     );
   }
 
@@ -44,26 +44,26 @@ function patchHtml(html){
 
   html=html.replace(/<script\s+src="\.\/ux-v[^"?]+\.js(?:\?v=\d+)?"><\/script>/g,'');
   html=html.replace('</body>',
-    '<script src="./ux-v22.js?v=66"></script>'+
-    '<script src="./ux-v18.js?v=66"></script>'+
-    '<script src="./ux-v26-detail.js?v=66"></script>'+
-    '<script src="./ux-v34-timer.js?v=66"></script>'+
-    '<script src="./ux-v35-history.js?v=66"></script>'+
-    '<script src="./ux-v36-sample.js?v=66"></script>'+
-    '<script src="./ux-v38-polish.js?v=66"></script>'+
-    '<script src="./ux-v39-item-actions.js?v=66"></script>'+
-    '<script src="./ux-v41-timer-compact.js?v=66"></script>'+
-    '<script src="./ux-v43-timer-back.js?v=66"></script>'+
-    '<script src="./ux-v46-desktop-dnd.js?v=66"></script>'+
-    '<script src="./ux-v48-image-storage.js?v=66"></script>'+
-    '<script src="./ux-v49-photo-remove.js?v=66"></script>'+
-    '<script src="./ux-v50-live-edit.js?v=66"></script>'+
-    '<script src="./ux-v52-scroll-restore.js?v=66"></script>'+
-    '<script src="./ux-v51-update-watch.js?v=66"></script>'+
-    '<script src="./ux-v54-refresh-motion.js?v=66"></script>'+
-    '<script src="./ux-v56-browser-history.js?v=66"></script>'+
-    '<script src="./ux-v59-item-rest.js?v=66"></script>'+
-    '<script src="./ux-v62-item-layout.js?v=66"></script></body>'
+    '<script src="./ux-v22.js?v=67"></script>'+
+    '<script src="./ux-v18.js?v=67"></script>'+
+    '<script src="./ux-v26-detail.js?v=67"></script>'+
+    '<script src="./ux-v34-timer.js?v=67"></script>'+
+    '<script src="./ux-v35-history.js?v=67"></script>'+
+    '<script src="./ux-v36-sample.js?v=67"></script>'+
+    '<script src="./ux-v38-polish.js?v=67"></script>'+
+    '<script src="./ux-v39-item-actions.js?v=67"></script>'+
+    '<script src="./ux-v41-timer-compact.js?v=67"></script>'+
+    '<script src="./ux-v43-timer-back.js?v=67"></script>'+
+    '<script src="./ux-v46-desktop-dnd.js?v=67"></script>'+
+    '<script src="./ux-v48-image-storage.js?v=67"></script>'+
+    '<script src="./ux-v49-photo-remove.js?v=67"></script>'+
+    '<script src="./ux-v50-live-edit.js?v=67"></script>'+
+    '<script src="./ux-v52-scroll-restore.js?v=67"></script>'+
+    '<script src="./ux-v51-update-watch.js?v=67"></script>'+
+    '<script src="./ux-v54-refresh-motion.js?v=67"></script>'+
+    '<script src="./ux-v56-browser-history.js?v=67"></script>'+
+    '<script src="./ux-v59-item-rest.js?v=67"></script>'+
+    '<script src="./ux-v62-item-layout.js?v=67"></script></body>'
   );
   return html;
 }
