@@ -1,10 +1,10 @@
 (function(){
-  if(window.__executionTimeGraphV39)return;
-  window.__executionTimeGraphV39=true;
+  if(window.__executionTimeGraphV69)return;
+  window.__executionTimeGraphV69=true;
 
   var NS='http://www.w3.org/2000/svg';
   var style=document.createElement('style');
-  style.setAttribute('data-execution-time-graph-v39','');
+  style.setAttribute('data-execution-time-graph-v69','');
   style.textContent='\
 .detail-time-card{background:#fff;border-radius:20px;padding:15px 14px 12px;box-shadow:0 1px 2px rgba(0,0,0,.04);overflow:visible}\
 .detail-time-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}\
@@ -63,6 +63,18 @@
     return {lo:lo,hi:hi};
   }
 
+  function closestPairs(prev,curr){
+    var candidates=[];
+    prev.forEach(function(a,ai){curr.forEach(function(b,bi){candidates.push({a:a,b:b,ai:ai,bi:bi,diff:Math.abs(a.hour-b.hour)})})});
+    candidates.sort(function(x,y){return x.diff-y.diff||(x.ai-y.ai)||(x.bi-y.bi)});
+    var usedA={},usedB={},pairs=[];
+    candidates.forEach(function(c){
+      if(usedA[c.ai]||usedB[c.bi])return;
+      usedA[c.ai]=true;usedB[c.bi]=true;pairs.push([c.a,c.b]);
+    });
+    return pairs;
+  }
+
   function closePointPop(){var p=document.getElementById('detailTimePop');if(p)p.remove()}
   function showPointPop(dot,p){
     closePointPop();
@@ -70,8 +82,8 @@
     pop.innerHTML='<div class="detail-pop-date">'+(p.month+1)+'月'+p.day+'日</div><div class="detail-pop-time">'+fmtTime(p.ts)+(p.runNo>1?' ・ '+p.runNo+'回目':'')+'</div>';
     document.body.appendChild(pop);
     var r=dot.getBoundingClientRect(),w=Math.min(190,Math.max(105,pop.getBoundingClientRect().width));
-    var x=Math.max(w/2+8,Math.min(innerWidth-w/2-8,r.left+r.width/2));
-    pop.style.left=x+'px';pop.style.top=(r.top-8)+'px';
+    var xx=Math.max(w/2+8,Math.min(innerWidth-w/2-8,r.left+r.width/2));
+    pop.style.left=xx+'px';pop.style.top=(r.top-8)+'px';
     setTimeout(function(){document.addEventListener('pointerdown',closePointPop,{once:true,capture:true})},0);
   }
 
@@ -80,16 +92,18 @@
     if(!card||!box||!m||!vm)return;
     closePointPop();
     var daysInMonth=new Date(vm.year,vm.month+1,0).getDate();
-    var logs=Array.isArray(m.completions)?m.completions.filter(function(x){var d=new Date(+x);return Number.isFinite(+x)&&d.getFullYear()===vm.year&&d.getMonth()===vm.month}).map(Number).sort(function(a,b){return a-b}):[];
+    var logs=Array.isArray(m.completions)?m.completions.filter(function(v){var d=new Date(+v);return Number.isFinite(+v)&&d.getFullYear()===vm.year&&d.getMonth()===vm.month}).map(Number).sort(function(a,b){return a-b}):[];
     box.innerHTML='';
     if(!logs.length){box.innerHTML='<div class="detail-time-empty">この月の実行記録はありません</div>';return}
 
-    var runCountByDay={};
-    var pts=logs.map(function(ts){
+    var byDay={};
+    logs.forEach(function(ts){
       var d=new Date(ts),serial=dayNumber(ts),key=String(serial);
-      runCountByDay[key]=(runCountByDay[key]||0)+1;
-      return {ts:ts,day:d.getDate(),month:d.getMonth(),serial:serial,hour:hourValue(ts),runNo:runCountByDay[key]};
-    }),b=bounds(pts);
+      var arr=byDay[key]||(byDay[key]=[]);
+      arr.push({ts:ts,day:d.getDate(),month:d.getMonth(),serial:serial,hour:hourValue(ts),runNo:arr.length+1});
+    });
+    var pts=[];Object.keys(byDay).sort(function(a,b){return +a-+b}).forEach(function(k){pts=pts.concat(byDay[k])});
+    var b=bounds(pts);
     var W=640,H=430,L=58,R=14,T=18,B=48,pw=W-L-R,ph=H-T-B;
     function x(day){return L+(day-1)/(Math.max(1,daysInMonth-1))*pw}
     function y(hour){return T+(b.hi-hour)/(b.hi-b.lo)*ph}
@@ -105,16 +119,19 @@
     var xticks=[1,5,10,15,20,25,daysInMonth].filter(function(v,idx,a){return v<=daysInMonth&&a.indexOf(v)===idx});
     xticks.forEach(function(day){svg.appendChild(svgEl('text',{x:x(day),y:H-12,'text-anchor':'middle',class:'detail-time-axis'},String(day)))});
 
-    var maxRun=pts.reduce(function(max,p){return Math.max(max,p.runNo)},1);
-    for(var runNo=1;runNo<=maxRun;runNo++){
-      var series=pts.filter(function(p){return p.runNo===runNo});
-      var dstr='';
-      series.forEach(function(p,idx){
-        var px=x(p.day),py=y(p.hour),prev=idx?series[idx-1]:null;
-        if(!prev||p.serial-prev.serial!==1)dstr+='M'+px.toFixed(1)+' '+py.toFixed(1);
-        else dstr+=' L'+px.toFixed(1)+' '+py.toFixed(1);
+    var serials=Object.keys(byDay).map(Number).sort(function(a,b){return a-b});
+    for(var si=1;si<serials.length;si++){
+      var prevSerial=serials[si-1],currSerial=serials[si];
+      if(currSerial-prevSerial!==1)continue;
+      var prev=byDay[String(prevSerial)],curr=byDay[String(currSerial)];
+
+      if(prev.length&&curr.length){
+        svg.appendChild(svgEl('line',{x1:x(prev[0].day),y1:y(prev[0].hour),x2:x(curr[0].day),y2:y(curr[0].hour),class:'detail-time-line'}));
+      }
+
+      closestPairs(prev.slice(1),curr.slice(1)).forEach(function(pair){
+        svg.appendChild(svgEl('line',{x1:x(pair[0].day),y1:y(pair[0].hour),x2:x(pair[1].day),y2:y(pair[1].hour),class:'detail-time-line repeat'}));
       });
-      if(dstr)svg.appendChild(svgEl('path',{d:dstr,class:'detail-time-line'+(runNo>1?' repeat':'')}));
     }
 
     pts.forEach(function(p){
