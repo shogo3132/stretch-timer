@@ -1,16 +1,20 @@
 (function(){
-  if(window.__itemLayoutV62)return;
-  window.__itemLayoutV62=true;
+  if(window.__itemLayoutV63)return;
+  window.__itemLayoutV63=true;
 
   var style=document.createElement('style');
-  style.setAttribute('data-item-layout-v62','');
+  style.setAttribute('data-item-layout-v63','');
   style.textContent='\
 #itemEdit .item-photo-field{position:relative}\
+#itemEdit .item-photo-field>span:first-child{display:none!important}\
 #itemEdit .item-photo-preview-wrap{position:relative}\
 #itemEdit #photoPreview{display:block;width:100%}\
 #itemPhotoDeleteX{position:absolute;top:10px;right:10px;z-index:5;width:42px;height:42px;border:0;border-radius:50%;background:rgba(20,24,28,.72);color:#fff;font-size:25px;font-weight:400;line-height:1;display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.18);-webkit-tap-highlight-color:transparent}\
 #itemPhotoDeleteX.show{display:flex}\
 #photoRemoveRow{display:none!important}\
+#itemEdit #itemTimeFields .item-time-label-row{justify-content:flex-start!important}\
+#itemEdit #itemTimeFields .item-time-label{text-align:left!important}\
+#itemEdit .item-delete-row-spaced{margin-top:12px!important}\
 ';
   document.head.appendChild(style);
 
@@ -82,8 +86,10 @@
     var deleteRow=deleteBtn&&deleteBtn.parentElement;
     var headline=stack.querySelector('.headline');
 
+    if(deleteRow)deleteRow.classList.add('item-delete-row-spaced');
+
     var anchor=headline&&headline.parentNode===stack?headline.nextSibling:stack.firstChild;
-    [photo,name,desc,times,deleteRow].forEach(function(el){
+    [name,photo,desc,times,deleteRow].forEach(function(el){
       if(!el||el.parentNode!==stack)return;
       stack.insertBefore(el,anchor);
       anchor=el.nextSibling;
