@@ -4,6 +4,16 @@
 
   var MAX_POINTS=8,MAX_GOAL=100,MAX_POINT=140;
   var bodyScroll='';
+  var sampleSaveQueued=false;
+  var SAMPLE_FOCUS={
+    goal:'下半身の土台を整え、左右差の少ない動きを身につける',
+    points:[
+      '股関節から動き、膝とつま先の向きを揃える',
+      '右足だけで踏ん張らず、かかと・母趾球・小趾球で均等に支える',
+      '痛みが出る動きは避け、伸びや筋肉の働きを目安にする',
+      '週4回を目安に続け、2週間ごとに立ち姿勢と動きやすさを確認する'
+    ]
+  };
 
   var style=document.createElement('style');
   style.setAttribute('data-focus-variants-v88','');
@@ -48,7 +58,13 @@
     var source=Array.isArray(value.points)?value.points:String(value.points||'').split(/\r?\n/);
     return {goal:text(value.goal,MAX_GOAL),points:source.map(function(x){return text(x,MAX_POINT)}).filter(Boolean).slice(0,MAX_POINTS)};
   }
-  function ensureFocus(){if(typeof state==='undefined'||!state)return cleanFocus(null);state.focus=cleanFocus(state.focus);return state.focus}
+  function hasFocus(value){return !!value&&Object.prototype.hasOwnProperty.call(value,'focus')}
+  function ensureFocus(){
+    if(typeof state==='undefined'||!state)return cleanFocus(SAMPLE_FOCUS);
+    var missing=!hasFocus(state);state.focus=cleanFocus(missing?SAMPLE_FOCUS:state.focus);
+    if(missing&&!sampleSaveQueued){sampleSaveQueued=true;setTimeout(function(){if(typeof save==='function')save()},0)}
+    return state.focus;
+  }
   function displayLines(focus){var lines=[];if(focus.goal)lines.push(focus.goal);return lines.concat(focus.points)}
   function emptyHtml(){return '<div class="focus-empty">今取り組んでいることを設定</div>'}
   function editButton(){return '<button type="button" class="focus-edit" aria-label="今のテーマを編集" title="編集">✎</button>'}
@@ -108,13 +124,13 @@
   }
 
   var previousNormalize=typeof normalize==='function'?normalize:null;
-  if(previousNormalize)normalize=function(s){var out=previousNormalize(s);out.focus=cleanFocus(s&&s.focus);return out};
+  if(previousNormalize)normalize=function(s){var out=previousNormalize(s);out.focus=cleanFocus(hasFocus(s)?s.focus:SAMPLE_FOCUS);return out};
 
   var previousSyncPayload=typeof syncPayload==='function'?syncPayload:null;
   if(previousSyncPayload)syncPayload=function(){var payload=JSON.parse(previousSyncPayload());payload.focus=cleanFocus(state&&state.focus);return JSON.stringify(payload)};
 
   var previousApplyRemote=typeof applyRemote==='function'?applyRemote:null;
-  if(previousApplyRemote)applyRemote=function(raw,remoteTime){var remote={};try{remote=JSON.parse(raw)||{}}catch(e){}var result=previousApplyRemote.apply(this,arguments);state.focus=cleanFocus(remote.focus);if(typeof save==='function')save(false);renderVariants();return result};
+  if(previousApplyRemote)applyRemote=function(raw,remoteTime){var remote={};try{remote=JSON.parse(raw)||{}}catch(e){}var result=previousApplyRemote.apply(this,arguments);state.focus=cleanFocus(hasFocus(remote)?remote.focus:SAMPLE_FOCUS);if(typeof save==='function')save(false);renderVariants();return result};
 
   var previousRenderHome=typeof renderHome==='function'?renderHome:null;
   if(previousRenderHome)renderHome=function(){var result=previousRenderHome.apply(this,arguments);renderVariants();return result};
