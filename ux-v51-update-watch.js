@@ -1,8 +1,8 @@
 (function(){
-  if(window.__updateWatchV55)return;
-  window.__updateWatchV55=true;
+  if(window.__updateWatchV56)return;
+  window.__updateWatchV56=true;
 
-  var CURRENT_BUILD='stretch-timer-v55';
+  var CURRENT_BUILD='stretch-timer-v56';
   var POLL_MS=10000;
   var UPDATE_TARGET_KEY='stretchTimer.updateTarget';
   var UPDATE_ATTEMPTS_KEY='stretchTimer.updateAttempts';
@@ -13,7 +13,7 @@
   var pingedBuild='';
 
   var style=document.createElement('style');
-  style.setAttribute('data-update-watch-v55','');
+  style.setAttribute('data-update-watch-v56','');
   style.textContent='\
 #updateAvailableBtn{display:none;border:0;border-radius:999px;background:#e9f7f2;color:#168465;font-size:12px;font-weight:800;line-height:1;min-height:30px;padding:7px 10px;white-space:nowrap;cursor:pointer;box-shadow:none}\
 #updateAvailableBtn.show{display:inline-flex;align-items:center;gap:5px}\
