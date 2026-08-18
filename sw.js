@@ -1,12 +1,12 @@
-const CACHE='stretch-timer-v82';
-const APP_VERSION='0.12.68';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./favicon.svg','./ux-v22.js?v=82','./ux-v18.js?v=82','./ux-v26-detail.js?v=82','./ux-v34-timer.js?v=82','./ux-v35-history.js?v=82','./ux-v36-sample.js?v=82','./ux-v38-polish.js?v=82','./ux-v41-timer-compact.js?v=82','./ux-v43-timer-back.js?v=82','./ux-v46-desktop-dnd.js?v=82','./ux-v79-item-editor-core.js?v=82','./ux-v79-item-card-sync.js?v=82','./ux-v52-scroll-restore.js?v=82','./ux-v51-update-watch.js?v=82','./ux-v54-refresh-motion.js?v=82','./ux-v79-transition-stability.js?v=82','./ux-v56-browser-history.js?v=82','./ux-v81-timer-edit-save.js?v=82','./ux-v82-timer-runtime.js?v=82'];
+const CACHE='stretch-timer-v83';
+const APP_VERSION='0.12.69';
+const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./favicon.svg','./ux-v22.js?v=83','./ux-v18.js?v=83','./ux-v26-detail.js?v=83','./ux-v34-timer.js?v=83','./ux-v35-history.js?v=83','./ux-v36-sample.js?v=83','./ux-v38-polish.js?v=83','./ux-v41-timer-compact.js?v=83','./ux-v43-timer-back.js?v=83','./ux-v46-desktop-dnd.js?v=83','./ux-v79-item-editor-core.js?v=83','./ux-v79-item-card-sync.js?v=83','./ux-v52-scroll-restore.js?v=83','./ux-v51-update-watch.js?v=83','./ux-v54-refresh-motion.js?v=83','./ux-v79-transition-stability.js?v=83','./ux-v56-browser-history.js?v=83','./ux-v81-timer-edit-save.js?v=83','./ux-v82-timer-runtime.js?v=83'];
 
 function patchHtml(html){
   if(!html.includes('rel="icon"')){
     html=html.replace(
       '<link rel="manifest" href="manifest.webmanifest">',
-      '<link rel="manifest" href="manifest.webmanifest">\n<link rel="icon" type="image/svg+xml" href="./favicon.svg?v=82">'
+      '<link rel="manifest" href="manifest.webmanifest">\n<link rel="icon" type="image/svg+xml" href="./favicon.svg?v=83">'
     );
   }
 
@@ -44,25 +44,25 @@ function patchHtml(html){
 
   html=html.replace(/<script\s+src="\.\/ux-v[^"?]+\.js(?:\?v=\d+)?"><\/script>/g,'');
   html=html.replace('</body>',
-    '<script src="./ux-v22.js?v=82"></script>'+
-    '<script src="./ux-v18.js?v=82"></script>'+
-    '<script src="./ux-v26-detail.js?v=82"></script>'+
-    '<script src="./ux-v34-timer.js?v=82"></script>'+
-    '<script src="./ux-v35-history.js?v=82"></script>'+
-    '<script src="./ux-v36-sample.js?v=82"></script>'+
-    '<script src="./ux-v38-polish.js?v=82"></script>'+
-    '<script src="./ux-v41-timer-compact.js?v=82"></script>'+
-    '<script src="./ux-v43-timer-back.js?v=82"></script>'+
-    '<script src="./ux-v46-desktop-dnd.js?v=82"></script>'+
-    '<script src="./ux-v79-item-editor-core.js?v=82"></script>'+
-    '<script src="./ux-v79-item-card-sync.js?v=82"></script>'+
-    '<script src="./ux-v52-scroll-restore.js?v=82"></script>'+
-    '<script src="./ux-v51-update-watch.js?v=82"></script>'+
-    '<script src="./ux-v54-refresh-motion.js?v=82"></script>'+
-    '<script src="./ux-v79-transition-stability.js?v=82"></script>'+
-    '<script src="./ux-v56-browser-history.js?v=82"></script>'+
-    '<script src="./ux-v81-timer-edit-save.js?v=82"></script>'+
-    '<script src="./ux-v82-timer-runtime.js?v=82"></script></body>'
+    '<script src="./ux-v22.js?v=83"></script>'+
+    '<script src="./ux-v18.js?v=83"></script>'+
+    '<script src="./ux-v26-detail.js?v=83"></script>'+
+    '<script src="./ux-v34-timer.js?v=83"></script>'+
+    '<script src="./ux-v35-history.js?v=83"></script>'+
+    '<script src="./ux-v36-sample.js?v=83"></script>'+
+    '<script src="./ux-v38-polish.js?v=83"></script>'+
+    '<script src="./ux-v41-timer-compact.js?v=83"></script>'+
+    '<script src="./ux-v43-timer-back.js?v=83"></script>'+
+    '<script src="./ux-v46-desktop-dnd.js?v=83"></script>'+
+    '<script src="./ux-v79-item-editor-core.js?v=83"></script>'+
+    '<script src="./ux-v79-item-card-sync.js?v=83"></script>'+
+    '<script src="./ux-v52-scroll-restore.js?v=83"></script>'+
+    '<script src="./ux-v51-update-watch.js?v=83"></script>'+
+    '<script src="./ux-v54-refresh-motion.js?v=83"></script>'+
+    '<script src="./ux-v79-transition-stability.js?v=83"></script>'+
+    '<script src="./ux-v56-browser-history.js?v=83"></script>'+
+    '<script src="./ux-v81-timer-edit-save.js?v=83"></script>'+
+    '<script src="./ux-v82-timer-runtime.js?v=83"></script></body>'
   );
   return html;
 }
