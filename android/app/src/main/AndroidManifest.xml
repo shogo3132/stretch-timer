@@ -13,7 +13,7 @@
         <activity
             android:name="com.dropbox.core.android.AuthActivity"
             android:exported="true"
-            android:configChanges="orientation|keyboard"
+            android:configChanges="orientation|keyboard|keyboardHidden|screenSize"
             android:launchMode="singleTask">
             <intent-filter>
                 <data android:scheme="db-yf8bmab58g823cb" />
@@ -25,7 +25,8 @@
 
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:configChanges="orientation|keyboard|keyboardHidden|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
