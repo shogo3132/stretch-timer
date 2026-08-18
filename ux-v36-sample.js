@@ -1,5 +1,5 @@
 (function(){
-  var FLAG='stretchTimer.sampleRoutine5.v37';
+  var FLAG='stretchTimer.sampleRoutine5.v66';
   if(localStorage.getItem(FLAG)==='done')return;
 
   function keyOf(ts){
@@ -7,16 +7,33 @@
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   }
 
-  function seedMonth(m,y,mo,lastDay,skip,morning){
-    var existing={};m.completions.forEach(function(ts){existing[keyOf(+ts)]=true});
+  function sameDayTimes(m,y,mo,day){
+    return m.completions.filter(function(ts){
+      var d=new Date(+ts);
+      return d.getFullYear()===y&&d.getMonth()===mo&&d.getDate()===day;
+    }).map(Number).sort(function(a,b){return a-b});
+  }
+
+  function ensureDayCount(m,y,mo,day,target,morning){
+    var existing=sameDayTimes(m,y,mo,day);
+    if(existing.length>=target)return 0;
+    var first=morning[(day-1)%morning.length];
+    var slots=[first,[18,12+(day*7)%38],[12,18+(day*11)%32],[21,4+(day*13)%41]];
+    var added=0;
+    for(var i=existing.length;i<target;i++){
+      var hm=slots[i]||[22,10+i];
+      m.completions.push(new Date(y,mo,day,hm[0],hm[1],0,0).getTime());
+      added++;
+    }
+    return added;
+  }
+
+  function seedMonth(m,y,mo,lastDay,skip,special,morning){
     var added=0;
     for(var day=1;day<=lastDay;day++){
       if(skip[day])continue;
-      var k=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
-      if(existing[k])continue;
-      var hm=morning[(day-1)%morning.length];
-      m.completions.push(new Date(y,mo,day,hm[0],hm[1],0,0).getTime());
-      added++;
+      var target=special[day]||2;
+      added+=ensureDayCount(m,y,mo,day,target,morning);
     }
     return added;
   }
@@ -31,10 +48,11 @@
       var morning=[[7,12],[7,28],[6,58],[7,41],[8,6],[7,19],[7,53],[8,22],[7,34],[6,49],[7,16],[8,3],[7,45],[7,8],[8,31],[7,24],[7,57],[8,11],[7,38],[6,55],[7,29],[8,18],[7,6],[7,51],[8,27],[7,33],[6,52],[7,21],[8,8],[7,47],[7,14]];
       var added=0;
 
-      added+=seedMonth(m,2026,6,31,{5:true,13:true,22:true},morning);
+      added+=seedMonth(m,2026,6,31,{5:true,13:true,22:true},{7:3,19:4,27:3},morning);
 
-      var now=new Date(),y=now.getFullYear(),mo=now.getMonth(),today=now.getDate();
-      if(y===2026&&mo===7){added+=seedMonth(m,y,mo,today,{4:true,10:true,15:true},morning)}
+      var now=new Date(),lastAug=(now.getFullYear()===2026&&now.getMonth()===7)?now.getDate():18;
+      lastAug=Math.max(1,Math.min(31,lastAug));
+      added+=seedMonth(m,2026,7,lastAug,{4:true,10:true,15:true},{6:3,14:4,18:3},morning);
 
       m.completions.sort(function(a,b){return a-b});
       localStorage.setItem(FLAG,'done');
