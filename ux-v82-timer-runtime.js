@@ -1,23 +1,24 @@
 (function(){
-  if(window.__timerRuntimeV82)return;
-  window.__timerRuntimeV82=true;
+  if(window.__timerRuntimeV84)return;
+  window.__timerRuntimeV84=true;
 
   var SNAP='stretchTimer.activeTimerV82';
   var restoredOnce=false;
 
   var style=document.createElement('style');
-  style.setAttribute('data-timer-runtime-v82','');
+  style.setAttribute('data-timer-runtime-v84','');
   style.textContent='\
-body.timer-active.timer-rest #timer{background:#eef8f2!important;color:#1b1f24!important}\
-body.timer-active.timer-rest #topBar{background:#eef8f2!important;color:#1b1f24!important;border-bottom-color:#dceee3!important}\
-body.timer-active.timer-rest #topBar #backBtn{background:#e2f1e8!important;color:#4b6358!important}\
-body.timer-active.timer-rest .timer-name{color:#2f6f56!important}\
-body.timer-active.timer-rest .compact-time{background:#f7fcf9!important}\
-body.timer-active.timer-rest .compact-seconds{color:#2f6f56!important}\
-body.timer-active.timer-rest .compact-progress{background:#dbece2!important}\
-body.timer-active.timer-rest .compact-progress-fill{background:#72bf9c!important}\
-body.timer-active.timer-rest .compact-rest-next{color:#567064!important}\
-body.timer-active.timer-rest .timer-count{color:#789084!important}\
+body.timer-active.timer-rest #timer{background:#d9f0e2!important;color:#1b1f24!important}\
+body.timer-active.timer-rest #topBar{background:#d9f0e2!important;color:#1b1f24!important;border-bottom-color:#c3e3cf!important}\
+body.timer-active.timer-rest #topBar #backBtn{background:#c9e8d5!important;color:#3f5e50!important}\
+body.timer-active.timer-rest .timer-name{color:#245f48!important}\
+body.timer-active.timer-rest .compact-time{background:transparent!important;box-shadow:none!important}\
+body.timer-active.timer-rest .compact-time.paused{background:#cde9d7!important}\
+body.timer-active.timer-rest .compact-seconds{color:#245f48!important}\
+body.timer-active.timer-rest .compact-progress{background:#c3e3cf!important}\
+body.timer-active.timer-rest .compact-progress-fill{background:#58ad84!important}\
+body.timer-active.timer-rest .compact-rest-next{color:#45695a!important}\
+body.timer-active.timer-rest .timer-count{color:#628171!important}\
 ';
   document.head.appendChild(style);
 
