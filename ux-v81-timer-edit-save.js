@@ -1,13 +1,12 @@
 (function(){
-  if(window.__timerEditSaveV81)return;
-  window.__timerEditSaveV81=true;
+  if(window.__timerEditSaveV83)return;
+  window.__timerEditSaveV83=true;
 
   var session=null;
   var restoringEditor=false;
   var coreOpenItem=typeof openItem==='function'?openItem:null;
 
   function currentMenuSafe(){try{return typeof menu==='function'?menu():null}catch(e){return null}}
-  function currentItemSafe(){try{return typeof item==='function'?item():null}catch(e){return null}}
   function resumeBar(){return document.getElementById('timerResumeEditBar')}
   function commitButton(){return document.getElementById('itemCommitBtn')}
 
@@ -16,13 +15,20 @@
     if(bar)bar.classList.toggle('active',!!session);
   }
 
+  function stopLiveInterval(){
+    if(!timerState)return;
+    try{if(timerState.interval)clearInterval(timerState.interval)}catch(e){}
+    timerState.interval=null;
+  }
+
   function capturePausedTimer(itemId){
     if(typeof currentScreen==='undefined'||currentScreen!=='timer'||!timerState||!timerState.paused)return null;
+    stopLiveInterval();
     return {
       menuId:currentMenuId,
       itemId:itemId,
       index:+timerState.index||0,
-      timer:Object.assign({},timerState)
+      timer:Object.assign({},timerState,{interval:null})
     };
   }
 
@@ -40,6 +46,7 @@
 
   function restorePausedEditor(){
     if(!session)return;
+    stopLiveInterval();
     var s=session;
     timerState=Object.assign({},s.timer,{paused:true,interval:null});
     currentMenuId=s.menuId;
@@ -69,6 +76,7 @@
 
   function saveAndResume(){
     if(!session)return;
+    stopLiveInterval();
     var s=session;
     var saved=saveThroughCore();
     if(!saved)return;
