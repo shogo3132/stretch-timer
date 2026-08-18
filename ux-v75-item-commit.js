@@ -1,6 +1,6 @@
 (function(){
-  if(window.__itemCommitV75)return;
-  window.__itemCommitV75=true;
+  if(window.__itemCommitV76)return;
+  window.__itemCommitV76=true;
 
   var draft=null;
   var committed=false;
@@ -8,10 +8,11 @@
   var originalSave=typeof save==='function'?save:null;
 
   var style=document.createElement('style');
-  style.setAttribute('data-item-commit-v75','');
+  style.setAttribute('data-item-commit-v76','');
   style.textContent='\
-#itemCommitBtn{width:100%;margin-top:4px}\
-#itemEdit .item-delete-row-spaced{margin-top:20px!important}\
+#itemEdit > .stack{gap:20px}\
+#itemCommitBtn{width:100%;margin-top:16px}\
+#itemEdit .item-delete-row-spaced{margin-top:8px!important}\
 ';
   document.head.appendChild(style);
 
@@ -94,9 +95,12 @@
       var leaving=typeof currentScreen!=='undefined'&&currentScreen==='itemEdit'&&id!=='itemEdit'&&draft&&!committed;
       if(leaving){
         var dirty=isDirty();
+        if(dirty){
+          var leave=confirm('変更内容は反映されません。\nこのページを離れますか？');
+          if(!leave)return;
+        }
         restoreDraft();
         draft=null;
-        if(dirty)alert('変更があります。「決定」を押していないため、変更内容は反映されません。');
       }
       var r=previousShow.apply(this,arguments);
       if(id==='itemEdit')setTimeout(ensureButton,0);
