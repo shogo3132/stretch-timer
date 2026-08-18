@@ -1,16 +1,19 @@
 (function(){
-  if(window.__updateWatchV54)return;
-  window.__updateWatchV54=true;
+  if(window.__updateWatchV55)return;
+  window.__updateWatchV55=true;
 
-  var CURRENT_BUILD='stretch-timer-v54';
+  var CURRENT_BUILD='stretch-timer-v55';
   var POLL_MS=10000;
+  var UPDATE_TARGET_KEY='stretchTimer.updateTarget';
+  var UPDATE_ATTEMPTS_KEY='stretchTimer.updateAttempts';
   var timer=null;
   var checking=false;
   var updating=false;
   var foundBuild='';
+  var pingedBuild='';
 
   var style=document.createElement('style');
-  style.setAttribute('data-update-watch-v54','');
+  style.setAttribute('data-update-watch-v55','');
   style.textContent='\
 #updateAvailableBtn{display:none;border:0;border-radius:999px;background:#e9f7f2;color:#168465;font-size:12px;font-weight:800;line-height:1;min-height:30px;padding:7px 10px;white-space:nowrap;cursor:pointer;box-shadow:none}\
 #updateAvailableBtn.show{display:inline-flex;align-items:center;gap:5px}\
@@ -38,13 +41,26 @@
 
   function setBadgeText(text){var badge=ensureBadge();if(badge){var s=badge.querySelector('span:last-child');if(s)s.textContent=text}}
 
+  function playUpdatePing(build){
+    if(document.hidden||!build||pingedBuild===build)return;
+    pingedBuild=build;
+    try{
+      if(typeof beep==='function'){
+        beep(1120,.07);
+        setTimeout(function(){try{beep(1480,.055)}catch(e){}},85);
+      }
+    }catch(e){}
+  }
+
   function showBadge(build){
+    var first=!!(build&&build!==foundBuild);
     foundBuild=build||foundBuild;
     var badge=ensureBadge();
     if(!badge)return;
     badge.classList.add('show');
     badge.onclick=applyUpdate;
     if(foundBuild)badge.title='新しいバージョン '+foundBuild.replace('stretch-timer-','')+' があります';
+    if(first)playUpdatePing(foundBuild);
     stop();
   }
 
@@ -86,13 +102,29 @@
     while(Date.now()<deadline){
       var current=await controllerBuild();
       if(current===target)return true;
-      if(Date.now()-lastUpdate>2200){
+      if(Date.now()-lastUpdate>1800){
         lastUpdate=Date.now();
         try{var reg=await navigator.serviceWorker.getRegistration();if(reg)await reg.update()}catch(e){}
       }
-      await new Promise(function(r){setTimeout(r,250)});
+      await new Promise(function(r){setTimeout(r,220)});
     }
     return false;
+  }
+
+  function clearPendingUpdate(){
+    try{localStorage.removeItem(UPDATE_TARGET_KEY);localStorage.removeItem(UPDATE_ATTEMPTS_KEY)}catch(e){}
+  }
+
+  async function navigateAfterUpdate(target,automatic){
+    if(!target)return;
+    try{
+      localStorage.setItem(UPDATE_TARGET_KEY,target);
+      var attempts=+(localStorage.getItem(UPDATE_ATTEMPTS_KEY)||0);
+      localStorage.setItem(UPDATE_ATTEMPTS_KEY,String(attempts+1));
+      localStorage.setItem('stretchTimer.pendingNotice','アプリを最新版に更新しました');
+    }catch(e){}
+    var suffix='?r='+Date.now()+(automatic?'&auto=1':'&update=1');
+    location.replace(location.pathname+suffix);
   }
 
   async function applyUpdate(){
@@ -104,21 +136,42 @@
     try{
       var target=foundBuild||await remoteBuild();
       if(!target||target===CURRENT_BUILD){
-        if(badge){badge.classList.remove('show','updating')}
-        foundBuild='';start();return;
+        clearPendingUpdate();
+        if(badge)badge.classList.remove('show','updating');
+        foundBuild='';updating=false;start();return;
       }
       if(!('serviceWorker'in navigator))throw new Error('service worker unavailable');
+      try{localStorage.setItem(UPDATE_TARGET_KEY,target);localStorage.setItem(UPDATE_ATTEMPTS_KEY,'0')}catch(e){}
       var reg=await navigator.serviceWorker.getRegistration();
       if(reg)await reg.update();
       var ready=await waitUntilControlled(target);
       if(!ready)throw new Error('new service worker did not activate');
-      try{localStorage.setItem('stretchTimer.pendingNotice','アプリを最新版に更新しました')}catch(e){}
-      location.replace(location.pathname+'?r='+Date.now());
+      await new Promise(function(r){setTimeout(r,350)});
+      await navigateAfterUpdate(target,false);
     }catch(e){
       console.error(e);
       updating=false;
       if(badge){badge.classList.remove('updating');badge.classList.add('show')}
       setBadgeText('更新を再試行');
+    }
+  }
+
+  async function continuePendingUpdate(){
+    var target='';var attempts=0;
+    try{target=localStorage.getItem(UPDATE_TARGET_KEY)||'';attempts=+(localStorage.getItem(UPDATE_ATTEMPTS_KEY)||0)}catch(e){}
+    if(!target)return false;
+    if(target===CURRENT_BUILD){clearPendingUpdate();return false}
+    if(attempts>=3){clearPendingUpdate();foundBuild=target;showBadge(target);setBadgeText('更新を再試行');return false}
+    updating=true;stop();
+    var badge=ensureBadge();if(badge){badge.classList.add('show','updating')}setBadgeText('更新中…');
+    try{
+      var reg=await navigator.serviceWorker.getRegistration();if(reg)await reg.update();
+      var ready=await waitUntilControlled(target);
+      if(ready)await new Promise(function(r){setTimeout(r,400)});
+      await navigateAfterUpdate(target,true);
+      return true;
+    }catch(e){
+      console.error(e);updating=false;foundBuild=target;showBadge(target);setBadgeText('更新を再試行');return false;
     }
   }
 
@@ -149,6 +202,8 @@
   });
 
   ensureBadge();bindRefresh();
-  setTimeout(check,1200);
-  start();
+  setTimeout(async function(){
+    var continued=await continuePendingUpdate();
+    if(!continued){check();start()}
+  },500);
 })();
