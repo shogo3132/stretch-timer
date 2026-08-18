@@ -1,14 +1,15 @@
 (function(){
-  if(window.__itemLayoutV63)return;
-  window.__itemLayoutV63=true;
+  if(window.__itemLayoutV64)return;
+  window.__itemLayoutV64=true;
 
   var style=document.createElement('style');
-  style.setAttribute('data-item-layout-v63','');
+  style.setAttribute('data-item-layout-v64','');
   style.textContent='\
 #itemEdit .item-photo-field{position:relative}\
 #itemEdit .item-photo-field>span:first-child{display:none!important}\
-#itemEdit .item-photo-preview-wrap{position:relative}\
-#itemEdit #photoPreview{display:block;width:100%}\
+#itemEdit .item-photo-preview-wrap{position:relative;cursor:pointer;-webkit-tap-highlight-color:transparent}\
+#itemEdit #photoPreview{display:block;width:100%;cursor:pointer}\
+#itemEdit #photoInput{display:none!important}\
 #itemPhotoDeleteX{position:absolute;top:10px;right:10px;z-index:5;width:42px;height:42px;border:0;border-radius:50%;background:rgba(20,24,28,.72);color:#fff;font-size:25px;font-weight:400;line-height:1;display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.18);-webkit-tap-highlight-color:transparent}\
 #itemPhotoDeleteX.show{display:flex}\
 #photoRemoveRow{display:none!important}\
@@ -32,6 +33,13 @@
     btn.classList.toggle('show',!!(x&&x.photo));
   }
 
+  function openPhotoPicker(){
+    var input=document.getElementById('photoInput');
+    if(!input)return;
+    try{input.value=''}catch(e){}
+    input.click();
+  }
+
   function ensurePhotoOverlay(){
     var field=photoField();
     var preview=document.getElementById('photoPreview');
@@ -44,6 +52,21 @@
       wrap.className='item-photo-preview-wrap';
       preview.parentNode.insertBefore(wrap,preview);
       wrap.appendChild(preview);
+    }
+
+    if(!wrap.dataset.photoPickerReady){
+      wrap.dataset.photoPickerReady='1';
+      wrap.addEventListener('click',function(e){
+        if(e.target&&e.target.closest&&e.target.closest('#itemPhotoDeleteX'))return;
+        e.preventDefault();
+        openPhotoPicker();
+      });
+      wrap.setAttribute('role','button');
+      wrap.setAttribute('tabindex','0');
+      wrap.setAttribute('aria-label','写真を設定または変更');
+      wrap.addEventListener('keydown',function(e){
+        if(e.key==='Enter'||e.key===' '){e.preventDefault();openPhotoPicker()}
+      });
     }
 
     var btn=document.getElementById('itemPhotoDeleteX');
