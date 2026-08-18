@@ -1,12 +1,12 @@
-const CACHE='stretch-timer-v70';
-const APP_VERSION='0.12.56';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./favicon.svg','./ux-v22.js?v=70','./ux-v18.js?v=70','./ux-v26-detail.js?v=70','./ux-v34-timer.js?v=70','./ux-v35-history.js?v=70','./ux-v36-sample.js?v=70','./ux-v38-polish.js?v=70','./ux-v39-item-actions.js?v=70','./ux-v41-timer-compact.js?v=70','./ux-v43-timer-back.js?v=70','./ux-v46-desktop-dnd.js?v=70','./ux-v48-image-storage.js?v=70','./ux-v49-photo-remove.js?v=70','./ux-v50-live-edit.js?v=70','./ux-v52-scroll-restore.js?v=70','./ux-v51-update-watch.js?v=70','./ux-v54-refresh-motion.js?v=70','./ux-v56-browser-history.js?v=70','./ux-v59-item-rest.js?v=70','./ux-v62-item-layout.js?v=70'];
+const CACHE='stretch-timer-v71';
+const APP_VERSION='0.12.57';
+const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./favicon.svg','./ux-v22.js?v=71','./ux-v18.js?v=71','./ux-v26-detail.js?v=71','./ux-v34-timer.js?v=71','./ux-v35-history.js?v=71','./ux-v36-sample.js?v=71','./ux-v38-polish.js?v=71','./ux-v39-item-actions.js?v=71','./ux-v41-timer-compact.js?v=71','./ux-v43-timer-back.js?v=71','./ux-v46-desktop-dnd.js?v=71','./ux-v48-image-storage.js?v=71','./ux-v49-photo-remove.js?v=71','./ux-v50-live-edit.js?v=71','./ux-v52-scroll-restore.js?v=71','./ux-v51-update-watch.js?v=71','./ux-v54-refresh-motion.js?v=71','./ux-v56-browser-history.js?v=71','./ux-v59-item-rest.js?v=71','./ux-v62-item-layout.js?v=71','./ux-v71-graph-pinch.js?v=71'];
 
 function patchHtml(html){
   if(!html.includes('rel="icon"')){
     html=html.replace(
       '<link rel="manifest" href="manifest.webmanifest">',
-      '<link rel="manifest" href="manifest.webmanifest">\n<link rel="icon" type="image/svg+xml" href="./favicon.svg?v=70">'
+      '<link rel="manifest" href="manifest.webmanifest">\n<link rel="icon" type="image/svg+xml" href="./favicon.svg?v=71">'
     );
   }
 
@@ -44,26 +44,27 @@ function patchHtml(html){
 
   html=html.replace(/<script\s+src="\.\/ux-v[^"?]+\.js(?:\?v=\d+)?"><\/script>/g,'');
   html=html.replace('</body>',
-    '<script src="./ux-v22.js?v=70"></script>'+
-    '<script src="./ux-v18.js?v=70"></script>'+
-    '<script src="./ux-v26-detail.js?v=70"></script>'+
-    '<script src="./ux-v34-timer.js?v=70"></script>'+
-    '<script src="./ux-v35-history.js?v=70"></script>'+
-    '<script src="./ux-v36-sample.js?v=70"></script>'+
-    '<script src="./ux-v38-polish.js?v=70"></script>'+
-    '<script src="./ux-v39-item-actions.js?v=70"></script>'+
-    '<script src="./ux-v41-timer-compact.js?v=70"></script>'+
-    '<script src="./ux-v43-timer-back.js?v=70"></script>'+
-    '<script src="./ux-v46-desktop-dnd.js?v=70"></script>'+
-    '<script src="./ux-v48-image-storage.js?v=70"></script>'+
-    '<script src="./ux-v49-photo-remove.js?v=70"></script>'+
-    '<script src="./ux-v50-live-edit.js?v=70"></script>'+
-    '<script src="./ux-v52-scroll-restore.js?v=70"></script>'+
-    '<script src="./ux-v51-update-watch.js?v=70"></script>'+
-    '<script src="./ux-v54-refresh-motion.js?v=70"></script>'+
-    '<script src="./ux-v56-browser-history.js?v=70"></script>'+
-    '<script src="./ux-v59-item-rest.js?v=70"></script>'+
-    '<script src="./ux-v62-item-layout.js?v=70"></script></body>'
+    '<script src="./ux-v22.js?v=71"></script>'+
+    '<script src="./ux-v18.js?v=71"></script>'+
+    '<script src="./ux-v26-detail.js?v=71"></script>'+
+    '<script src="./ux-v34-timer.js?v=71"></script>'+
+    '<script src="./ux-v35-history.js?v=71"></script>'+
+    '<script src="./ux-v36-sample.js?v=71"></script>'+
+    '<script src="./ux-v38-polish.js?v=71"></script>'+
+    '<script src="./ux-v39-item-actions.js?v=71"></script>'+
+    '<script src="./ux-v41-timer-compact.js?v=71"></script>'+
+    '<script src="./ux-v43-timer-back.js?v=71"></script>'+
+    '<script src="./ux-v46-desktop-dnd.js?v=71"></script>'+
+    '<script src="./ux-v48-image-storage.js?v=71"></script>'+
+    '<script src="./ux-v49-photo-remove.js?v=71"></script>'+
+    '<script src="./ux-v50-live-edit.js?v=71"></script>'+
+    '<script src="./ux-v52-scroll-restore.js?v=71"></script>'+
+    '<script src="./ux-v51-update-watch.js?v=71"></script>'+
+    '<script src="./ux-v54-refresh-motion.js?v=71"></script>'+
+    '<script src="./ux-v56-browser-history.js?v=71"></script>'+
+    '<script src="./ux-v59-item-rest.js?v=71"></script>'+
+    '<script src="./ux-v62-item-layout.js?v=71"></script>'+
+    '<script src="./ux-v71-graph-pinch.js?v=71"></script></body>'
   );
   return html;
 }
