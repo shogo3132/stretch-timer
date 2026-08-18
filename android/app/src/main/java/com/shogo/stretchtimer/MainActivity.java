@@ -117,35 +117,46 @@ public class MainActivity extends Activity {
             public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
                 fileCallback = callback;
+                cameraOutputUri = null;
+
+                boolean wantsImage = acceptsImages(params);
 
                 Intent contentIntent;
-                try {
-                    contentIntent = params.createIntent();
-                } catch (Exception e) {
+                if (wantsImage) {
+                    try {
+                        contentIntent = params.createIntent();
+                    } catch (Exception e) {
+                        contentIntent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                        contentIntent.addCategory(Intent.CATEGORY_OPENABLE);
+                        contentIntent.setType("image/*");
+                    }
+                } else {
                     contentIntent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                     contentIntent.addCategory(Intent.CATEGORY_OPENABLE);
-                    contentIntent.setType("image/*");
+                    contentIntent.setType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
                 }
 
                 Intent cameraIntent = null;
-                try {
-                    ContentValues values = new ContentValues();
-                    values.put(MediaStore.Images.Media.DISPLAY_NAME, "stretch_" + System.currentTimeMillis() + ".jpg");
-                    values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
-                    cameraOutputUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-                    if (cameraOutputUri != null) {
-                        cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, cameraOutputUri);
-                        cameraIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                if (wantsImage) {
+                    try {
+                        ContentValues values = new ContentValues();
+                        values.put(MediaStore.Images.Media.DISPLAY_NAME, "stretch_" + System.currentTimeMillis() + ".jpg");
+                        values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+                        cameraOutputUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                        if (cameraOutputUri != null) {
+                            cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                            cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, cameraOutputUri);
+                            cameraIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        }
+                    } catch (Exception ignored) {
+                        cameraOutputUri = null;
                     }
-                } catch (Exception ignored) {
-                    cameraOutputUri = null;
                 }
 
                 Intent chooser = new Intent(Intent.ACTION_CHOOSER);
                 chooser.putExtra(Intent.EXTRA_INTENT, contentIntent);
                 if (cameraIntent != null) chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{cameraIntent});
-                chooser.putExtra(Intent.EXTRA_TITLE, "写真を選択");
+                chooser.putExtra(Intent.EXTRA_TITLE, wantsImage ? "写真を選択" : "Excelファイルを選択");
                 try {
                     startActivityForResult(chooser, FILE_CHOOSER_REQUEST);
                     return true;
@@ -163,13 +174,30 @@ public class MainActivity extends Activity {
         }
     }
 
+    private boolean acceptsImages(WebChromeClient.FileChooserParams params) {
+        try {
+            String[] acceptTypes = params == null ? null : params.getAcceptTypes();
+            if (acceptTypes == null) return false;
+            for (String acceptType : acceptTypes) {
+                if (acceptType == null) continue;
+                String value = acceptType.toLowerCase();
+                if (value.contains("image/") || value.contains(".jpg") || value.contains(".jpeg")
+                        || value.contains(".png") || value.contains(".webp") || value.contains(".gif")) {
+                    return true;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return false;
+    }
+
     private void startDropboxBrowserAuth() {
         try {
             nativeDropboxPending = true;
             Auth.startOAuth2PKCE(
                     this,
                     DROPBOX_APP_KEY,
-                    DbxRequestConfig.newBuilder("stretch-timer/0.12.8").build(),
+                    DbxRequestConfig.newBuilder("stretch-timer/0.12.11").build(),
                     Arrays.asList("files.metadata.read", "files.content.read", "files.content.write")
             );
         } catch (Exception e) {

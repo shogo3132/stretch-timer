@@ -1,12 +1,12 @@
-const CACHE='stretch-timer-v84';
-const APP_VERSION='0.12.70';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./favicon.svg','./ux-v22.js?v=84','./ux-v18.js?v=84','./ux-v26-detail.js?v=84','./ux-v34-timer.js?v=84','./ux-v35-history.js?v=84','./ux-v36-sample.js?v=84','./ux-v38-polish.js?v=84','./ux-v41-timer-compact.js?v=84','./ux-v43-timer-back.js?v=84','./ux-v46-desktop-dnd.js?v=84','./ux-v79-item-editor-core.js?v=84','./ux-v79-item-card-sync.js?v=84','./ux-v52-scroll-restore.js?v=84','./ux-v51-update-watch.js?v=84','./ux-v54-refresh-motion.js?v=84','./ux-v79-transition-stability.js?v=84','./ux-v56-browser-history.js?v=84','./ux-v81-timer-edit-save.js?v=84','./ux-v82-timer-runtime.js?v=84'];
+const CACHE='stretch-timer-v85';
+const APP_VERSION='0.12.71';
+const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./favicon.svg','./vendor/xlsx.mini.min.js?v=85','./ux-v22.js?v=85','./ux-v18.js?v=85','./ux-v26-detail.js?v=85','./ux-v34-timer.js?v=85','./ux-v35-history.js?v=85','./ux-v36-sample.js?v=85','./ux-v38-polish.js?v=85','./ux-v41-timer-compact.js?v=85','./ux-v43-timer-back.js?v=85','./ux-v46-desktop-dnd.js?v=85','./ux-v79-item-editor-core.js?v=85','./ux-v79-item-card-sync.js?v=85','./ux-v52-scroll-restore.js?v=85','./ux-v51-update-watch.js?v=85','./ux-v54-refresh-motion.js?v=85','./ux-v79-transition-stability.js?v=85','./ux-v56-browser-history.js?v=85','./ux-v81-timer-edit-save.js?v=85','./ux-v82-timer-runtime.js?v=85','./ux-v85-xlsx-import.js?v=85'];
 
 function patchHtml(html){
   if(!html.includes('rel="icon"')){
     html=html.replace(
       '<link rel="manifest" href="manifest.webmanifest">',
-      '<link rel="manifest" href="manifest.webmanifest">\n<link rel="icon" type="image/svg+xml" href="./favicon.svg?v=84">'
+      '<link rel="manifest" href="manifest.webmanifest">\n<link rel="icon" type="image/svg+xml" href="./favicon.svg?v=85">'
     );
   }
 
@@ -43,26 +43,29 @@ function patchHtml(html){
     .replaceAll('項目','種目');
 
   html=html.replace(/<script\s+src="\.\/ux-v[^"?]+\.js(?:\?v=\d+)?"><\/script>/g,'');
+  html=html.replace(/<script\s+src="\.\/vendor\/xlsx\.mini\.min\.js(?:\?v=\d+)?"><\/script>/g,'');
   html=html.replace('</body>',
-    '<script src="./ux-v22.js?v=84"></script>'+
-    '<script src="./ux-v18.js?v=84"></script>'+
-    '<script src="./ux-v26-detail.js?v=84"></script>'+
-    '<script src="./ux-v34-timer.js?v=84"></script>'+
-    '<script src="./ux-v35-history.js?v=84"></script>'+
-    '<script src="./ux-v36-sample.js?v=84"></script>'+
-    '<script src="./ux-v38-polish.js?v=84"></script>'+
-    '<script src="./ux-v41-timer-compact.js?v=84"></script>'+
-    '<script src="./ux-v43-timer-back.js?v=84"></script>'+
-    '<script src="./ux-v46-desktop-dnd.js?v=84"></script>'+
-    '<script src="./ux-v79-item-editor-core.js?v=84"></script>'+
-    '<script src="./ux-v79-item-card-sync.js?v=84"></script>'+
-    '<script src="./ux-v52-scroll-restore.js?v=84"></script>'+
-    '<script src="./ux-v51-update-watch.js?v=84"></script>'+
-    '<script src="./ux-v54-refresh-motion.js?v=84"></script>'+
-    '<script src="./ux-v79-transition-stability.js?v=84"></script>'+
-    '<script src="./ux-v56-browser-history.js?v=84"></script>'+
-    '<script src="./ux-v81-timer-edit-save.js?v=84"></script>'+
-    '<script src="./ux-v82-timer-runtime.js?v=84"></script></body>'
+    '<script src="./vendor/xlsx.mini.min.js?v=85"></script>'+
+    '<script src="./ux-v22.js?v=85"></script>'+
+    '<script src="./ux-v18.js?v=85"></script>'+
+    '<script src="./ux-v26-detail.js?v=85"></script>'+
+    '<script src="./ux-v34-timer.js?v=85"></script>'+
+    '<script src="./ux-v35-history.js?v=85"></script>'+
+    '<script src="./ux-v36-sample.js?v=85"></script>'+
+    '<script src="./ux-v38-polish.js?v=85"></script>'+
+    '<script src="./ux-v41-timer-compact.js?v=85"></script>'+
+    '<script src="./ux-v43-timer-back.js?v=85"></script>'+
+    '<script src="./ux-v46-desktop-dnd.js?v=85"></script>'+
+    '<script src="./ux-v79-item-editor-core.js?v=85"></script>'+
+    '<script src="./ux-v79-item-card-sync.js?v=85"></script>'+
+    '<script src="./ux-v52-scroll-restore.js?v=85"></script>'+
+    '<script src="./ux-v51-update-watch.js?v=85"></script>'+
+    '<script src="./ux-v54-refresh-motion.js?v=85"></script>'+
+    '<script src="./ux-v79-transition-stability.js?v=85"></script>'+
+    '<script src="./ux-v56-browser-history.js?v=85"></script>'+
+    '<script src="./ux-v81-timer-edit-save.js?v=85"></script>'+
+    '<script src="./ux-v82-timer-runtime.js?v=85"></script>'+
+    '<script src="./ux-v85-xlsx-import.js?v=85"></script></body>'
   );
   return html;
 }
