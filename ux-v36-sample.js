@@ -1,10 +1,9 @@
 (function(){
-  var FLAG='stretchTimer.sampleRoutine5.v67';
+  var FLAG='stretchTimer.sampleRoutine5.v68';
   if(localStorage.getItem(FLAG)==='done')return;
 
   function isTarget(m){
-    var name=String(m&&m.name||'').trim();
-    return name==='ルーティン5'||name==='メニュー5';
+    return String(m&&m.name||'').trim()==='テストデータ';
   }
 
   function addDay(m,y,mo,day,count,morning){
@@ -27,12 +26,13 @@
   function seed(){
     try{
       if(typeof state==='undefined'||!state||!Array.isArray(state.menus))return false;
-      var m=state.menus.find(isTarget);
-      if(!m)return false;
+      var matches=state.menus.filter(isTarget);
+      if(matches.length!==1)return false;
+      var m=matches[0];
 
       if(!Array.isArray(m.completions))m.completions=[];
 
-      // テスト用の2026年7月・8月だけを作り直す。
+      // 「テストデータ」だけ、2026年7月・8月の記録をテスト用に作り直す。
       m.completions=m.completions.filter(function(ts){
         var d=new Date(+ts);
         return !(d.getFullYear()===2026&&(d.getMonth()===6||d.getMonth()===7));
