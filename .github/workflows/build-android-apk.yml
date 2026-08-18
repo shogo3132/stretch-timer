@@ -80,11 +80,11 @@ jobs:
       - name: Publish APK to repository
         run: |
           mkdir -p dist
-          cp android/app/build/outputs/apk/debug/app-debug-v*.apk dist/stretch-timer-v0.12.11.apk
+          cp android/app/build/outputs/apk/debug/app-debug-v*.apk dist/stretch-timer-v0.12.12.apk
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add dist/stretch-timer-v0.12.11.apk
+          git add dist/stretch-timer-v0.12.12.apk
           if ! git diff --cached --quiet; then
-            git commit -m "Publish Stretch Timer APK v0.12.11"
+            git commit -m "Publish Stretch Timer APK v0.12.12"
             git push
           fi

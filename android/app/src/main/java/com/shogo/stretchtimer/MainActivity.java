@@ -79,6 +79,7 @@ public class MainActivity extends Activity {
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         settings.setBuiltInZoomControls(false);
         settings.setDisplayZoomControls(false);
+        settings.setUserAgentString(settings.getUserAgentString() + " StretchTimerApp/0.12.12");
 
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
@@ -93,6 +94,11 @@ public class MainActivity extends Activity {
                 if ((host.equals("www.dropbox.com") || host.equals("dropbox.com"))
                         && path.startsWith("/oauth2/authorize")) {
                     startDropboxBrowserAuth();
+                    return true;
+                }
+
+                if (isYouTubeHost(host)) {
+                    openYouTube(uri);
                     return true;
                 }
 
@@ -191,13 +197,33 @@ public class MainActivity extends Activity {
         return false;
     }
 
+    private boolean isYouTubeHost(String host) {
+        return host.equals("youtu.be") || host.equals("youtube.com") || host.endsWith(".youtube.com")
+                || host.equals("youtube-nocookie.com") || host.endsWith(".youtube-nocookie.com");
+    }
+
+    private void openYouTube(Uri uri) {
+        Intent appIntent = new Intent(Intent.ACTION_VIEW, uri);
+        appIntent.setPackage("com.google.android.youtube");
+        try {
+            startActivity(appIntent);
+            return;
+        } catch (ActivityNotFoundException ignored) {
+        }
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, uri));
+        } catch (Exception e) {
+            Toast.makeText(this, "参考動画を開けませんでした", Toast.LENGTH_LONG).show();
+        }
+    }
+
     private void startDropboxBrowserAuth() {
         try {
             nativeDropboxPending = true;
             Auth.startOAuth2PKCE(
                     this,
                     DROPBOX_APP_KEY,
-                    DbxRequestConfig.newBuilder("stretch-timer/0.12.11").build(),
+                    DbxRequestConfig.newBuilder("stretch-timer/0.12.12").build(),
                     Arrays.asList("files.metadata.read", "files.content.read", "files.content.write")
             );
         } catch (Exception e) {

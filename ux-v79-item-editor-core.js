@@ -73,6 +73,13 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
   function clampWork(v){return clamp(v,MIN_WORK,MAX_WORK,30)}
   function currentMenuSafe(){try{return typeof menu==='function'?menu():null}catch(e){return null}}
   function currentItemSafe(){try{return typeof item==='function'?item():null}catch(e){return null}}
+  function isYouTubeUrl(value){
+    if(!value)return true;
+    try{
+      var u=new URL(value),host=u.hostname.toLowerCase().replace(/^www\./,'');
+      return u.protocol==='https:'&&(host==='youtu.be'||host==='youtube.com'||host.endsWith('.youtube.com')||host==='youtube-nocookie.com'||host.endsWith('.youtube-nocookie.com'));
+    }catch(e){return false}
+  }
 
   function toast(text){
     var old=document.getElementById('storageToast');if(old)old.remove();
@@ -104,7 +111,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
   if(previousNormalize){
     normalize=function(s){
       var out=previousNormalize(s);
-      if(out&&Array.isArray(out.menus))out.menus.forEach(function(m){(m.items||[]).forEach(function(x){x.seconds=clampWork(x.seconds);x.restSeconds=clampRest(x.restSeconds)})});
+      if(out&&Array.isArray(out.menus))out.menus.forEach(function(m){(m.items||[]).forEach(function(x){x.seconds=clampWork(x.seconds);x.restSeconds=clampRest(x.restSeconds);x.videoUrl=typeof x.videoUrl==='string'?x.videoUrl.trim():''})});
       return out;
     };
   }
@@ -116,6 +123,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
         var w=clampWork(x.seconds),r=clampRest(x.restSeconds);
         if(+x.seconds!==w){x.seconds=w;changed=true}
         if(+x.restSeconds!==r){x.restSeconds=r;changed=true}
+        if(typeof x.videoUrl!=='string'){x.videoUrl='';changed=true}
       })});
       if(changed&&typeof save==='function')save(false);
     }catch(e){console.error(e)}
@@ -138,7 +146,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
   if(typeof syncPayload==='function')syncPayload=function(){
     return JSON.stringify({schemaVersion:2,updatedAt:state.updatedAt||Date.now(),menus:state.menus.map(function(m){
       var copy={};Object.keys(m).forEach(function(k){if(k!=='items')copy[k]=m[k]});
-      copy.items=(m.items||[]).map(function(x){return {id:x.id,name:x.name,seconds:clampWork(x.seconds),restSeconds:clampRest(x.restSeconds),desc:x.desc,photoData:x.photo||''}});
+      copy.items=(m.items||[]).map(function(x){return {id:x.id,name:x.name,seconds:clampWork(x.seconds),restSeconds:clampRest(x.restSeconds),desc:x.desc,videoUrl:x.videoUrl||'',photoData:x.photo||''}});
       return copy;
     })});
   };
@@ -151,6 +159,8 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
       '<label class="field">種目名<input id="itemName"></label>'+
       '<div class="field item-photo-field"><div class="item-photo-preview-wrap" role="button" tabindex="0" aria-label="写真を設定または変更"><img id="photoPreview" class="photo-preview" alt="写真プレビュー"><button type="button" id="itemPhotoDeleteX" aria-label="画像を削除" title="画像を削除">×</button></div><input id="photoInput" type="file" accept="image/*" capture="environment"></div>'+
       '<label class="field">説明・メモ<textarea id="itemDesc" placeholder="フォームや注意点など"></textarea></label>'+
+      '<label class="field">参考動画URL<input id="itemVideoUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://youtu.be/…?t=90"></label>'+
+      '<div class="tip" style="margin-top:-13px">YouTubeの時間指定付きURLを入力できます。</div>'+
       '<div id="itemTimeFields"></div>'+
       '<button id="itemCommitBtn" type="button" class="btn">決定</button>'+
       '<div class="row item-delete-row-spaced"><button id="duplicateItemBtn" class="btn sub" type="button">複製</button><button id="deleteItemBtn" class="btn danger" type="button">削除</button></div>'+
@@ -163,6 +173,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
     document.getElementById('photoInput').onchange=handlePhotoChange;
     document.getElementById('itemName').oninput=function(e){if(draft)draft.value.name=e.target.value||'名称未設定'};
     document.getElementById('itemDesc').oninput=function(e){if(draft)draft.value.desc=e.target.value};
+    document.getElementById('itemVideoUrl').oninput=function(e){if(draft)draft.value.videoUrl=e.target.value.trim()};
     document.getElementById('itemCommitBtn').onclick=commitAndBack;
     document.getElementById('deleteItemBtn').onclick=deleteCurrentItem;
     document.getElementById('duplicateItemBtn').onclick=duplicateCurrentItem;
@@ -247,7 +258,8 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
   function beginDraft(id){
     currentItemId=id;var x=currentItemSafe();if(!x)return false;
     draft={menuId:currentMenuId,itemId:x.id,value:clone(x)};draft.value.seconds=clampWork(draft.value.seconds);draft.value.restSeconds=clampRest(draft.value.restSeconds);committed=false;navigating=false;
-    var name=document.getElementById('itemName'),desc=document.getElementById('itemDesc');if(name)name.value=draft.value.name||'';if(desc)desc.value=draft.value.desc||'';refreshPhoto();updateResumeBar();return true;
+    draft.value.videoUrl=typeof draft.value.videoUrl==='string'?draft.value.videoUrl.trim():'';
+    var name=document.getElementById('itemName'),desc=document.getElementById('itemDesc'),video=document.getElementById('itemVideoUrl');if(name)name.value=draft.value.name||'';if(desc)desc.value=draft.value.desc||'';if(video)video.value=draft.value.videoUrl;refreshPhoto();updateResumeBar();return true;
   }
   function isDirty(){if(!draft)return false;var x=currentItemSafe();return !!x&&!same(draft.value,x)}
   function discardDraft(){draft=null;committed=false}
@@ -263,6 +275,8 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
 
   function commitAndBack(){
     if(!draft)return;
+    draft.value.videoUrl=typeof draft.value.videoUrl==='string'?draft.value.videoUrl.trim():'';
+    if(!isYouTubeUrl(draft.value.videoUrl)){alert('参考動画URLにはYouTubeのURLを入力してください。');var video=document.getElementById('itemVideoUrl');if(video)video.focus();return}
     var m=state&&Array.isArray(state.menus)?state.menus.find(function(v){return v.id===draft.menuId}):null;if(!m)return;
     var i=(m.items||[]).findIndex(function(v){return v.id===draft.itemId});if(i<0)return;
     var before=clone(m.items[i]),next=clone(draft.value);next.seconds=clampWork(next.seconds);next.restSeconds=clampRest(next.restSeconds);m.items[i]=next;
@@ -320,7 +334,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
     });
   };
 
-  var add=document.getElementById('addItemBtn');if(add)add.onclick=function(){var m=currentMenuSafe();if(!m)return;var x={id:makeId(),name:'新しい種目',seconds:30,restSeconds:DEFAULT_REST,desc:'',photo:''};m.items.push(x);if(typeof save==='function')save();openItemCore(x.id)};
+  var add=document.getElementById('addItemBtn');if(add)add.onclick=function(){var m=currentMenuSafe();if(!m)return;var x={id:makeId(),name:'新しい種目',seconds:30,restSeconds:DEFAULT_REST,desc:'',videoUrl:'',photo:''};m.items.push(x);if(typeof save==='function')save();openItemCore(x.id)};
 
   function currentTimerItem(){if(!timerState||timerState.phase!=='item')return null;var m=currentMenuSafe();return m&&Array.isArray(m.items)?m.items[timerState.index]||null:null}
   function openCurrentEdit(){var x=currentTimerItem();if(!x||!timerState||!timerState.paused)return;editContext={menuId:currentMenuId,itemId:x.id,index:timerState.index};openItemCore(x.id)}
