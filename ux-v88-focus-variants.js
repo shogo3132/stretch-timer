@@ -1,6 +1,6 @@
 (function(){
-  if(window.__focusCardV92)return;
-  window.__focusCardV92=true;
+  if(window.__focusCardV93)return;
+  window.__focusCardV93=true;
 
   var MAX_LINES=10,MAX_LINE=180,MAX_IMAGES=5,IMAGE_MAX_SIDE=960,IMAGE_TARGET_BYTES=120000;
   var bodyScroll='';
@@ -14,7 +14,7 @@
   ];
 
   var style=document.createElement('style');
-  style.setAttribute('data-focus-card-v92','');
+  style.setAttribute('data-focus-card-v93','');
   style.textContent='\
 #focusVariants{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box}\
 .focus-card-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}\
@@ -30,8 +30,12 @@
 .focus-gallery-item{width:100%;min-width:0;aspect-ratio:1;box-sizing:border-box;padding:0;border:0;border-radius:10px;overflow:hidden;background:#dcebe6;cursor:pointer;-webkit-tap-highlight-color:transparent}\
 .focus-gallery-item img{width:100%;height:100%;display:block;object-fit:cover}\
 #focusImageViewer{position:fixed;inset:0;z-index:21000;background:rgba(20,26,32,.42);display:grid;place-items:center;padding:20px 14px}\
-.focus-viewer-card{position:relative;width:min(100%,620px);max-height:min(72dvh,620px);padding:18px;border:1px solid #d9eee7;border-radius:20px;background:#e9f7f2;box-shadow:0 18px 55px rgba(0,0,0,.22);display:grid;place-items:center}\
-#focusImageViewer img{max-width:100%;max-height:calc(min(72dvh,620px) - 36px);display:block;object-fit:contain;border-radius:12px}\
+.focus-viewer-card{position:relative;width:min(100%,620px);max-height:min(72dvh,620px);box-sizing:border-box;padding:18px;border:1px solid #d9eee7;border-radius:20px;background:#e9f7f2;box-shadow:0 18px 55px rgba(0,0,0,.22);display:grid;grid-template-rows:minmax(0,1fr) auto;gap:12px;overflow:hidden}\
+.focus-viewer-stage{width:100%;min-width:0;display:grid;place-items:center;overflow:hidden;touch-action:pan-y;user-select:none;-webkit-user-select:none}\
+#focusImageViewer img{max-width:100%;max-height:calc(min(72dvh,620px) - 66px);display:block;object-fit:contain;border-radius:12px;transition:transform .14s ease,opacity .14s ease;will-change:transform,opacity;pointer-events:none}\
+.focus-viewer-dots{display:flex;justify-content:center;gap:6px;min-height:7px}\
+.focus-viewer-dot{width:6px;height:6px;border-radius:50%;background:#a9c9bd;transition:width .16s ease,background .16s ease}\
+.focus-viewer-dot.active{width:16px;border-radius:99px;background:#168465}\
 .focus-viewer-close{position:absolute;z-index:1;top:8px;right:8px;width:36px;height:36px;border:0;border-radius:50%;background:rgba(36,50,45,.72);color:#fff;font-size:24px;line-height:1;cursor:pointer}\
 #focusEditorOverlay{position:fixed;inset:0;z-index:20000;background:rgba(20,26,32,.42);display:flex;align-items:flex-end;justify-content:center;padding:18px 14px max(18px,env(safe-area-inset-bottom))}\
 #focusEditorPanel{width:min(100%,620px);max-height:min(82dvh,720px);overflow:auto;background:#f7f8fa;border-radius:24px;padding:20px;box-shadow:0 18px 55px rgba(0,0,0,.22);display:grid;gap:16px}\
@@ -87,14 +91,25 @@
       (focus.lines.length?'<ul class="focus-list">'+focus.lines.map(function(x){return '<li>'+escapeValue(x)+'</li>'}).join('')+'</ul>':'<div class="focus-empty">今取り組んでいることを設定</div>')+
       (focus.images.length?'<div class="focus-gallery" aria-label="理想のイメージ">'+focus.images.map(function(src,i){return '<button type="button" class="focus-gallery-item" data-focus-image="'+i+'" aria-label="画像'+(i+1)+'を拡大"><img src="'+escapeValue(src)+'" alt=""></button>'}).join('')+'</div>':'')+'</div>';
     host.querySelector('.focus-edit').onclick=openEditor;
-    Array.prototype.forEach.call(host.querySelectorAll('[data-focus-image]'),function(button){button.onclick=function(){openImageViewer(focus.images[+button.getAttribute('data-focus-image')])}});
+    Array.prototype.forEach.call(host.querySelectorAll('[data-focus-image]'),function(button){button.onclick=function(){openImageViewer(focus.images,+button.getAttribute('data-focus-image'))}});
   }
 
   function closeImageViewer(){var viewer=document.getElementById('focusImageViewer');if(viewer)viewer.remove()}
-  function openImageViewer(src){
-    if(!src)return;closeImageViewer();var viewer=document.createElement('div');viewer.id='focusImageViewer';viewer.setAttribute('role','dialog');viewer.setAttribute('aria-label','画像を拡大表示');
-    viewer.innerHTML='<div class="focus-viewer-card"><button type="button" class="focus-viewer-close" aria-label="閉じる">×</button><img src="'+escapeValue(src)+'" alt="理想のイメージ"></div>';
-    viewer.onclick=function(e){if(e.target===viewer||e.target.classList.contains('focus-viewer-close'))closeImageViewer()};document.body.appendChild(viewer);
+  function openImageViewer(images,startIndex){
+    images=Array.isArray(images)?images:[];if(!images.length)return;var index=Math.max(0,Math.min(images.length-1,+startIndex||0));closeImageViewer();
+    var viewer=document.createElement('div');viewer.id='focusImageViewer';viewer.tabIndex=-1;viewer.setAttribute('role','dialog');viewer.setAttribute('aria-label','画像を拡大表示');
+    viewer.innerHTML='<div class="focus-viewer-card"><button type="button" class="focus-viewer-close" aria-label="閉じる">×</button><div class="focus-viewer-stage"><img src="'+escapeValue(images[index])+'" alt="理想のイメージ '+(index+1)+'"></div><div class="focus-viewer-dots" aria-hidden="true"></div></div>';
+    var stage=viewer.querySelector('.focus-viewer-stage'),image=stage.querySelector('img'),dots=viewer.querySelector('.focus-viewer-dots'),animating=false,startX=0,startAt=0,tracking=false;
+    function renderDots(){dots.innerHTML=images.map(function(_,i){return '<span class="focus-viewer-dot'+(i===index?' active':'')+'"></span>'}).join('')}
+    function move(next,direction){
+      if(animating||next<0||next>=images.length||next===index)return;animating=true;image.style.transform='translateX('+(direction>0?-18:18)+'px)';image.style.opacity='.2';
+      setTimeout(function(){index=next;image.src=images[index];image.alt='理想のイメージ '+(index+1);renderDots();image.style.transition='none';image.style.transform='translateX('+(direction>0?18:-18)+'px)';image.style.opacity='.2';image.offsetWidth;image.style.transition='transform .14s ease,opacity .14s ease';image.style.transform='translateX(0)';image.style.opacity='1';setTimeout(function(){animating=false},150)},140);
+    }
+    stage.onpointerdown=function(e){if(e.pointerType==='mouse'&&e.button!==0)return;tracking=true;startX=e.clientX;startAt=Date.now();try{stage.setPointerCapture(e.pointerId)}catch(err){}};
+    stage.onpointerup=function(e){if(!tracking)return;tracking=false;var dx=e.clientX-startX,elapsed=Math.max(1,Date.now()-startAt),flick=Math.abs(dx)/elapsed>.45;if(Math.abs(dx)>42||(flick&&Math.abs(dx)>24))move(index+(dx<0?1:-1),dx<0?1:-1)};
+    stage.onpointercancel=function(){tracking=false};
+    viewer.onkeydown=function(e){if(e.key==='ArrowLeft'){e.preventDefault();move(index-1,-1)}else if(e.key==='ArrowRight'){e.preventDefault();move(index+1,1)}else if(e.key==='Escape')closeImageViewer()};
+    viewer.onclick=function(e){if(e.target===viewer||e.target.classList.contains('focus-viewer-close'))closeImageViewer()};renderDots();document.body.appendChild(viewer);try{viewer.focus({preventScroll:true})}catch(e){viewer.focus()}
   }
 
   function readFile(file){return new Promise(function(resolve,reject){var reader=new FileReader();reader.onload=function(){resolve(reader.result)};reader.onerror=reject;reader.readAsDataURL(file)})}
@@ -139,6 +154,6 @@
   var previousRenderHome=typeof renderHome==='function'?renderHome:null;
   if(previousRenderHome)renderHome=function(){var result=previousRenderHome.apply(this,arguments);renderFocus();return result};
 
-  window.__stretchTimerFocusV92={clean:cleanFocus,render:renderFocus,openEditor:openEditor};
+  window.__stretchTimerFocusV93={clean:cleanFocus,render:renderFocus,openEditor:openEditor};
   ensureFocus();renderFocus();
 })();
