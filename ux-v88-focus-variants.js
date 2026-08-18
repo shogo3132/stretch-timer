@@ -1,8 +1,8 @@
 (function(){
-  if(window.__focusCardV94)return;
-  window.__focusCardV94=true;
+  if(window.__focusCardV95)return;
+  window.__focusCardV95=true;
 
-  var MAX_LINES=10,MAX_LINE=180,MAX_MEDIA=5,MAX_VIDEOS=2,MAX_VIDEO_BYTES=8*1024*1024,MAX_VIDEO_SECONDS=10,IMAGE_MAX_SIDE=960,IMAGE_TARGET_BYTES=120000;
+  var MAX_LINES=10,MAX_LINE=180,MAX_MEDIA=5,MAX_TOTAL_MEDIA_BYTES=20*1024*1024,MAX_VIDEO_SECONDS=20,IMAGE_MAX_SIDE=960,IMAGE_TARGET_BYTES=120000;
   var VIDEO_DELETE_KEY='stretchTimer.focusVideoDeletes';
   var bodyScroll='';
   var sampleSaveQueued=false;
@@ -15,7 +15,7 @@
   ];
 
   var style=document.createElement('style');
-  style.setAttribute('data-focus-card-v94','');
+  style.setAttribute('data-focus-card-v95','');
   style.textContent='\
 #focusVariants{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box}\
 .focus-card-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}\
@@ -63,6 +63,7 @@
 .focus-media-adds{display:flex;flex-wrap:wrap;gap:8px}\
 .focus-image-add{min-height:40px;padding:8px 14px;border:1px solid #b7d9cd;border-radius:12px;background:#edf8f4;color:#168465;font-weight:800;cursor:pointer}\
 .focus-image-add:disabled{opacity:.48;cursor:default}\
+.focus-media-usage{font-size:13px;font-weight:750;color:#587169}\
 @media(min-width:700px){#focusEditorOverlay{align-items:center}.focus-card{padding:20px}}\
 ';
   document.head.appendChild(style);
@@ -71,11 +72,13 @@
   function isImageMedia(value){return typeof value==='string'&&/^data:image\/(?:jpeg|png|webp);base64,/i.test(value)}
   function cleanVideo(value){
     if(!value||typeof value!=='object'||value.type!=='video'||typeof value.path!=='string'||!/^\/focus-media\/[a-z0-9._-]+$/i.test(value.path))return null;
-    var mime=value.mime==='video/webm'?'video/webm':'video/mp4',poster=isImageMedia(value.poster)?value.poster:'';
-    return {type:'video',path:value.path,name:text(value.name||'動画'),mime:mime,size:Math.max(0,Math.min(MAX_VIDEO_BYTES,Math.round(+value.size||0))),duration:Math.max(0,Math.min(MAX_VIDEO_SECONDS,Math.round((+value.duration||0)*10)/10)),poster:poster};
+    var mime=value.mime==='video/webm'?'video/webm':'video/mp4',poster=isImageMedia(value.poster)?value.poster:'',size=Math.max(0,Math.round(+value.size||0));if(size>MAX_TOTAL_MEDIA_BYTES)return null;
+    return {type:'video',path:value.path,name:text(value.name||'動画'),mime:mime,size:size,duration:Math.max(0,Math.min(MAX_VIDEO_SECONDS,Math.round((+value.duration||0)*10)/10)),poster:poster};
   }
   function isVideoMedia(value){return !!cleanVideo(value)}
-  function videoCount(list){return (list||[]).reduce(function(n,x){return n+(x&&typeof x==='object'&&x.type==='video'?1:0)},0)}
+  function mediaBytes(value){if(isImageMedia(value))return dataBytes(value);if(value&&typeof value==='object'&&value.type==='video')return Math.max(0,Math.round(+value.size||+((value._file||{}).size)||0));return 0}
+  function mediaTotalBytes(list){return (list||[]).reduce(function(total,value){return total+mediaBytes(value)},0)}
+  function megabytes(bytes){return (bytes/1024/1024).toFixed(bytes>=10*1024*1024?1:2)}
   function cleanFocus(value){
     value=value&&typeof value==='object'?value:{};
     var source=[];
@@ -83,8 +86,8 @@
     if(Array.isArray(value.lines))source=source.concat(value.lines);
     else if(Array.isArray(value.points))source=source.concat(value.points);
     else if(value.points)source=source.concat(String(value.points).split(/\r?\n/));
-    var images=[];
-    (Array.isArray(value.images)?value.images:[]).forEach(function(entry){if(images.length>=MAX_MEDIA)return;if(isImageMedia(entry))images.push(entry);else{var video=cleanVideo(entry);if(video&&videoCount(images)<MAX_VIDEOS)images.push(video)}});
+    var images=[],totalBytes=0;
+    (Array.isArray(value.images)?value.images:[]).forEach(function(entry){if(images.length>=MAX_MEDIA)return;var clean=isImageMedia(entry)?entry:cleanVideo(entry),bytes=mediaBytes(clean);if(clean&&totalBytes+bytes<=MAX_TOTAL_MEDIA_BYTES){images.push(clean);totalBytes+=bytes}});
     return {lines:source.map(text).filter(Boolean).slice(0,MAX_LINES),images:images};
   }
   function hasFocus(value){return !!value&&Object.prototype.hasOwnProperty.call(value,'focus')}
@@ -157,10 +160,10 @@
   async function inspectVideo(file){
     var mime=(file&&file.type||'').toLowerCase(),name=(file&&file.name||'').toLowerCase();
     if(!file||!((mime==='video/mp4'||mime==='video/webm')||(mime===''&&/\.(mp4|webm)$/.test(name))))throw new Error('MP4またはWebMの動画を選んでください');
-    if(file.size>MAX_VIDEO_BYTES)throw new Error('動画は8MB以内にしてください');
+    if(file.size>MAX_TOTAL_MEDIA_BYTES)throw new Error('動画を含むギャラリー全体は20MB以内です');
     var url=URL.createObjectURL(file),video=document.createElement('video');video.preload='metadata';video.muted=true;video.playsInline=true;var metadataReady=waitForMedia(video,'loadedmetadata',7000);video.src=url;video.load();
     try{
-      await metadataReady;var duration=+video.duration||0;if(!duration||duration>MAX_VIDEO_SECONDS+.05)throw new Error('動画は10秒以内にしてください');
+      await metadataReady;var duration=+video.duration||0;if(!duration||duration>MAX_VIDEO_SECONDS+.05)throw new Error('動画は20秒以内にしてください');
       var poster='';try{var seekReady=waitForMedia(video,'seeked',4500);video.currentTime=Math.min(.2,Math.max(.01,duration/3));await seekReady;if(video.videoWidth&&video.videoHeight){var scale=Math.min(1,360/Math.max(video.videoWidth,video.videoHeight)),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(video.videoWidth*scale));canvas.height=Math.max(1,Math.round(video.videoHeight*scale));canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);poster=canvas.toDataURL('image/jpeg',.72)}}catch(e){}
       return {type:'video',name:text(file.name||'動画'),mime:mime==='video/webm'?'video/webm':'video/mp4',size:file.size,duration:Math.round(duration*10)/10,poster:poster,_file:file,_id:Date.now().toString(36)+Math.random().toString(36).slice(2,9)};
     }finally{URL.revokeObjectURL(url);video.removeAttribute('src');try{video.load()}catch(e){}}
@@ -186,16 +189,16 @@
       '<div class="focus-editor-head"><h2 id="focusEditorTitle">FOCUSを編集</h2><button type="button" class="focus-editor-close" aria-label="閉じる">×</button></div>'+
       '<label class="field">内容<textarea id="focusLinesInput" placeholder="1行目\n2行目\n3行目"></textarea></label>'+
       '<div class="focus-editor-help">1行が1つの箇条書きになります。最大'+MAX_LINES+'項目。</div>'+
-      '<div class="focus-image-editor"><div class="focus-image-title">理想のイメージ</div><div class="focus-image-drafts" id="focusImageDrafts"></div><div class="focus-media-adds"><button type="button" class="focus-image-add" id="focusImageAddBtn">＋ 画像</button><button type="button" class="focus-image-add" id="focusVideoAddBtn">＋ 動画</button></div><input type="file" id="focusImageInput" accept="image/*" hidden><input type="file" id="focusVideoInput" accept="video/mp4,video/webm,.mp4,.webm" hidden><div class="focus-editor-help">画像・動画合わせて最大'+MAX_MEDIA+'個、動画は最大'+MAX_VIDEOS+'本。動画は10秒・8MB以内でDropboxに保存されます。</div></div>'+
+      '<div class="focus-image-editor"><div class="focus-image-title">理想のイメージ</div><div class="focus-image-drafts" id="focusImageDrafts"></div><div class="focus-media-adds"><button type="button" class="focus-image-add" id="focusImageAddBtn">＋ 画像</button><button type="button" class="focus-image-add" id="focusVideoAddBtn">＋ 動画</button></div><input type="file" id="focusImageInput" accept="image/*" hidden><input type="file" id="focusVideoInput" accept="video/mp4,video/webm,.mp4,.webm" hidden><div class="focus-media-usage" id="focusMediaUsage"></div><div class="focus-editor-help">画像・動画合わせて最大'+MAX_MEDIA+'個、合計20MBまで。動画は1本20秒以内でDropboxに保存されます。</div></div>'+
       '<div class="focus-editor-actions"><button type="button" class="btn sub" id="focusCancelBtn">キャンセル</button><button type="button" class="btn" id="focusSaveBtn">保存</button></div></div>';
     document.body.appendChild(overlay);
     var input=document.getElementById('focusLinesInput');input.value=focus.lines.join('\n');
     var imageInput=document.getElementById('focusImageInput'),videoInput=document.getElementById('focusVideoInput'),addButton=document.getElementById('focusImageAddBtn'),videoButton=document.getElementById('focusVideoAddBtn');
     function draftThumb(entry,i){var video=entry&&typeof entry==='object'&&entry.type==='video';return '<div class="focus-image-draft">'+(video?(entry.poster?'<img src="'+escapeValue(entry.poster)+'" alt="動画'+(i+1)+'">':'')+'<span class="focus-gallery-play">▶</span>':'<img src="'+escapeValue(entry)+'" alt="画像'+(i+1)+'">')+'<button type="button" class="focus-image-remove" data-remove-focus-image="'+i+'" aria-label="'+(video?'動画':'画像')+(i+1)+'を削除">×</button></div>'}
-    function renderDrafts(){var drafts=document.getElementById('focusImageDrafts'),full=draftImages.length>=MAX_MEDIA,videos=videoCount(draftImages);drafts.innerHTML=draftImages.length?draftImages.map(draftThumb).join(''):'<div class="focus-image-empty">画像・動画はまだありません</div>';addButton.textContent='＋ 画像（'+draftImages.length+'/'+MAX_MEDIA+'）';videoButton.textContent='＋ 動画（'+videos+'/'+MAX_VIDEOS+'）';addButton.disabled=full;videoButton.disabled=full||videos>=MAX_VIDEOS;Array.prototype.forEach.call(drafts.querySelectorAll('[data-remove-focus-image]'),function(button){button.onclick=function(){draftImages.splice(+button.getAttribute('data-remove-focus-image'),1);renderDrafts()}})}
-    renderDrafts();addButton.onclick=function(){if(draftImages.length<MAX_MEDIA)imageInput.click()};videoButton.onclick=function(){if(draftImages.length>=MAX_MEDIA||videoCount(draftImages)>=MAX_VIDEOS)return;if(typeof hasDropboxAuth!=='function'||!hasDropboxAuth()){alert('動画の保存にはDropbox接続が必要です。設定からDropboxに接続してください。');return}videoInput.click()};
-    imageInput.onchange=async function(){var file=imageInput.files&&imageInput.files[0];imageInput.value='';if(!file)return;addButton.disabled=true;addButton.textContent='画像を処理中…';try{draftImages.push(await compressImage(file));renderDrafts()}catch(e){renderDrafts();alert(e&&e.message?e.message:'画像を追加できませんでした')}};
-    videoInput.onchange=async function(){var file=videoInput.files&&videoInput.files[0];videoInput.value='';if(!file)return;videoButton.disabled=true;videoButton.textContent='動画を確認中…';try{draftImages.push(await inspectVideo(file));renderDrafts()}catch(e){renderDrafts();alert(e&&e.message?e.message:'動画を追加できませんでした')}};
+    function renderDrafts(){var drafts=document.getElementById('focusImageDrafts'),full=draftImages.length>=MAX_MEDIA||mediaTotalBytes(draftImages)>=MAX_TOTAL_MEDIA_BYTES;drafts.innerHTML=draftImages.length?draftImages.map(draftThumb).join(''):'<div class="focus-image-empty">画像・動画はまだありません</div>';addButton.textContent='＋ 画像（'+draftImages.length+'/'+MAX_MEDIA+'）';videoButton.textContent='＋ 動画';addButton.disabled=full;videoButton.disabled=full;document.getElementById('focusMediaUsage').textContent='使用量 '+megabytes(mediaTotalBytes(draftImages))+'MB / 20MB';Array.prototype.forEach.call(drafts.querySelectorAll('[data-remove-focus-image]'),function(button){button.onclick=function(){draftImages.splice(+button.getAttribute('data-remove-focus-image'),1);renderDrafts()}})}
+    renderDrafts();addButton.onclick=function(){if(draftImages.length<MAX_MEDIA)imageInput.click()};videoButton.onclick=function(){if(draftImages.length>=MAX_MEDIA)return;if(typeof hasDropboxAuth!=='function'||!hasDropboxAuth()){alert('動画の保存にはDropbox接続が必要です。設定からDropboxに接続してください。');return}videoInput.click()};
+    imageInput.onchange=async function(){var file=imageInput.files&&imageInput.files[0];imageInput.value='';if(!file)return;addButton.disabled=true;addButton.textContent='画像を処理中…';try{var compressed=await compressImage(file);if(mediaTotalBytes(draftImages)+mediaBytes(compressed)>MAX_TOTAL_MEDIA_BYTES)throw new Error('ギャラリー全体のファイルサイズは20MB以内にしてください');draftImages.push(compressed);renderDrafts()}catch(e){renderDrafts();alert(e&&e.message?e.message:'画像を追加できませんでした')}};
+    videoInput.onchange=async function(){var file=videoInput.files&&videoInput.files[0];videoInput.value='';if(!file)return;videoButton.disabled=true;videoButton.textContent='動画を確認中…';try{if(mediaTotalBytes(draftImages)+file.size>MAX_TOTAL_MEDIA_BYTES)throw new Error('ギャラリー全体のファイルサイズは20MB以内にしてください');draftImages.push(await inspectVideo(file));renderDrafts()}catch(e){renderDrafts();alert(e&&e.message?e.message:'動画を追加できませんでした')}};
     overlay.querySelector('.focus-editor-close').onclick=closeEditor;document.getElementById('focusCancelBtn').onclick=closeEditor;
     document.getElementById('focusSaveBtn').onclick=async function(){
       var saveButton=this,closeButton=overlay.querySelector('.focus-editor-close'),cancelButton=document.getElementById('focusCancelBtn'),previous=state.focus,uploaded=[],resolved=[];saveButton.disabled=true;closeButton.disabled=true;cancelButton.disabled=true;saveButton.textContent=draftImages.some(function(x){return x&&x._file})?'動画を保存中…':'保存中…';
@@ -220,6 +223,6 @@
   var previousDropboxUpload=typeof dropboxUpload==='function'?dropboxUpload:null;
   if(previousDropboxUpload)dropboxUpload=async function(){var result=await previousDropboxUpload.apply(this,arguments);try{await flushVideoDeletes()}catch(e){console.error(e)}return result};
 
-  window.__stretchTimerFocusV94={clean:cleanFocus,render:renderFocus,openEditor:openEditor};
+  window.__stretchTimerFocusV95={clean:cleanFocus,render:renderFocus,openEditor:openEditor};
   ensureFocus();renderFocus();
 })();
