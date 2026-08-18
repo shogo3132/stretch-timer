@@ -8,6 +8,9 @@ on:
       - '.github/workflows/build-android-apk.yml'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -58,3 +61,15 @@ jobs:
           name: stretch-timer-fixed-signed-apk
           path: android/app/build/outputs/apk/debug/app-debug-v*.apk
           if-no-files-found: error
+
+      - name: Publish APK to repository
+        run: |
+          mkdir -p dist
+          cp android/app/build/outputs/apk/debug/app-debug-v*.apk dist/stretch-timer-v0.12.10.apk
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dist/stretch-timer-v0.12.10.apk
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish Stretch Timer APK v0.12.10"
+            git push
+          fi
