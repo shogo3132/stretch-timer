@@ -2,7 +2,7 @@
   if(window.__updateWatchV51)return;
   window.__updateWatchV51=true;
 
-  var CURRENT_BUILD='stretch-timer-v51';
+  var CURRENT_BUILD='stretch-timer-v52';
   var POLL_MS=10000;
   var timer=null;
   var checking=false;
