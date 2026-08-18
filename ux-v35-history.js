@@ -14,7 +14,9 @@
 .detail-time-grid{stroke:#e8ecef;stroke-width:1}\
 .detail-time-axis{fill:#8a929c;font-size:13px;font-weight:400;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}\
 .detail-time-line{fill:none;stroke:#27ae8b;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}\
+.detail-time-line.repeat{stroke:#14735c}\
 .detail-time-dot{fill:#fff;stroke:#27ae8b;stroke-width:2.2;cursor:pointer;touch-action:manipulation}\
+.detail-time-dot.repeat{fill:#14735c;stroke:#14735c}\
 ';
   document.head.appendChild(style);
 
@@ -65,7 +67,7 @@
   function showPointPop(dot,p){
     closePointPop();
     var pop=document.createElement('div');pop.id='detailTimePop';pop.className='detail-pop';
-    pop.innerHTML='<div class="detail-pop-date">'+(p.month+1)+'月'+p.day+'日</div><div class="detail-pop-time">'+fmtTime(p.ts)+'</div>';
+    pop.innerHTML='<div class="detail-pop-date">'+(p.month+1)+'月'+p.day+'日</div><div class="detail-pop-time">'+fmtTime(p.ts)+(p.runNo>1?' ・ '+p.runNo+'回目':'')+'</div>';
     document.body.appendChild(pop);
     var r=dot.getBoundingClientRect(),w=Math.min(190,Math.max(105,pop.getBoundingClientRect().width));
     var x=Math.max(w/2+8,Math.min(innerWidth-w/2-8,r.left+r.width/2));
@@ -82,7 +84,12 @@
     box.innerHTML='';
     if(!logs.length){box.innerHTML='<div class="detail-time-empty">この月の実行記録はありません</div>';return}
 
-    var pts=logs.map(function(ts){var d=new Date(ts);return {ts:ts,day:d.getDate(),month:d.getMonth(),serial:dayNumber(ts),hour:hourValue(ts)}}),b=bounds(pts);
+    var runCountByDay={};
+    var pts=logs.map(function(ts){
+      var d=new Date(ts),serial=dayNumber(ts),key=String(serial);
+      runCountByDay[key]=(runCountByDay[key]||0)+1;
+      return {ts:ts,day:d.getDate(),month:d.getMonth(),serial:serial,hour:hourValue(ts),runNo:runCountByDay[key]};
+    }),b=bounds(pts);
     var W=640,H=430,L=58,R=14,T=18,B=48,pw=W-L-R,ph=H-T-B;
     function x(day){return L+(day-1)/(Math.max(1,daysInMonth-1))*pw}
     function y(hour){return T+(b.hi-hour)/(b.hi-b.lo)*ph}
@@ -98,15 +105,21 @@
     var xticks=[1,5,10,15,20,25,daysInMonth].filter(function(v,idx,a){return v<=daysInMonth&&a.indexOf(v)===idx});
     xticks.forEach(function(day){svg.appendChild(svgEl('text',{x:x(day),y:H-12,'text-anchor':'middle',class:'detail-time-axis'},String(day)))});
 
-    var dstr='';
-    pts.forEach(function(p,idx){
-      var px=x(p.day),py=y(p.hour),prev=idx?pts[idx-1]:null;
-      if(!prev||p.serial-prev.serial>1)dstr+='M'+px.toFixed(1)+' '+py.toFixed(1);
-      else dstr+=' L'+px.toFixed(1)+' '+py.toFixed(1);
-    });
-    svg.appendChild(svgEl('path',{d:dstr,class:'detail-time-line'}));
+    var maxRun=pts.reduce(function(max,p){return Math.max(max,p.runNo)},1);
+    for(var runNo=1;runNo<=maxRun;runNo++){
+      var series=pts.filter(function(p){return p.runNo===runNo});
+      var dstr='';
+      series.forEach(function(p,idx){
+        var px=x(p.day),py=y(p.hour),prev=idx?series[idx-1]:null;
+        if(!prev||p.serial-prev.serial!==1)dstr+='M'+px.toFixed(1)+' '+py.toFixed(1);
+        else dstr+=' L'+px.toFixed(1)+' '+py.toFixed(1);
+      });
+      if(dstr)svg.appendChild(svgEl('path',{d:dstr,class:'detail-time-line'+(runNo>1?' repeat':'')}));
+    }
+
     pts.forEach(function(p){
-      var c=svgEl('circle',{cx:x(p.day),cy:y(p.hour),r:5.2,class:'detail-time-dot',tabindex:'0','aria-label':p.day+'日 '+fmtTime(p.ts)});
+      var cls='detail-time-dot'+(p.runNo>1?' repeat':'');
+      var c=svgEl('circle',{cx:x(p.day),cy:y(p.hour),r:5.2,class:cls,tabindex:'0','aria-label':p.day+'日 '+p.runNo+'回目 '+fmtTime(p.ts)});
       c.addEventListener('click',function(e){e.stopPropagation();showPointPop(c,p)});
       c.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();showPointPop(c,p)}});
       svg.appendChild(c);
