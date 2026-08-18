@@ -1,5 +1,5 @@
 (function(){
-  var CURRENT_BUILD='stretch-timer-v51';
+  var CURRENT_BUILD='stretch-timer-v52';
   var BUILD_KEY='stretchTimer.appBuild';
   var PENDING_NOTICE='stretchTimer.pendingNotice';
   var refreshRunning=false;
