@@ -1,6 +1,6 @@
 (function(){
-  if(window.__scrollRestoreV52)return;
-  window.__scrollRestoreV52=true;
+  if(window.__scrollRestoreV79)return;
+  window.__scrollRestoreV79=true;
 
   var menuScroll={};
   var pendingRestore=null;
@@ -36,6 +36,12 @@
       return previousOpenItem.apply(this,arguments);
     };
   }
+
+  document.addEventListener('click',function(e){
+    if(typeof currentScreen==='undefined'||currentScreen!=='menuEdit')return;
+    var target=e.target&&e.target.closest?e.target.closest('.item-open,.item-action-pop [data-act="edit"]'):null;
+    if(target)rememberMenuScroll();
+  },true);
 
   var previousOpenMenu=typeof openMenu==='function'?openMenu:null;
   if(previousOpenMenu){
