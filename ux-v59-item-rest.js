@@ -1,33 +1,65 @@
 (function(){
-  if(window.__itemRestV59)return;
-  window.__itemRestV59=true;
+  if(window.__itemRestV60)return;
+  window.__itemRestV60=true;
 
   var DEFAULT_REST=20;
   var MIN_REST=1;
   var MAX_REST=60;
-  var ROW_H=52;
+  var MIN_WORK=1;
+  var DEFAULT_WORK_MAX=600;
+  var MAX_WORK=3600;
+  var ROW_H=40;
   var saveTimer=null;
+  var audioCtx=null;
+  var lastTickAt=0;
 
   var style=document.createElement('style');
-  style.setAttribute('data-item-rest-v59','');
+  style.setAttribute('data-item-rest-v60','');
   style.textContent='\
-#itemRestField{display:grid;gap:8px}\
-#itemRestField .item-rest-label{color:#48505a;font-size:14px}\
-.item-rest-wheel-wrap{position:relative;height:156px;border-radius:18px;background:#fff;outline:1px solid #edf0f2;overflow:hidden}\
-.item-rest-wheel-wrap:before,.item-rest-wheel-wrap:after{content:"";position:absolute;left:12px;right:12px;height:1px;background:#e4e8eb;z-index:2;pointer-events:none}\
-.item-rest-wheel-wrap:before{top:52px}.item-rest-wheel-wrap:after{bottom:52px}\
-.item-rest-wheel{height:156px;overflow-y:auto;scroll-snap-type:y mandatory;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:52px 0;mask-image:linear-gradient(to bottom,transparent 0,#000 28%,#000 72%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 28%,#000 72%,transparent 100%)}\
-.item-rest-wheel::-webkit-scrollbar{display:none}\
-.item-rest-option{height:52px;display:flex;align-items:center;justify-content:center;scroll-snap-align:center;font-size:21px;color:#9aa1a9;user-select:none;cursor:pointer;transition:font-size .12s ease,color .12s ease,font-weight .12s ease}\
-.item-rest-option.selected{font-size:27px;font-weight:800;color:#1b1f24}\
-.item-rest-unit{position:absolute;left:calc(50% + 26px);top:50%;transform:translateY(-50%);z-index:3;font-size:14px;color:#6e7680;pointer-events:none}\
-.item-rest-last{padding:14px 16px;border-radius:16px;background:#f1f3f5;color:#6e7680;font-size:14px}\
+#itemTimeFields{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}\
+.item-time-field{display:grid;gap:7px;min-width:0}\
+.item-time-label{color:#48505a;font-size:13px;text-align:center;white-space:nowrap}\
+.item-time-wheel-wrap{position:relative;height:120px;border-radius:15px;background:#fff;outline:1px solid #edf0f2;overflow:hidden}\
+.item-time-wheel-wrap:before,.item-time-wheel-wrap:after{content:"";position:absolute;left:10px;right:10px;height:1px;background:#e4e8eb;z-index:2;pointer-events:none}\
+.item-time-wheel-wrap:before{top:40px}.item-time-wheel-wrap:after{bottom:40px}\
+.item-time-wheel{height:120px;overflow-y:auto;scroll-snap-type:y mandatory;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:40px 0;mask-image:linear-gradient(to bottom,transparent 0,#000 30%,#000 70%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 30%,#000 70%,transparent 100%)}\
+.item-time-wheel::-webkit-scrollbar{display:none}\
+.item-time-option{height:40px;display:flex;align-items:center;justify-content:center;scroll-snap-align:center;font-size:17px;color:#9aa1a9;user-select:none;cursor:pointer;transition:font-size .1s ease,color .1s ease,font-weight .1s ease}\
+.item-time-option.selected{font-size:22px;font-weight:800;color:#1b1f24}\
+.item-time-unit{position:absolute;left:calc(50% + 23px);top:50%;transform:translateY(-50%);z-index:3;font-size:12px;color:#6e7680;pointer-events:none}\
+.item-time-last{height:120px;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;border-radius:15px;background:#f1f3f5;color:#6e7680;font-size:12px;line-height:1.45}\
+@media(max-width:380px){#itemTimeFields{gap:8px}.item-time-label{font-size:12px}.item-time-option.selected{font-size:21px}}\
 ';
   document.head.appendChild(style);
 
-  function clampRest(v){
-    v=Math.round(+v||DEFAULT_REST);
-    return Math.max(MIN_REST,Math.min(MAX_REST,v));
+  function clamp(v,min,max,fallback){
+    v=Math.round(+v||fallback);
+    return Math.max(min,Math.min(max,v));
+  }
+  function clampRest(v){return clamp(v,MIN_REST,MAX_REST,DEFAULT_REST)}
+  function clampWork(v){return clamp(v,MIN_WORK,MAX_WORK,30)}
+
+  function ensureAudio(){
+    try{
+      if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+      if(audioCtx.state==='suspended')audioCtx.resume();
+    }catch(e){}
+  }
+
+  function tick(){
+    if(Date.now()-lastTickAt<24)return;
+    lastTickAt=Date.now();
+    try{
+      ensureAudio();
+      if(!audioCtx)return;
+      var o=audioCtx.createOscillator(),g=audioCtx.createGain();
+      o.type='square';
+      o.frequency.value=1250;
+      g.gain.setValueAtTime(.012,audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+.018);
+      o.connect(g);g.connect(audioCtx.destination);
+      o.start();o.stop(audioCtx.currentTime+.02);
+    }catch(e){}
   }
 
   function ensureData(){
@@ -37,13 +69,10 @@
       state.menus.forEach(function(m){
         if(!Array.isArray(m.items))return;
         m.items.forEach(function(x){
-          if(!Number.isFinite(+x.restSeconds)){
-            x.restSeconds=DEFAULT_REST;
-            changed=true;
-          }else{
-            var next=clampRest(x.restSeconds);
-            if(next!==+x.restSeconds){x.restSeconds=next;changed=true}
-          }
+          if(!Number.isFinite(+x.restSeconds)){x.restSeconds=DEFAULT_REST;changed=true}
+          else{var next=clampRest(x.restSeconds);if(next!==+x.restSeconds){x.restSeconds=next;changed=true}}
+          if(!Number.isFinite(+x.seconds)){x.seconds=30;changed=true}
+          else{var work=clampWork(x.seconds);if(work!==+x.seconds){x.seconds=work;changed=true}}
         });
       });
       if(changed&&typeof save==='function')save(false);
@@ -51,187 +80,140 @@
   }
 
   function currentIndex(){
+    try{var m=typeof menu==='function'?menu():null;if(!m||!Array.isArray(m.items))return -1;return m.items.findIndex(function(x){return x.id===currentItemId})}catch(e){return -1}
+  }
+  function isLastItem(){try{var m=typeof menu==='function'?menu():null,i=currentIndex();return !!(m&&i>=0&&i===m.items.length-1)}catch(e){return false}}
+
+  function removeOldFields(){
+    var oldRest=document.getElementById('restSeconds');
+    if(oldRest){var restLabel=oldRest.closest('label');if(restLabel)restLabel.style.display='none';else oldRest.style.display='none'}
+    var oldWork=document.getElementById('itemSeconds');
+    if(oldWork){var workLabel=oldWork.closest('label');if(workLabel)workLabel.style.display='none';else oldWork.style.display='none'}
+  }
+
+  function setSelected(wheel,value,withTick){
+    var old=wheel.dataset.selected||'';
+    wheel.dataset.selected=String(value);
+    Array.prototype.forEach.call(wheel.children,function(el){el.classList.toggle('selected',+el.dataset.value===value)});
+    if(withTick&&old&&old!==String(value))tick();
+  }
+
+  function writeValue(kind,value){
     try{
-      var m=typeof menu==='function'?menu():null;
-      if(!m||!Array.isArray(m.items))return -1;
-      return m.items.findIndex(function(x){return x.id===currentItemId});
-    }catch(e){return -1}
-  }
-
-  function isLastItem(){
-    try{
-      var m=typeof menu==='function'?menu():null;
-      var i=currentIndex();
-      return !!(m&&i>=0&&i===m.items.length-1);
-    }catch(e){return false}
-  }
-
-  function removeOldMenuRest(){
-    var old=document.getElementById('restSeconds');
-    if(old){
-      var label=old.closest('label');
-      if(label)label.style.display='none';else old.style.display='none';
-    }
-  }
-
-  function setSelected(wheel,value){
-    value=clampRest(value);
-    Array.prototype.forEach.call(wheel.children,function(el){
-      el.classList.toggle('selected',+el.dataset.value===value);
-    });
-  }
-
-  function writeRest(value){
-    try{
-      var x=typeof item==='function'?item():null;
-      if(!x)return;
-      value=clampRest(value);
-      if(x.restSeconds===value)return;
-      x.restSeconds=value;
+      var x=typeof item==='function'?item():null;if(!x)return;
+      if(kind==='rest')value=clampRest(value);else value=clampWork(value);
+      var key=kind==='rest'?'restSeconds':'seconds';
+      if(+x[key]===value)return;
+      x[key]=value;
       if(typeof save==='function')save();
+      if(kind==='work'&&typeof updateDuration==='function')updateDuration();
     }catch(e){console.error(e)}
   }
 
-  function decorateItemRest(){
-    removeOldMenuRest();
-    var screen=document.getElementById('itemEdit');
-    if(!screen)return;
-    var stack=screen.querySelector('.stack');
-    if(!stack)return;
-    var old=document.getElementById('itemRestField');
-    if(old)old.remove();
-
-    var x=typeof item==='function'?item():null;
-    if(!x)return;
-    if(!Number.isFinite(+x.restSeconds))x.restSeconds=DEFAULT_REST;
-    x.restSeconds=clampRest(x.restSeconds);
-
-    var field=document.createElement('div');
-    field.id='itemRestField';
-    field.className='field';
-    var secondsField=document.getElementById('itemSeconds');
-    var secondsLabel=secondsField&&secondsField.closest('label');
-
-    if(isLastItem()){
-      field.innerHTML='<span class="item-rest-label">次の種目まで</span><div class="item-rest-last">最後の種目のため休憩は入りません</div>';
-    }else{
-      field.innerHTML='<span class="item-rest-label">次の種目まで</span><div class="item-rest-wheel-wrap"><div class="item-rest-wheel" id="itemRestWheel"></div><span class="item-rest-unit">秒</span></div>';
-      var wheel=field.querySelector('.item-rest-wheel');
-      var frag=document.createDocumentFragment();
-      for(var n=MIN_REST;n<=MAX_REST;n++){
-        var opt=document.createElement('div');
-        opt.className='item-rest-option';
-        opt.dataset.value=String(n);
-        opt.textContent=String(n);
-        frag.appendChild(opt);
-      }
-      wheel.appendChild(frag);
-      var value=clampRest(x.restSeconds);
-      setSelected(wheel,value);
-      requestAnimationFrame(function(){wheel.scrollTop=(value-MIN_REST)*ROW_H});
-
-      function syncFromScroll(){
-        var next=clampRest(Math.round(wheel.scrollTop/ROW_H)+MIN_REST);
-        setSelected(wheel,next);
-        clearTimeout(saveTimer);
-        saveTimer=setTimeout(function(){writeRest(next)},120);
-      }
-      wheel.addEventListener('scroll',syncFromScroll,{passive:true});
-      wheel.addEventListener('click',function(e){
-        var opt=e.target.closest('.item-rest-option');
-        if(!opt)return;
-        var next=clampRest(opt.dataset.value);
-        wheel.scrollTo({top:(next-MIN_REST)*ROW_H,behavior:'smooth'});
-      });
+  function buildWheel(kind,value,max){
+    var wrap=document.createElement('div');
+    wrap.className='item-time-wheel-wrap';
+    var wheel=document.createElement('div');
+    wheel.className='item-time-wheel';
+    var unit=document.createElement('span');unit.className='item-time-unit';unit.textContent='秒';
+    wrap.append(wheel,unit);
+    var min=1,frag=document.createDocumentFragment();
+    for(var n=min;n<=max;n++){
+      var opt=document.createElement('div');opt.className='item-time-option';opt.dataset.value=String(n);opt.textContent=String(n);frag.appendChild(opt);
     }
+    wheel.appendChild(frag);
+    value=kind==='rest'?clampRest(value):clampWork(value);
+    setSelected(wheel,value,false);
+    requestAnimationFrame(function(){wheel.scrollTop=(value-min)*ROW_H});
 
-    if(secondsLabel)secondsLabel.insertAdjacentElement('afterend',field);
-    else stack.insertBefore(field,stack.children[2]||null);
+    wheel.addEventListener('pointerdown',ensureAudio,{passive:true});
+    wheel.addEventListener('touchstart',ensureAudio,{passive:true});
+    wheel.addEventListener('scroll',function(){
+      var next=Math.round(wheel.scrollTop/ROW_H)+min;
+      next=kind==='rest'?clampRest(next):clamp(next,min,max,value);
+      setSelected(wheel,next,true);
+      clearTimeout(saveTimer);
+      saveTimer=setTimeout(function(){writeValue(kind,next)},90);
+    },{passive:true});
+    wheel.addEventListener('click',function(e){
+      var opt=e.target.closest('.item-time-option');if(!opt)return;
+      var next=+opt.dataset.value;
+      wheel.scrollTo({top:(next-min)*ROW_H,behavior:'smooth'});
+    });
+    return wrap;
   }
 
-  ensureData();
-  removeOldMenuRest();
+  function decorateItemTimes(){
+    removeOldFields();
+    var screen=document.getElementById('itemEdit');if(!screen)return;
+    var stack=screen.querySelector('.stack');if(!stack)return;
+    var old=document.getElementById('itemTimeFields');if(old)old.remove();
+    var x=typeof item==='function'?item():null;if(!x)return;
+    if(!Number.isFinite(+x.restSeconds))x.restSeconds=DEFAULT_REST;
+    if(!Number.isFinite(+x.seconds))x.seconds=30;
+    x.restSeconds=clampRest(x.restSeconds);x.seconds=clampWork(x.seconds);
+
+    var row=document.createElement('div');row.id='itemTimeFields';
+    var workField=document.createElement('div');workField.className='item-time-field';
+    var workLabel=document.createElement('div');workLabel.className='item-time-label';workLabel.textContent='運動時間';
+    var workMax=Math.max(DEFAULT_WORK_MAX,Math.min(MAX_WORK,x.seconds));
+    workField.append(workLabel,buildWheel('work',x.seconds,workMax));
+
+    var restField=document.createElement('div');restField.className='item-time-field';
+    var restLabel=document.createElement('div');restLabel.className='item-time-label';restLabel.textContent='休憩時間';
+    restField.appendChild(restLabel);
+    if(isLastItem()){
+      var last=document.createElement('div');last.className='item-time-last';last.textContent='最後の種目のため休憩なし';restField.appendChild(last);
+    }else restField.appendChild(buildWheel('rest',x.restSeconds,MAX_REST));
+    row.append(workField,restField);
+
+    var seconds=document.getElementById('itemSeconds'),secondsLabel=seconds&&seconds.closest('label');
+    if(secondsLabel)secondsLabel.insertAdjacentElement('afterend',row);else stack.insertBefore(row,stack.children[2]||null);
+  }
+
+  ensureData();removeOldFields();
 
   if(typeof totalSeconds==='function'){
     totalSeconds=function(m){
       if(!m||!Array.isArray(m.items))return 0;
-      return m.items.reduce(function(sum,x,i){
-        var work=Math.max(1,+x.seconds||1);
-        var rest=i<m.items.length-1?clampRest(x.restSeconds):0;
-        return sum+work+rest;
-      },0);
+      return m.items.reduce(function(sum,x,i){return sum+Math.max(1,+x.seconds||1)+(i<m.items.length-1?clampRest(x.restSeconds):0)},0);
     };
   }
 
   if(typeof advance==='function'){
     advance=function(){
-      var m=typeof menu==='function'?menu():null;
-      if(!m||!timerState)return;
+      var m=typeof menu==='function'?menu():null;if(!m||!timerState)return;
       if(timerState.phase==='item'&&timerState.index<m.items.length-1){
-        var current=m.items[timerState.index];
-        var rest=clampRest(current&&current.restSeconds);
-        timerState.phase='rest';
-        timerState.remaining=rest;
-        timerState.total=rest;
-        return;
+        var current=m.items[timerState.index],rest=clampRest(current&&current.restSeconds);
+        timerState.phase='rest';timerState.remaining=rest;timerState.total=rest;return;
       }
       timerState.index++;
-      if(timerState.index>=m.items.length){
-        if(typeof finishTimer==='function')finishTimer();
-        return;
-      }
-      timerState.phase='item';
-      timerState.remaining=m.items[timerState.index].seconds;
-      timerState.total=m.items[timerState.index].seconds;
+      if(timerState.index>=m.items.length){if(typeof finishTimer==='function')finishTimer();return}
+      timerState.phase='item';timerState.remaining=m.items[timerState.index].seconds;timerState.total=m.items[timerState.index].seconds;
     };
   }
 
   if(typeof syncPayload==='function'){
     syncPayload=function(){
-      return JSON.stringify({
-        schemaVersion:2,
-        updatedAt:state.updatedAt||Date.now(),
-        menus:state.menus.map(function(m){
-          var copy={};Object.keys(m).forEach(function(k){if(k!=='items')copy[k]=m[k]});
-          copy.items=(m.items||[]).map(function(x){
-            return {id:x.id,name:x.name,seconds:x.seconds,restSeconds:clampRest(x.restSeconds),desc:x.desc,photoData:x.photo||''};
-          });
-          return copy;
-        })
-      });
+      return JSON.stringify({schemaVersion:2,updatedAt:state.updatedAt||Date.now(),menus:state.menus.map(function(m){
+        var copy={};Object.keys(m).forEach(function(k){if(k!=='items')copy[k]=m[k]});
+        copy.items=(m.items||[]).map(function(x){return {id:x.id,name:x.name,seconds:clampWork(x.seconds),restSeconds:clampRest(x.restSeconds),desc:x.desc,photoData:x.photo||''}});return copy;
+      })});
     };
   }
 
   var previousOpenItem=typeof openItem==='function'?openItem:null;
-  if(previousOpenItem){
-    openItem=function(){
-      var r=previousOpenItem.apply(this,arguments);
-      var x=typeof item==='function'?item():null;
-      if(x&&!Number.isFinite(+x.restSeconds)){x.restSeconds=DEFAULT_REST;if(typeof save==='function')save(false)}
-      setTimeout(decorateItemRest,0);
-      return r;
-    };
-  }
+  if(previousOpenItem){openItem=function(){var r=previousOpenItem.apply(this,arguments);var x=typeof item==='function'?item():null;if(x&&!Number.isFinite(+x.restSeconds)){x.restSeconds=DEFAULT_REST;if(typeof save==='function')save(false)}setTimeout(decorateItemTimes,0);return r}};
 
   var previousRenderItems=typeof renderItems==='function'?renderItems:null;
   if(previousRenderItems){
     renderItems=function(){
       var r=previousRenderItems.apply(this,arguments);
-      try{
-        var m=typeof menu==='function'?menu():null;
-        if(m&&Array.isArray(m.items)){
-          setTimeout(function(){
-            document.querySelectorAll('#itemList .item').forEach(function(el,i){
-              var meta=el.querySelector('.muted');
-              var x=m.items[i];
-              if(meta&&x)meta.textContent=i===m.items.length-1?x.seconds+'秒':x.seconds+'秒 ・ 次まで'+clampRest(x.restSeconds)+'秒';
-            });
-          },0);
-        }
-      }catch(e){}
-      return r;
+      try{var m=typeof menu==='function'?menu():null;if(m&&Array.isArray(m.items))setTimeout(function(){
+        document.querySelectorAll('#itemList .item').forEach(function(el,i){var meta=el.querySelector('.muted'),x=m.items[i];if(meta&&x)meta.textContent=i===m.items.length-1?x.seconds+'秒':x.seconds+'秒 ・ 休憩'+clampRest(x.restSeconds)+'秒'});
+      },0)}catch(e){}return r;
     };
   }
 
-  setTimeout(function(){removeOldMenuRest();if(typeof currentScreen!=='undefined'&&currentScreen==='itemEdit')decorateItemRest()},0);
+  setTimeout(function(){removeOldFields();if(typeof currentScreen!=='undefined'&&currentScreen==='itemEdit')decorateItemTimes()},0);
 })();
