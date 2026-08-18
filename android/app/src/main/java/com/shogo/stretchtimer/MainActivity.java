@@ -126,6 +126,7 @@ public class MainActivity extends Activity {
                 cameraOutputUri = null;
 
                 boolean wantsImage = acceptsImages(params);
+                boolean wantsVideo = acceptsVideos(params);
 
                 Intent contentIntent;
                 if (wantsImage) {
@@ -136,6 +137,11 @@ public class MainActivity extends Activity {
                         contentIntent.addCategory(Intent.CATEGORY_OPENABLE);
                         contentIntent.setType("image/*");
                     }
+                } else if (wantsVideo) {
+                    contentIntent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    contentIntent.addCategory(Intent.CATEGORY_OPENABLE);
+                    contentIntent.setType("video/*");
+                    contentIntent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"video/mp4", "video/webm"});
                 } else {
                     contentIntent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                     contentIntent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -162,7 +168,7 @@ public class MainActivity extends Activity {
                 Intent chooser = new Intent(Intent.ACTION_CHOOSER);
                 chooser.putExtra(Intent.EXTRA_INTENT, contentIntent);
                 if (cameraIntent != null) chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{cameraIntent});
-                chooser.putExtra(Intent.EXTRA_TITLE, wantsImage ? "写真を選択" : "Excelファイルを選択");
+                chooser.putExtra(Intent.EXTRA_TITLE, wantsImage ? "写真を選択" : wantsVideo ? "動画を選択" : "Excelファイルを選択");
                 try {
                     startActivityForResult(chooser, FILE_CHOOSER_REQUEST);
                     return true;
@@ -191,6 +197,20 @@ public class MainActivity extends Activity {
                         || value.contains(".png") || value.contains(".webp") || value.contains(".gif")) {
                     return true;
                 }
+            }
+        } catch (Exception ignored) {
+        }
+        return false;
+    }
+
+    private boolean acceptsVideos(WebChromeClient.FileChooserParams params) {
+        try {
+            String[] acceptTypes = params == null ? null : params.getAcceptTypes();
+            if (acceptTypes == null) return false;
+            for (String acceptType : acceptTypes) {
+                if (acceptType == null) continue;
+                String value = acceptType.toLowerCase();
+                if (value.contains("video/") || value.contains(".mp4") || value.contains(".webm")) return true;
             }
         } catch (Exception ignored) {
         }
