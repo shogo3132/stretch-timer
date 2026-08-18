@@ -1,15 +1,16 @@
 (function(){
-  if(window.__updateWatchV51)return;
-  window.__updateWatchV51=true;
+  if(window.__updateWatchV53)return;
+  window.__updateWatchV53=true;
 
-  var CURRENT_BUILD='stretch-timer-v52';
+  var CURRENT_BUILD='stretch-timer-v53';
   var POLL_MS=10000;
   var timer=null;
   var checking=false;
+  var updating=false;
   var foundBuild='';
 
   var style=document.createElement('style');
-  style.setAttribute('data-update-watch-v51','');
+  style.setAttribute('data-update-watch-v53','');
   style.textContent='\
 #updateAvailableBtn{display:none;border:0;border-radius:999px;background:#e9f7f2;color:#168465;font-size:12px;font-weight:800;line-height:1;min-height:30px;padding:7px 10px;white-space:nowrap;cursor:pointer;box-shadow:none}\
 #updateAvailableBtn.show{display:inline-flex;align-items:center;gap:5px}\
@@ -35,11 +36,14 @@
     return badge;
   }
 
+  function setBadgeText(text){var badge=ensureBadge();if(badge){var s=badge.querySelector('span:last-child');if(s)s.textContent=text}}
+
   function showBadge(build){
     foundBuild=build||foundBuild;
     var badge=ensureBadge();
     if(!badge)return;
     badge.classList.add('show');
+    badge.onclick=applyUpdate;
     if(foundBuild)badge.title='新しいバージョン '+foundBuild.replace('stretch-timer-','')+' があります';
     stop();
   }
@@ -55,7 +59,7 @@
   }
 
   async function check(){
-    if(checking||document.hidden)return;
+    if(checking||updating||document.hidden)return;
     checking=true;
     try{
       var build=await remoteBuild();
@@ -63,34 +67,88 @@
     }finally{checking=false}
   }
 
-  async function applyUpdate(){
-    var badge=ensureBadge();
-    if(badge){badge.classList.add('updating');badge.querySelector('span:last-child').textContent='更新中…'}
-    try{
-      if('serviceWorker'in navigator){
-        var reg=await navigator.serviceWorker.getRegistration();
-        if(reg)await reg.update();
+  function controllerBuild(){
+    return new Promise(function(resolve){
+      try{
+        var c=navigator.serviceWorker&&navigator.serviceWorker.controller;
+        if(!c){resolve('');return}
+        var ch=new MessageChannel(),done=false;
+        var finish=function(v){if(done)return;done=true;resolve(v||'')};
+        ch.port1.onmessage=function(e){finish(e.data&&e.data.build)};
+        c.postMessage({type:'GET_BUILD'},[ch.port2]);
+        setTimeout(function(){finish('')},700);
+      }catch(e){resolve('')}
+    });
+  }
+
+  async function waitUntilControlled(target){
+    var deadline=Date.now()+30000,lastUpdate=0;
+    while(Date.now()<deadline){
+      var current=await controllerBuild();
+      if(current===target)return true;
+      if(Date.now()-lastUpdate>2200){
+        lastUpdate=Date.now();
+        try{var reg=await navigator.serviceWorker.getRegistration();if(reg)await reg.update()}catch(e){}
       }
+      await new Promise(function(r){setTimeout(r,250)});
+    }
+    return false;
+  }
+
+  async function applyUpdate(){
+    if(updating)return;
+    updating=true;stop();
+    var badge=ensureBadge();
+    if(badge){badge.classList.add('updating');badge.classList.add('show')}
+    setBadgeText('更新中…');
+    try{
+      var target=foundBuild||await remoteBuild();
+      if(!target||target===CURRENT_BUILD){
+        if(badge){badge.classList.remove('show','updating')}
+        foundBuild='';start();return;
+      }
+      if(!('serviceWorker'in navigator))throw new Error('service worker unavailable');
+      var reg=await navigator.serviceWorker.getRegistration();
+      if(reg)await reg.update();
+      var ready=await waitUntilControlled(target);
+      if(!ready)throw new Error('new service worker did not activate');
       try{localStorage.setItem('stretchTimer.pendingNotice','アプリを最新版に更新しました')}catch(e){}
       location.replace(location.pathname+'?r='+Date.now());
     }catch(e){
-      if(badge){badge.classList.remove('updating');badge.querySelector('span:last-child').textContent='更新あり'}
+      console.error(e);
+      updating=false;
+      if(badge){badge.classList.remove('updating');badge.classList.add('show')}
+      setBadgeText('更新を再試行');
     }
   }
 
-  function start(){
-    if(timer||foundBuild)return;
-    timer=setInterval(check,POLL_MS);
+  async function manualRefresh(){
+    if(updating||checking)return;
+    var btn=document.getElementById('refreshBtn');
+    if(btn)btn.classList.add('refreshing');
+    checking=true;
+    try{
+      var build=await remoteBuild();
+      if(build&&build!==CURRENT_BUILD){foundBuild=build;showBadge(build);checking=false;if(btn)btn.classList.remove('refreshing');await applyUpdate();return}
+      if(typeof hasDropboxAuth==='function'&&hasDropboxAuth()&&typeof syncNow==='function'){
+        try{await syncNow(false)}catch(e){console.error(e)}
+      }
+    }finally{checking=false;if(btn)btn.classList.remove('refreshing')}
   }
+
+  function bindRefresh(){var btn=document.getElementById('refreshBtn');if(btn)btn.onclick=manualRefresh}
+  var prevShow=typeof show==='function'?show:null;
+  if(prevShow)show=function(){var r=prevShow.apply(this,arguments);setTimeout(bindRefresh,0);return r};
+
+  function start(){if(timer||foundBuild||updating)return;timer=setInterval(check,POLL_MS)}
   function stop(){if(timer){clearInterval(timer);timer=null}}
 
   document.addEventListener('visibilitychange',function(){
     if(document.hidden)return;
-    check();
-    start();
+    check();start();bindRefresh();
   });
 
-  ensureBadge();
+  ensureBadge();bindRefresh();
   setTimeout(check,1200);
   start();
 })();
