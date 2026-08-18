@@ -1,12 +1,12 @@
-const CACHE='stretch-timer-v52';
-const APP_VERSION='0.12.38';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./favicon.svg','./ux-v22.js?v=52','./ux-v18.js?v=52','./ux-v26-detail.js?v=52','./ux-v34-timer.js?v=52','./ux-v35-history.js?v=52','./ux-v36-sample.js?v=52','./ux-v38-polish.js?v=52','./ux-v39-item-actions.js?v=52','./ux-v41-timer-compact.js?v=52','./ux-v43-timer-back.js?v=52','./ux-v46-desktop-dnd.js?v=52','./ux-v48-image-storage.js?v=52','./ux-v49-photo-remove.js?v=52','./ux-v50-live-edit.js?v=52','./ux-v51-update-watch.js?v=52','./ux-v52-scroll-restore.js?v=52'];
+const CACHE='stretch-timer-v53';
+const APP_VERSION='0.12.39';
+const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./favicon.svg','./ux-v22.js?v=53','./ux-v18.js?v=53','./ux-v26-detail.js?v=53','./ux-v34-timer.js?v=53','./ux-v35-history.js?v=53','./ux-v36-sample.js?v=53','./ux-v38-polish.js?v=53','./ux-v39-item-actions.js?v=53','./ux-v41-timer-compact.js?v=53','./ux-v43-timer-back.js?v=53','./ux-v46-desktop-dnd.js?v=53','./ux-v48-image-storage.js?v=53','./ux-v49-photo-remove.js?v=53','./ux-v50-live-edit.js?v=53','./ux-v52-scroll-restore.js?v=53','./ux-v51-update-watch.js?v=53'];
 
 function patchHtml(html){
   if(!html.includes('rel="icon"')){
     html=html.replace(
       '<link rel="manifest" href="manifest.webmanifest">',
-      '<link rel="manifest" href="manifest.webmanifest">\n<link rel="icon" type="image/svg+xml" href="./favicon.svg?v=52">'
+      '<link rel="manifest" href="manifest.webmanifest">\n<link rel="icon" type="image/svg+xml" href="./favicon.svg?v=53">'
     );
   }
 
@@ -44,22 +44,22 @@ function patchHtml(html){
 
   html=html.replace(/<script\s+src="\.\/ux-v[^"?]+\.js(?:\?v=\d+)?"><\/script>/g,'');
   html=html.replace('</body>',
-    '<script src="./ux-v22.js?v=52"></script>'+
-    '<script src="./ux-v18.js?v=52"></script>'+
-    '<script src="./ux-v26-detail.js?v=52"></script>'+
-    '<script src="./ux-v34-timer.js?v=52"></script>'+
-    '<script src="./ux-v35-history.js?v=52"></script>'+
-    '<script src="./ux-v36-sample.js?v=52"></script>'+
-    '<script src="./ux-v38-polish.js?v=52"></script>'+
-    '<script src="./ux-v39-item-actions.js?v=52"></script>'+
-    '<script src="./ux-v41-timer-compact.js?v=52"></script>'+
-    '<script src="./ux-v43-timer-back.js?v=52"></script>'+
-    '<script src="./ux-v46-desktop-dnd.js?v=52"></script>'+
-    '<script src="./ux-v48-image-storage.js?v=52"></script>'+
-    '<script src="./ux-v49-photo-remove.js?v=52"></script>'+
-    '<script src="./ux-v50-live-edit.js?v=52"></script>'+
-    '<script src="./ux-v51-update-watch.js?v=52"></script>'+
-    '<script src="./ux-v52-scroll-restore.js?v=52"></script></body>'
+    '<script src="./ux-v22.js?v=53"></script>'+
+    '<script src="./ux-v18.js?v=53"></script>'+
+    '<script src="./ux-v26-detail.js?v=53"></script>'+
+    '<script src="./ux-v34-timer.js?v=53"></script>'+
+    '<script src="./ux-v35-history.js?v=53"></script>'+
+    '<script src="./ux-v36-sample.js?v=53"></script>'+
+    '<script src="./ux-v38-polish.js?v=53"></script>'+
+    '<script src="./ux-v39-item-actions.js?v=53"></script>'+
+    '<script src="./ux-v41-timer-compact.js?v=53"></script>'+
+    '<script src="./ux-v43-timer-back.js?v=53"></script>'+
+    '<script src="./ux-v46-desktop-dnd.js?v=53"></script>'+
+    '<script src="./ux-v48-image-storage.js?v=53"></script>'+
+    '<script src="./ux-v49-photo-remove.js?v=53"></script>'+
+    '<script src="./ux-v50-live-edit.js?v=53"></script>'+
+    '<script src="./ux-v52-scroll-restore.js?v=53"></script>'+
+    '<script src="./ux-v51-update-watch.js?v=53"></script></body>'
   );
   return html;
 }
@@ -82,6 +82,12 @@ self.addEventListener('activate',e=>{
     self.clients.claim(),
     caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))
   ]));
+});
+
+self.addEventListener('message',e=>{
+  if(e.data&&e.data.type==='GET_BUILD'&&e.ports&&e.ports[0]){
+    e.ports[0].postMessage({build:CACHE,version:APP_VERSION});
+  }
 });
 
 self.addEventListener('fetch',e=>{
