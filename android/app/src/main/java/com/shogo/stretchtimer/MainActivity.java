@@ -2,15 +2,26 @@ package com.shogo.stretchtimer;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.app.PendingIntent;
+import android.app.PictureInPictureParams;
+import android.app.RemoteAction;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ContentValues;
+import android.content.IntentFilter;
+import android.content.res.Configuration;
 import android.graphics.Color;
+import android.graphics.drawable.Icon;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Rational;
 import android.view.View;
 import android.view.WindowInsets;
 import android.webkit.CookieManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.SafeBrowsingResponse;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -28,16 +39,50 @@ import com.dropbox.core.oauth.DbxCredential;
 import org.json.JSONObject;
 
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends Activity {
     private static final String APP_URL = "https://shogo3132.github.io/stretch-timer/";
     private static final String DROPBOX_APP_KEY = "yf8bmab58g823cb";
     private static final int FILE_CHOOSER_REQUEST = 501;
+    private static final String ACTION_PIP_TOGGLE = "com.shogo.stretchtimer.PIP_TOGGLE";
 
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
     private Uri cameraOutputUri;
     private boolean nativeDropboxPending = false;
+    private boolean timerActive = false;
+    private boolean timerCompleted = false;
+    private boolean timerPaused = false;
+    private boolean suppressPipOnce = false;
+    private boolean pipModeSeen = false;
+
+    private final BroadcastReceiver pipActionReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent != null && ACTION_PIP_TOGGLE.equals(intent.getAction())) runPipAction("toggle");
+        }
+    };
+
+    private final class TimerBridge {
+        @JavascriptInterface
+        public void updateTimerState(String raw) {
+            try {
+                JSONObject value = new JSONObject(raw == null ? "{}" : raw);
+                boolean active = value.optBoolean("active", false);
+                boolean completed = value.optBoolean("completed", false);
+                boolean paused = value.optBoolean("paused", false);
+                runOnUiThread(() -> {
+                    timerActive = active;
+                    timerCompleted = completed;
+                    timerPaused = paused;
+                    updatePictureInPictureParams();
+                });
+            } catch (Exception ignored) {
+            }
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +106,7 @@ public class MainActivity extends Activity {
 
         webView = new WebView(this);
         webView.setBackgroundColor(Color.rgb(247, 248, 250));
+        webView.addJavascriptInterface(new TimerBridge(), "StretchTimerNative");
         shell.addView(webView, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT
@@ -79,7 +125,11 @@ public class MainActivity extends Activity {
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         settings.setBuiltInZoomControls(false);
         settings.setDisplayZoomControls(false);
-        settings.setUserAgentString(settings.getUserAgentString() + " StretchTimerApp/0.12.12");
+        settings.setUserAgentString(settings.getUserAgentString() + " StretchTimerApp/0.12.14");
+
+        IntentFilter pipFilter = new IntentFilter(ACTION_PIP_TOGGLE);
+        if (Build.VERSION.SDK_INT >= 33) registerReceiver(pipActionReceiver, pipFilter, Context.RECEIVER_NOT_EXPORTED);
+        else registerReceiver(pipActionReceiver, pipFilter);
 
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
@@ -217,12 +267,60 @@ public class MainActivity extends Activity {
         return false;
     }
 
+    private PictureInPictureParams buildPictureInPictureParams() {
+        PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder()
+                .setAspectRatio(new Rational(16, 9));
+        List<RemoteAction> actions = new ArrayList<>();
+        if (timerActive && !timerCompleted) {
+            Intent toggleIntent = new Intent(ACTION_PIP_TOGGLE).setPackage(getPackageName());
+            PendingIntent pending = PendingIntent.getBroadcast(
+                    this,
+                    700,
+                    toggleIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+            int iconId = timerPaused ? android.R.drawable.ic_media_play : android.R.drawable.ic_media_pause;
+            String label = timerPaused ? "再開" : "一時停止";
+            actions.add(new RemoteAction(Icon.createWithResource(this, iconId), label, label, pending));
+        }
+        builder.setActions(actions);
+        if (Build.VERSION.SDK_INT >= 31) {
+            builder.setAutoEnterEnabled(timerActive && !suppressPipOnce);
+            builder.setSeamlessResizeEnabled(false);
+        }
+        return builder.build();
+    }
+
+    private void updatePictureInPictureParams() {
+        if (Build.VERSION.SDK_INT < 26) return;
+        try { setPictureInPictureParams(buildPictureInPictureParams()); } catch (Exception ignored) {}
+    }
+
+    private void runPipAction(String action) {
+        if (webView == null) return;
+        String safeAction = JSONObject.quote(action == null ? "" : action);
+        webView.evaluateJavascript(
+                "if(typeof window.__stretchTimerPipActionV96==='function'){window.__stretchTimerPipActionV96(" + safeAction + ");}",
+                null
+        );
+    }
+
+    private void notifyWebPictureInPictureMode(boolean enabled) {
+        if (webView == null) return;
+        webView.evaluateJavascript(
+                "if(typeof window.__stretchTimerSetPipModeV96==='function'){window.__stretchTimerSetPipModeV96(" + enabled + ");}",
+                null
+        );
+    }
+
     private boolean isYouTubeHost(String host) {
         return host.equals("youtu.be") || host.equals("youtube.com") || host.endsWith(".youtube.com")
                 || host.equals("youtube-nocookie.com") || host.endsWith(".youtube-nocookie.com");
     }
 
     private void openYouTube(Uri uri) {
+        suppressPipOnce = true;
+        updatePictureInPictureParams();
         Intent appIntent = new Intent(Intent.ACTION_VIEW, uri);
         appIntent.setPackage("com.google.android.youtube");
         try {
@@ -243,7 +341,7 @@ public class MainActivity extends Activity {
             Auth.startOAuth2PKCE(
                     this,
                     DROPBOX_APP_KEY,
-                    DbxRequestConfig.newBuilder("stretch-timer/0.12.12").build(),
+                    DbxRequestConfig.newBuilder("stretch-timer/0.12.14").build(),
                     Arrays.asList("files.metadata.read", "files.content.read", "files.content.write")
             );
         } catch (Exception e) {
@@ -328,6 +426,12 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         if (webView != null) webView.onResume();
+        if (!isInPictureInPictureMode()) {
+            suppressPipOnce = false;
+            pipModeSeen = false;
+            notifyWebPictureInPictureMode(false);
+            updatePictureInPictureParams();
+        }
         if (!nativeDropboxPending) return;
         try {
             DbxCredential credential = Auth.getDbxCredential();
@@ -340,13 +444,35 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        if (Build.VERSION.SDK_INT >= 26 && Build.VERSION.SDK_INT < 31 && timerActive && !suppressPipOnce) {
+            try { enterPictureInPictureMode(buildPictureInPictureParams()); } catch (Exception ignored) {}
+        }
+    }
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode, Configuration newConfig) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
+        if (isInPictureInPictureMode) pipModeSeen = true;
+        notifyWebPictureInPictureMode(isInPictureInPictureMode);
+    }
+
+    @Override
     protected void onPause() {
-        if (webView != null) webView.onPause();
+        if (webView != null && !timerActive && !isInPictureInPictureMode()) webView.onPause();
         super.onPause();
     }
 
     @Override
+    protected void onStop() {
+        if (pipModeSeen && timerActive && !timerPaused && !isInPictureInPictureMode()) runPipAction("toggle");
+        super.onStop();
+    }
+
+    @Override
     protected void onDestroy() {
+        try { unregisterReceiver(pipActionReceiver); } catch (Exception ignored) {}
         if (webView != null) {
             webView.stopLoading();
             webView.destroy();
