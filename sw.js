@@ -1,6 +1,6 @@
-const CACHE='stretch-timer-v96';
-const APP_VERSION='0.12.82';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./favicon.svg','./vendor/xlsx.mini.min.js?v=96','./ux-v22.js?v=96','./ux-v18.js?v=96','./ux-v26-detail.js?v=96','./ux-v34-timer.js?v=96','./ux-v35-history.js?v=96','./ux-v36-sample.js?v=96','./ux-v38-polish.js?v=96','./ux-v41-timer-compact.js?v=96','./ux-v43-timer-back.js?v=96','./ux-v46-desktop-dnd.js?v=96','./ux-v79-item-editor-core.js?v=96','./ux-v79-item-card-sync.js?v=96','./ux-v52-scroll-restore.js?v=96','./ux-v51-update-watch.js?v=96','./ux-v54-refresh-motion.js?v=96','./ux-v79-transition-stability.js?v=96','./ux-v56-browser-history.js?v=96','./ux-v81-timer-edit-save.js?v=96','./ux-v82-timer-runtime.js?v=96','./ux-v85-xlsx-import.js?v=96','./ux-v86-video-reference.js?v=96','./ux-v88-focus-variants.js?v=96','./ux-v96-native-pip.js?v=96'];
+const CACHE='stretch-timer-v97';
+const APP_VERSION='0.12.83';
+const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./favicon.svg','./vendor/xlsx.mini.min.js?v=96','./ux-v22.js?v=96','./ux-v18.js?v=96','./ux-v26-detail.js?v=96','./ux-v34-timer.js?v=96','./ux-v35-history.js?v=96','./ux-v36-sample.js?v=96','./ux-v38-polish.js?v=96','./ux-v41-timer-compact.js?v=96','./ux-v43-timer-back.js?v=96','./ux-v46-desktop-dnd.js?v=96','./ux-v79-item-editor-core.js?v=96','./ux-v79-item-card-sync.js?v=96','./ux-v52-scroll-restore.js?v=96','./ux-v51-update-watch.js?v=96','./ux-v54-refresh-motion.js?v=96','./ux-v79-transition-stability.js?v=96','./ux-v56-browser-history.js?v=96','./ux-v81-timer-edit-save.js?v=97','./ux-v82-timer-runtime.js?v=96','./ux-v85-xlsx-import.js?v=96','./ux-v86-video-reference.js?v=96','./ux-v88-focus-variants.js?v=96','./ux-v96-native-pip.js?v=96'];
 
 function patchHtml(html){
   if(!html.includes('rel="icon"')){
@@ -63,7 +63,7 @@ function patchHtml(html){
     '<script src="./ux-v54-refresh-motion.js?v=96"></script>'+
     '<script src="./ux-v79-transition-stability.js?v=96"></script>'+
     '<script src="./ux-v56-browser-history.js?v=96"></script>'+
-    '<script src="./ux-v81-timer-edit-save.js?v=96"></script>'+
+    '<script src="./ux-v81-timer-edit-save.js?v=97"></script>'+
     '<script src="./ux-v82-timer-runtime.js?v=96"></script>'+
     '<script src="./ux-v85-xlsx-import.js?v=96"></script>'+
     '<script src="./ux-v86-video-reference.js?v=96"></script>'+

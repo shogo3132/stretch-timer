@@ -79,13 +79,13 @@ jobs:
           test -x "$AAPT"
           NEW_APK=$(find android/app/build/outputs/apk/release -name 'app-release-v*.apk' -type f | head -n 1)
           test -n "$NEW_APK"
-          test -f dist/stretch-timer-v0.12.14.apk
+          test -f dist/stretch-timer-v0.12.15.apk
           "$APKSIGNER" verify --verbose "$NEW_APK"
           if "$AAPT" dump badging "$NEW_APK" | grep -q 'application-debuggable'; then
             echo "Release APK is unexpectedly debuggable"
             exit 1
           fi
-          OLD_CERT=$("$APKSIGNER" verify --print-certs dist/stretch-timer-v0.12.14.apk | awk -F': ' '/Signer #1 certificate SHA-256 digest/{print $2; exit}')
+          OLD_CERT=$("$APKSIGNER" verify --print-certs dist/stretch-timer-v0.12.15.apk | awk -F': ' '/Signer #1 certificate SHA-256 digest/{print $2; exit}')
           NEW_CERT=$("$APKSIGNER" verify --print-certs "$NEW_APK" | awk -F': ' '/Signer #1 certificate SHA-256 digest/{print $2; exit}')
           test -n "$OLD_CERT"
           test "$NEW_CERT" = "$OLD_CERT"
@@ -101,11 +101,11 @@ jobs:
       - name: Publish APK to repository
         run: |
           mkdir -p dist
-          cp android/app/build/outputs/apk/release/app-release-v*.apk dist/stretch-timer-v0.12.15.apk
+          cp android/app/build/outputs/apk/release/app-release-v*.apk dist/stretch-timer-v0.12.16.apk
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add dist/stretch-timer-v0.12.15.apk
+          git add dist/stretch-timer-v0.12.16.apk
           if ! git diff --cached --quiet; then
-            git commit -m "Publish Stretch Timer APK v0.12.15"
+            git commit -m "Publish Stretch Timer APK v0.12.16"
             git push
           fi
