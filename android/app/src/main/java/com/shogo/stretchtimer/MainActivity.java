@@ -125,7 +125,7 @@ public class MainActivity extends Activity {
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         settings.setBuiltInZoomControls(false);
         settings.setDisplayZoomControls(false);
-        settings.setUserAgentString(settings.getUserAgentString() + " StretchTimerApp/0.12.14");
+        settings.setUserAgentString(settings.getUserAgentString() + " StretchTimerApp/0.12.15");
 
         IntentFilter pipFilter = new IntentFilter(ACTION_PIP_TOGGLE);
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(pipActionReceiver, pipFilter, Context.RECEIVER_NOT_EXPORTED);
@@ -341,7 +341,7 @@ public class MainActivity extends Activity {
             Auth.startOAuth2PKCE(
                     this,
                     DROPBOX_APP_KEY,
-                    DbxRequestConfig.newBuilder("stretch-timer/0.12.14").build(),
+                    DbxRequestConfig.newBuilder("stretch-timer/0.12.15").build(),
                     Arrays.asList("files.metadata.read", "files.content.read", "files.content.write")
             );
         } catch (Exception e) {

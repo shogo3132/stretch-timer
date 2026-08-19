@@ -58,7 +58,7 @@ jobs:
           test -n "$STRETCH_KEYSTORE_BASE64"
           echo "$STRETCH_KEYSTORE_BASE64" | base64 --decode > android/app/stretch-timer.jks
 
-      - name: Build fixed-signed debug APK
+      - name: Build fixed-signed release APK
         env:
           STRETCH_KEYSTORE_PATH: stretch-timer.jks
           STRETCH_KEYSTORE_PASSWORD: ${{ secrets.STRETCH_KEYSTORE_PASSWORD }}
@@ -68,23 +68,39 @@ jobs:
           test -n "$STRETCH_KEYSTORE_PASSWORD"
           test -n "$STRETCH_KEY_ALIAS"
           test -n "$STRETCH_KEY_PASSWORD"
-          gradle -p android :app:assembleDebug
+          gradle -p android :app:assembleRelease
+
+      - name: Verify release APK and update signature
+        run: |
+          NEW_APK=$(find android/app/build/outputs/apk/release -name 'app-release-v*.apk' -type f | head -n 1)
+          test -n "$NEW_APK"
+          test -f dist/stretch-timer-v0.12.14.apk
+          apksigner verify --verbose "$NEW_APK"
+          if aapt dump badging "$NEW_APK" | grep -q 'application-debuggable'; then
+            echo "Release APK is unexpectedly debuggable"
+            exit 1
+          fi
+          OLD_CERT=$(apksigner verify --print-certs dist/stretch-timer-v0.12.14.apk | awk -F': ' '/Signer #1 certificate SHA-256 digest/{print $2; exit}')
+          NEW_CERT=$(apksigner verify --print-certs "$NEW_APK" | awk -F': ' '/Signer #1 certificate SHA-256 digest/{print $2; exit}')
+          test -n "$OLD_CERT"
+          test "$NEW_CERT" = "$OLD_CERT"
+          echo "Release APK is non-debuggable and uses the existing update certificate"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: stretch-timer-fixed-signed-apk
-          path: android/app/build/outputs/apk/debug/app-debug-v*.apk
+          name: stretch-timer-release-apk
+          path: android/app/build/outputs/apk/release/app-release-v*.apk
           if-no-files-found: error
 
       - name: Publish APK to repository
         run: |
           mkdir -p dist
-          cp android/app/build/outputs/apk/debug/app-debug-v*.apk dist/stretch-timer-v0.12.14.apk
+          cp android/app/build/outputs/apk/release/app-release-v*.apk dist/stretch-timer-v0.12.15.apk
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add dist/stretch-timer-v0.12.14.apk
+          git add dist/stretch-timer-v0.12.15.apk
           if ! git diff --cached --quiet; then
-            git commit -m "Publish Stretch Timer APK v0.12.14"
+            git commit -m "Publish Stretch Timer APK v0.12.15"
             git push
           fi
