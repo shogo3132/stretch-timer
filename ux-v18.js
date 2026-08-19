@@ -63,8 +63,8 @@
     var viewportHeight=window.visualViewport&&window.visualViewport.height||window.innerHeight;
     var topEdge=Math.max(80,Math.min(120,viewportHeight/6));
     var bottomEdge=Math.max(110,Math.min(160,viewportHeight/6)),next=0,ratio=0;
-    if(y<topEdge){ratio=Math.max(0,Math.min(1,(topEdge-y)/topEdge));next=-Math.round(45+ratio*275)}
-    else if(y>viewportHeight-bottomEdge){ratio=Math.max(0,Math.min(1,(y-(viewportHeight-bottomEdge))/bottomEdge));next=Math.round(45+ratio*275)}
+    if(y<topEdge){ratio=Math.max(0,Math.min(1,(topEdge-y)/topEdge));next=-Math.round(90+ratio*550)}
+    else if(y>viewportHeight-bottomEdge){ratio=Math.max(0,Math.min(1,(y-(viewportHeight-bottomEdge))/bottomEdge));next=Math.round(90+ratio*550)}
     if(!scrollSpeed&&next)lastScrollAt=0;
     scrollSpeed=next;
     if(scrollSpeed&&scrollFrame===null)scrollFrame=requestAnimationFrame(autoScrollStep);
