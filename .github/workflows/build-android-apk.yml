@@ -72,16 +72,21 @@ jobs:
 
       - name: Verify release APK and update signature
         run: |
+          BUILD_TOOLS="$ANDROID_HOME/build-tools/35.0.0"
+          APKSIGNER="$BUILD_TOOLS/apksigner"
+          AAPT="$BUILD_TOOLS/aapt"
+          test -x "$APKSIGNER"
+          test -x "$AAPT"
           NEW_APK=$(find android/app/build/outputs/apk/release -name 'app-release-v*.apk' -type f | head -n 1)
           test -n "$NEW_APK"
           test -f dist/stretch-timer-v0.12.14.apk
-          apksigner verify --verbose "$NEW_APK"
-          if aapt dump badging "$NEW_APK" | grep -q 'application-debuggable'; then
+          "$APKSIGNER" verify --verbose "$NEW_APK"
+          if "$AAPT" dump badging "$NEW_APK" | grep -q 'application-debuggable'; then
             echo "Release APK is unexpectedly debuggable"
             exit 1
           fi
-          OLD_CERT=$(apksigner verify --print-certs dist/stretch-timer-v0.12.14.apk | awk -F': ' '/Signer #1 certificate SHA-256 digest/{print $2; exit}')
-          NEW_CERT=$(apksigner verify --print-certs "$NEW_APK" | awk -F': ' '/Signer #1 certificate SHA-256 digest/{print $2; exit}')
+          OLD_CERT=$("$APKSIGNER" verify --print-certs dist/stretch-timer-v0.12.14.apk | awk -F': ' '/Signer #1 certificate SHA-256 digest/{print $2; exit}')
+          NEW_CERT=$("$APKSIGNER" verify --print-certs "$NEW_APK" | awk -F': ' '/Signer #1 certificate SHA-256 digest/{print $2; exit}')
           test -n "$OLD_CERT"
           test "$NEW_CERT" = "$OLD_CERT"
           echo "Release APK is non-debuggable and uses the existing update certificate"
