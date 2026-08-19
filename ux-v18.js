@@ -51,15 +51,18 @@
   }
   function autoScrollStep(){
     if(!dragging||!held||!scrollSpeed){scrollFrame=null;return}
-    var beforeY=window.scrollY;window.scrollBy(0,scrollSpeed);
+    var scroller=document.scrollingElement||document.documentElement,beforeY=scroller.scrollTop,maxY=Math.max(0,scroller.scrollHeight-scroller.clientHeight);
+    scroller.scrollTop=Math.max(0,Math.min(maxY,beforeY+scrollSpeed));
     updateTargetAt(pointerY);
-    if(window.scrollY===beforeY){scrollFrame=null;return}
+    if(scroller.scrollTop===beforeY){scrollSpeed=0;scrollFrame=null;return}
     scrollFrame=requestAnimationFrame(autoScrollStep);
   }
   function updateAutoScroll(y){
-    var edge=Math.max(72,Math.min(120,window.innerHeight*.18)),next=0;
-    if(y<edge)next=-Math.max(4,Math.round((edge-y)/edge*20));
-    else if(y>window.innerHeight-edge)next=Math.max(4,Math.round((y-(window.innerHeight-edge))/edge*20));
+    var viewportHeight=window.visualViewport&&window.visualViewport.height||window.innerHeight;
+    var topEdge=Math.max(80,Math.min(120,viewportHeight*.16));
+    var bottomEdge=Math.max(150,Math.min(220,viewportHeight*.26)),next=0;
+    if(y<topEdge)next=-Math.max(5,Math.round((topEdge-y)/topEdge*22));
+    else if(y>viewportHeight-bottomEdge)next=Math.max(8,Math.round((y-(viewportHeight-bottomEdge))/bottomEdge*30));
     scrollSpeed=next;
     if(scrollSpeed&&scrollFrame===null)scrollFrame=requestAnimationFrame(autoScrollStep);
     if(!scrollSpeed)stopAutoScroll();
