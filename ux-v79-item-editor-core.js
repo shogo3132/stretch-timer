@@ -274,18 +274,17 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
   openItem=openItemCore;
 
   function commitAndBack(){
-    if(!draft)return;
+    if(!draft)return false;
     draft.value.videoUrl=typeof draft.value.videoUrl==='string'?draft.value.videoUrl.trim():'';
-    if(!isYouTubeUrl(draft.value.videoUrl)){alert('参考動画URLにはYouTubeのURLを入力してください。');var video=document.getElementById('itemVideoUrl');if(video)video.focus();return}
-    var m=state&&Array.isArray(state.menus)?state.menus.find(function(v){return v.id===draft.menuId}):null;if(!m)return;
-    var i=(m.items||[]).findIndex(function(v){return v.id===draft.itemId});if(i<0)return;
+    if(!isYouTubeUrl(draft.value.videoUrl)){alert('参考動画URLにはYouTubeのURLを入力してください。');var video=document.getElementById('itemVideoUrl');if(video)video.focus();return false}
+    var m=state&&Array.isArray(state.menus)?state.menus.find(function(v){return v.id===draft.menuId}):null;if(!m)return false;
+    var i=(m.items||[]).findIndex(function(v){return v.id===draft.itemId});if(i<0)return false;
     var before=clone(m.items[i]),next=clone(draft.value);next.seconds=clampWork(next.seconds);next.restSeconds=clampRest(next.restSeconds);m.items[i]=next;
     committed=true;
     var ok=typeof save==='function'?save():true;
-    if(ok===false){m.items[i]=before;committed=false;return}
-    var menuId=draft.menuId;draft=null;
-    if(editContext){editContext=null;if(timerState){try{clearInterval(timerState.interval)}catch(e){}timerState=null;if(typeof releaseAwake==='function')releaseAwake()}updateResumeBar()}
-    if(typeof openMenu==='function')openMenu(menuId);
+    if(ok===false){m.items[i]=before;committed=false;return false}
+    draft={menuId:draft.menuId,itemId:draft.itemId,value:clone(next)};committed=false;navigating=false;
+    return true;
   }
   function deleteCurrentItem(){
     if(!draft)return;if(!confirm('この種目を削除しますか？'))return;

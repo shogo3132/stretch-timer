@@ -103,8 +103,7 @@ body.paused-routine-away .screen.active{padding-bottom:170px!important}\
     if(typeof currentScreen==='undefined'||currentScreen!=='itemEdit')return true;
     var btn=document.getElementById('itemCommitBtn');
     if(!btn||typeof btn.onclick!=='function')return true;
-    btn.onclick();
-    return typeof currentScreen==='undefined'||currentScreen!=='itemEdit';
+    return btn.onclick()!==false;
   }
   function resumeSession(){
     if(!session)return;

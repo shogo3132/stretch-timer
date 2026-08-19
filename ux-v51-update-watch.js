@@ -2,7 +2,7 @@
   if(window.__updateWatchV96)return;
   window.__updateWatchV96=true;
 
-  var CURRENT_BUILD='stretch-timer-v97';
+  var CURRENT_BUILD='stretch-timer-v98';
   var POLL_MS=10000;
   var UPDATE_TARGET_KEY='stretchTimer.updateTarget';
   var UPDATE_ATTEMPTS_KEY='stretchTimer.updateAttempts';
