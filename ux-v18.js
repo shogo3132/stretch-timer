@@ -40,8 +40,8 @@
   function reorderDirect(type,id,targetId,before){var m=currentMenu();var arr=type==='menu'?(typeof state!=='undefined'&&state?state.menus:null):(m&&m.items);if(!arr)return;var from=arr.findIndex(function(x){return x.id===id}),to=arr.findIndex(function(x){return x.id===targetId});if(from<0||to<0||from===to)return;var moved=arr.splice(from,1)[0];to=arr.findIndex(function(x){return x.id===targetId});arr.splice(before?to:to+1,0,moved);if(typeof save==='function')save();if(type==='menu'){if(typeof renderHome==='function')renderHome()}else{if(typeof renderItems==='function')renderItems();if(typeof updateDuration==='function')updateDuration()}}
 
   var held=null,holdTimer=null,dragging=false,target=null,before=true,startX=0,startY=0,type='',selector='';
-  var pointerX=0,pointerY=0,scrollSpeed=0,scrollFrame=null;
-  function stopAutoScroll(){scrollSpeed=0;if(scrollFrame!==null){cancelAnimationFrame(scrollFrame);scrollFrame=null}}
+  var pointerX=0,pointerY=0,scrollSpeed=0,scrollFrame=null,lastScrollAt=0;
+  function stopAutoScroll(){scrollSpeed=0;lastScrollAt=0;if(scrollFrame!==null){cancelAnimationFrame(scrollFrame);scrollFrame=null}}
   function updateTargetAt(y){
     clearTargets();target=null;
     var cards=Array.prototype.slice.call(document.querySelectorAll(selector)).filter(function(x){return x!==held});if(!cards.length)return;
@@ -49,20 +49,23 @@
     cards.forEach(function(card){var r=card.getBoundingClientRect(),mid=r.top+r.height/2,dist=Math.abs(y-mid);if(dist<bestDist){bestDist=dist;best=card;bestBefore=y<mid}});
     if(best){target=best;before=bestBefore;best.classList.add(before?'reorder-before':'reorder-after')}
   }
-  function autoScrollStep(){
+  function autoScrollStep(now){
     if(!dragging||!held||!scrollSpeed){scrollFrame=null;return}
     var scroller=document.scrollingElement||document.documentElement,beforeY=scroller.scrollTop,maxY=Math.max(0,scroller.scrollHeight-scroller.clientHeight);
-    scroller.scrollTop=Math.max(0,Math.min(maxY,beforeY+scrollSpeed));
+    if((scrollSpeed<0&&beforeY<=0)||(scrollSpeed>0&&beforeY>=maxY-.5)){stopAutoScroll();return}
+    if(!lastScrollAt)lastScrollAt=now;
+    var elapsed=Math.max(0,Math.min(34,now-lastScrollAt));lastScrollAt=now;
+    scroller.scrollTop=Math.max(0,Math.min(maxY,beforeY+scrollSpeed*elapsed/1000));
     updateTargetAt(pointerY);
-    if(scroller.scrollTop===beforeY){scrollSpeed=0;scrollFrame=null;return}
     scrollFrame=requestAnimationFrame(autoScrollStep);
   }
   function updateAutoScroll(y){
     var viewportHeight=window.visualViewport&&window.visualViewport.height||window.innerHeight;
-    var topEdge=Math.max(80,Math.min(120,viewportHeight*.16));
-    var bottomEdge=Math.max(150,Math.min(220,viewportHeight*.26)),next=0;
-    if(y<topEdge)next=-Math.max(5,Math.round((topEdge-y)/topEdge*22));
-    else if(y>viewportHeight-bottomEdge)next=Math.max(8,Math.round((y-(viewportHeight-bottomEdge))/bottomEdge*30));
+    var topEdge=Math.max(80,Math.min(120,viewportHeight/6));
+    var bottomEdge=Math.max(110,Math.min(160,viewportHeight/6)),next=0,ratio=0;
+    if(y<topEdge){ratio=Math.max(0,Math.min(1,(topEdge-y)/topEdge));next=-Math.round(45+ratio*275)}
+    else if(y>viewportHeight-bottomEdge){ratio=Math.max(0,Math.min(1,(y-(viewportHeight-bottomEdge))/bottomEdge));next=Math.round(45+ratio*275)}
+    if(!scrollSpeed&&next)lastScrollAt=0;
     scrollSpeed=next;
     if(scrollSpeed&&scrollFrame===null)scrollFrame=requestAnimationFrame(autoScrollStep);
     if(!scrollSpeed)stopAutoScroll();
