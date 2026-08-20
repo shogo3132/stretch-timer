@@ -10,7 +10,7 @@ body.timer-active{overflow:hidden!important}\
 body.timer-active #topBar{background:#fff!important;color:#1b1f24!important;border-bottom:1px solid #eef1f3!important}\
 body.timer-active #topBar #backBtn{background:#f3f5f7!important;color:#4d5661!important;border:0!important;box-shadow:none!important}\
 body.timer-active #timer{height:calc(100dvh - 74px)!important;min-height:0!important;overflow:hidden!important;background:#fff!important;color:#1b1f24!important;padding:10px 20px max(12px,env(safe-area-inset-bottom))!important}\
-body.timer-active #timerContent{height:100%!important;max-width:680px;margin:0 auto;display:grid!important;grid-template-rows:auto auto auto auto;align-content:start;gap:10px!important;overflow:hidden!important;text-align:center}\
+body.timer-active #timerContent{position:relative;height:100%!important;max-width:680px;margin:0 auto;padding-bottom:48px;display:grid!important;grid-template-rows:auto auto auto auto;align-content:start;gap:10px!important;overflow:hidden!important;text-align:center}\
 body.timer-active .timer-name{font-size:25px!important;line-height:1.2!important;margin:0!important;color:#1b1f24!important}\
 body.timer-active .timer-img{width:100%!important;height:clamp(190px,31vh,250px)!important;object-fit:cover!important;border-radius:20px!important;margin:0!important;background:#eef1f3!important;box-shadow:none!important}\
 body.timer-active .compact-timer-core{display:grid;grid-template-columns:52px 1fr 52px;align-items:center;gap:10px;margin:0}\
@@ -27,6 +27,11 @@ body.timer-active .compact-meta{display:grid;gap:4px;min-height:0;align-content:
 body.timer-active .timer-desc{font-size:15px!important;line-height:1.45!important;color:#5f6873!important;padding:0 8px!important;margin:2px 0 0!important;display:block!important;overflow:visible!important;white-space:pre-wrap!important}\
 body.timer-active .timer-count{font-size:12px!important;color:#a0a7af!important;margin:2px 0 0!important;order:2}\
 body.timer-active .compact-rest-next{font-size:20px;font-weight:800;line-height:1.35;color:#35404a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px}\
+body.timer-active .routine-total-progress{position:absolute;left:0;right:0;bottom:0;display:grid;gap:5px;width:100%;padding:5px 2px 0;background:#fff;text-align:left}\
+body.timer-active .routine-total-head{display:flex;align-items:center;justify-content:space-between;color:#68727c;font-size:12px;font-weight:750;line-height:1}\
+body.timer-active .routine-total-track{height:9px;border-radius:999px;background:#dde3e6;overflow:hidden}\
+body.timer-active .routine-total-fill{height:100%;border-radius:999px;background:#168465;transition:width .2s linear}\
+body.native-pip .routine-total-progress{display:none!important}\
 body.timer-active .prestart{padding:44px 12px!important;color:#1b1f24!important}\
 body.timer-active .prestart .num{color:#1b1f24!important}\
 body.timer-active .prestart .first{color:#27ae8b!important}\
@@ -39,6 +44,21 @@ body.timer-active .prestart .first{color:#27ae8b!important}\
     if(!timerState)return 0;
     var total=Math.max(1,+timerState.total||1),remain=Math.max(0,+timerState.remaining||0);
     return Math.max(0,Math.min(100,(1-remain/total)*100));
+  }
+  function itemWorkSeconds(x){return Math.max(1,Math.round(+x.seconds||1))}
+  function itemRestSeconds(x){return Math.max(1,Math.min(60,Math.round(+x.restSeconds||20)))}
+  function routineProgress(m){
+    var items=m&&Array.isArray(m.items)?m.items:[],total=0,elapsed=0,idx=Math.max(0,Math.min(items.length-1,+timerState.index||0));
+    items.forEach(function(x,i){total+=itemWorkSeconds(x);if(i<items.length-1)total+=itemRestSeconds(x)});
+    if(!items.length||!total||timerState.phase==='pre')return {pct:0,total:total,elapsed:0};
+    for(var i=0;i<idx;i++)elapsed+=itemWorkSeconds(items[i])+itemRestSeconds(items[i]);
+    if(timerState.phase==='rest')elapsed+=itemWorkSeconds(items[idx])+Math.max(0,itemRestSeconds(items[idx])-Math.max(0,+timerState.remaining||0));
+    else elapsed+=Math.max(0,itemWorkSeconds(items[idx])-Math.max(0,+timerState.remaining||0));
+    elapsed=Math.max(0,Math.min(total,elapsed));return {pct:elapsed/total*100,total:total,elapsed:elapsed};
+  }
+  function routineProgressHtml(m){
+    var p=routineProgress(m),pct=Math.max(0,Math.min(100,p.pct));
+    return '<div class="routine-total-progress" aria-label="ルーティン全体の進捗 '+Math.round(pct)+'パーセント"><div class="routine-total-head"><span>ルーティン全体</span><span>'+Math.round(pct)+'%</span></div><div class="routine-total-track"><div class="routine-total-fill" style="width:'+pct.toFixed(2)+'%"></div></div></div>';
   }
   function compactCore(){
     var paused=!!timerState.paused;
@@ -70,7 +90,7 @@ body.timer-active .prestart .first{color:#27ae8b!important}\
     if(!timerState)return;
     var m=menu(),box=document.getElementById('timerContent');
     if(timerState.phase==='pre'){
-      box.innerHTML='<div class="prestart"><div class="muted">開始まで</div><div class="num">'+timerState.remaining+'</div><div class="first">'+esc(m.items[0].name)+'</div></div>';
+      box.innerHTML='<div class="prestart"><div class="muted">開始まで</div><div class="num">'+timerState.remaining+'</div><div class="first">'+esc(m.items[0].name)+'</div></div>'+routineProgressHtml(m);
       syncThemeColor();
       return;
     }
@@ -79,13 +99,13 @@ body.timer-active .prestart .first{color:#27ae8b!important}\
       box.innerHTML='<div class="timer-name">休憩</div>'+
         (nextItem&&nextItem.photo?'<img class="timer-img timer-next-img" src="'+nextItem.photo+'" alt="'+esc(nextItem.name||'次の種目')+'">':'')+
         compactCore()+
-        '<div class="compact-meta"><div class="compact-rest-next">次：'+esc(nextItem&&nextItem.name||'完了')+'</div><div class="timer-count">'+(timerState.index+1)+' / '+m.items.length+'</div></div>';
+        '<div class="compact-meta"><div class="compact-rest-next">次：'+esc(nextItem&&nextItem.name||'完了')+'</div><div class="timer-count">'+(timerState.index+1)+' / '+m.items.length+'</div></div>'+routineProgressHtml(m);
     }else{
       var x=m.items[timerState.index];
       box.innerHTML='<div class="timer-name">'+esc(x.name)+'</div>'+
         (x.photo?'<img class="timer-img" src="'+x.photo+'">':'')+
         compactCore()+
-        '<div class="compact-meta">'+(x.desc?'<div class="timer-desc">'+esc(x.desc)+'</div>':'')+'<div class="timer-count">'+(timerState.index+1)+' / '+m.items.length+'</div></div>';
+        '<div class="compact-meta">'+(x.desc?'<div class="timer-desc">'+esc(x.desc)+'</div>':'')+'<div class="timer-count">'+(timerState.index+1)+' / '+m.items.length+'</div></div>'+routineProgressHtml(m);
     }
     wireCompact(box);
     syncThemeColor();
