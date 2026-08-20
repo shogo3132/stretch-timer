@@ -14,7 +14,7 @@ body.native-pip #topBar{display:none!important}\
 body.native-pip .screen{display:none!important}\
 body.native-pip #timer{display:block!important;width:100%!important;height:100dvh!important;min-height:0!important;padding:8px 14px!important;background:#fff!important;color:#1b1f24!important;overflow:hidden!important}\
 body.native-pip #timerContent{width:100%!important;height:100%!important;max-width:none!important;margin:0!important;display:grid!important;grid-template-rows:auto minmax(0,1fr) auto auto!important;align-content:stretch!important;justify-content:stretch!important;gap:3px!important;overflow:hidden!important;text-align:center!important}\
-body.native-pip.native-pip-has-image #timerContent{grid-template-columns:minmax(72px,38%) minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr) auto!important;column-gap:10px!important;row-gap:3px!important}\
+body.native-pip.native-pip-has-image #timerContent{grid-template-columns:minmax(72px,38%) minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr) auto auto!important;column-gap:10px!important;row-gap:3px!important}\
 body.native-pip .timer-name{font-size:clamp(14px,7vh,22px)!important;line-height:1.1!important;margin:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;color:#1b1f24!important}\
 body.native-pip.native-pip-has-image .timer-name{grid-column:2!important;grid-row:1!important;font-size:clamp(13px,6.5vh,20px)!important}\
 body.native-pip .compact-skip,body.native-pip .compact-meta,body.native-pip .timer-edit-current,body.native-pip .timer-video-row{display:none!important}\
@@ -28,6 +28,11 @@ body.native-pip .compact-seconds{font-size:clamp(38px,27vh,70px)!important;line-
 body.native-pip .compact-progress{height:5px!important;margin:0 5px!important;background:#dfe8e4!important}\
 body.native-pip.native-pip-has-image .compact-progress{grid-column:2!important;grid-row:3!important}\
 body.native-pip .compact-progress-fill{background:#27ae8b!important}\
+body.native-pip .routine-total-progress{position:static!important;grid-column:1/-1!important;grid-row:4!important;display:block!important;width:100%!important;padding:2px 0 0!important;background:transparent!important}\
+body.native-pip .routine-total-head{display:none!important}\
+body.native-pip .routine-total-track{height:6px!important;background:#ccd7d4!important}\
+body.native-pip .routine-total-fill{background:#13755b!important}\
+body.native-pip .prestart+.routine-total-progress{display:none!important}\
 body.native-pip.timer-rest #timer,body.native-pip.timer-rest #timerContent{background:#d9f0e2!important}\
 body.native-pip #timerContent>.prestart{grid-row:1/-1!important}\
 body.native-pip .prestart{height:100%!important;padding:0!important;display:grid!important;place-content:center!important;gap:3px!important;color:#1b1f24!important}\
