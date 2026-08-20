@@ -13,9 +13,10 @@ body.native-pip,body.native-pip .app{width:100%!important;height:100%!important;
 body.native-pip #topBar{display:none!important}\
 body.native-pip .screen{display:none!important}\
 body.native-pip #timer{display:block!important;width:100%!important;height:100dvh!important;min-height:0!important;padding:8px 14px!important;background:#fff!important;color:#1b1f24!important;overflow:hidden!important}\
-body.native-pip #timerContent{width:100%!important;height:100%!important;max-width:none!important;margin:0!important;display:grid!important;grid-template-rows:auto 1fr auto!important;align-content:center!important;justify-content:stretch!important;gap:2px!important;overflow:hidden!important;text-align:center!important}\
+body.native-pip #timerContent{width:100%!important;height:100%!important;max-width:none!important;margin:0!important;display:grid!important;grid-template-rows:auto minmax(0,1fr) auto auto!important;align-content:stretch!important;justify-content:stretch!important;gap:3px!important;overflow:hidden!important;text-align:center!important}\
 body.native-pip .timer-name{font-size:clamp(14px,7vh,22px)!important;line-height:1.1!important;margin:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;color:#1b1f24!important}\
-body.native-pip .timer-img,body.native-pip .compact-skip,body.native-pip .compact-meta,body.native-pip .timer-edit-current,body.native-pip .timer-video-row{display:none!important}\
+body.native-pip .compact-skip,body.native-pip .compact-meta,body.native-pip .timer-edit-current,body.native-pip .timer-video-row{display:none!important}\
+body.native-pip .timer-img{display:block!important;width:100%!important;height:clamp(36px,28vh,78px)!important;min-height:0!important;object-fit:cover!important;border-radius:9px!important;margin:0!important;background:#e4e9ec!important}\
 body.native-pip .compact-timer-core{display:grid!important;grid-template-columns:1fr!important;align-items:center!important;gap:0!important;margin:0!important;min-height:0!important}\
 body.native-pip .compact-time{min-height:0!important;height:100%!important;padding:0!important;border-radius:10px!important;align-content:center!important;background:transparent!important}\
 body.native-pip .compact-pause-label{height:auto!important;min-height:12px!important;margin:0!important;font-size:clamp(9px,4vh,12px)!important;line-height:1!important;color:#718078!important}\

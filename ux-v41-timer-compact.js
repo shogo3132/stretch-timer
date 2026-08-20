@@ -26,11 +26,11 @@ body.timer-active .compact-progress-fill{height:100%;background:#27ae8b;border-r
 body.timer-active .compact-meta{display:grid;gap:4px;min-height:0;align-content:start;text-align:center;margin-top:0}\
 body.timer-active .timer-desc{font-size:15px!important;line-height:1.45!important;color:#5f6873!important;padding:0 8px!important;margin:2px 0 0!important;display:block!important;overflow:visible!important;white-space:pre-wrap!important}\
 body.timer-active .timer-count{font-size:12px!important;color:#a0a7af!important;margin:2px 0 0!important;order:2}\
-body.timer-active .compact-rest-next{font-size:15px;color:#5f6873;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px}\
+body.timer-active .compact-rest-next{font-size:20px;font-weight:800;line-height:1.35;color:#35404a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px}\
 body.timer-active .prestart{padding:44px 12px!important;color:#1b1f24!important}\
 body.timer-active .prestart .num{color:#1b1f24!important}\
 body.timer-active .prestart .first{color:#27ae8b!important}\
-@media(max-height:760px){body.timer-active #timer{padding-top:7px!important}body.timer-active #timerContent{gap:7px!important}body.timer-active .timer-img{height:clamp(145px,23vh,175px)!important}body.timer-active .compact-time{min-height:84px!important}body.timer-active .compact-seconds{font-size:56px!important}body.timer-active .compact-skip{min-height:66px!important}}\
+@media(max-height:760px){body.timer-active #timer{padding-top:7px!important}body.timer-active #timerContent{gap:7px!important}body.timer-active .timer-img{height:clamp(145px,23vh,175px)!important}body.timer-active .compact-time{min-height:84px!important}body.timer-active .compact-seconds{font-size:56px!important}body.timer-active .compact-skip{min-height:66px!important}body.timer-active .compact-rest-next{font-size:18px}}\
 ';
   document.head.appendChild(style);
 
@@ -75,8 +75,11 @@ body.timer-active .prestart .first{color:#27ae8b!important}\
       return;
     }
     if(timerState.phase==='rest'){
-      box.innerHTML='<div class="timer-name">休憩</div>'+compactCore()+
-        '<div class="compact-meta"><div class="compact-rest-next">次：'+esc(m.items[timerState.index+1]&&m.items[timerState.index+1].name||'完了')+'</div><div class="timer-count">'+(timerState.index+1)+' / '+m.items.length+'</div></div>';
+      var nextItem=m.items[timerState.index+1];
+      box.innerHTML='<div class="timer-name">休憩</div>'+
+        (nextItem&&nextItem.photo?'<img class="timer-img timer-next-img" src="'+nextItem.photo+'" alt="'+esc(nextItem.name||'次の種目')+'">':'')+
+        compactCore()+
+        '<div class="compact-meta"><div class="compact-rest-next">次：'+esc(nextItem&&nextItem.name||'完了')+'</div><div class="timer-count">'+(timerState.index+1)+' / '+m.items.length+'</div></div>';
     }else{
       var x=m.items[timerState.index];
       box.innerHTML='<div class="timer-name">'+esc(x.name)+'</div>'+
