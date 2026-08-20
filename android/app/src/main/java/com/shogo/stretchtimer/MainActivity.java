@@ -20,6 +20,7 @@ import android.provider.MediaStore;
 import android.util.Rational;
 import android.view.View;
 import android.view.WindowInsets;
+import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.SafeBrowsingResponse;
@@ -77,10 +78,19 @@ public class MainActivity extends Activity {
                     timerActive = active;
                     timerCompleted = completed;
                     timerPaused = paused;
+                    updateKeepScreenOn(active);
                     updatePictureInPictureParams();
                 });
             } catch (Exception ignored) {
             }
+        }
+    }
+
+    private void updateKeepScreenOn(boolean enabled) {
+        if (enabled) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        } else {
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
     }
 
@@ -125,7 +135,7 @@ public class MainActivity extends Activity {
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         settings.setBuiltInZoomControls(false);
         settings.setDisplayZoomControls(false);
-        settings.setUserAgentString(settings.getUserAgentString() + " StretchTimerApp/0.12.16");
+        settings.setUserAgentString(settings.getUserAgentString() + " StretchTimerApp/0.12.17");
 
         IntentFilter pipFilter = new IntentFilter(ACTION_PIP_TOGGLE);
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(pipActionReceiver, pipFilter, Context.RECEIVER_NOT_EXPORTED);
@@ -341,7 +351,7 @@ public class MainActivity extends Activity {
             Auth.startOAuth2PKCE(
                     this,
                     DROPBOX_APP_KEY,
-                    DbxRequestConfig.newBuilder("stretch-timer/0.12.16").build(),
+                    DbxRequestConfig.newBuilder("stretch-timer/0.12.17").build(),
                     Arrays.asList("files.metadata.read", "files.content.read", "files.content.write")
             );
         } catch (Exception e) {
@@ -472,6 +482,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        updateKeepScreenOn(false);
         try { unregisterReceiver(pipActionReceiver); } catch (Exception ignored) {}
         if (webView != null) {
             webView.stopLoading();
