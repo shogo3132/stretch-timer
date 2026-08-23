@@ -29,6 +29,7 @@ body.timer-active .timer-count{font-size:12px!important;color:#a0a7af!important;
 body.timer-active .compact-rest-next{font-size:20px;font-weight:800;line-height:1.35;color:#35404a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px}\
 body.timer-active .routine-total-progress{position:absolute;left:0;right:0;bottom:0;display:grid;gap:5px;width:100%;padding:5px 2px 0;background:#fff;text-align:left}\
 body.timer-active .routine-total-head{display:flex;align-items:center;justify-content:space-between;color:#68727c;font-size:12px;font-weight:750;line-height:1}\
+body.timer-active .routine-total-head span:last-child{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;white-space:nowrap}\
 body.timer-active .routine-total-track{height:9px;border-radius:999px;background:#dde3e6;overflow:hidden}\
 body.timer-active .routine-total-fill{height:100%;border-radius:999px;background:#168465;transition:width .2s linear}\
 body.native-pip .routine-total-progress{display:none!important}\
@@ -56,9 +57,11 @@ body.timer-active .prestart .first{color:#27ae8b!important}\
     else elapsed+=Math.max(0,itemWorkSeconds(items[idx])-Math.max(0,+timerState.remaining||0));
     elapsed=Math.max(0,Math.min(total,elapsed));return {pct:elapsed/total*100,total:total,elapsed:elapsed};
   }
+  function routineTimeText(seconds){seconds=Math.max(0,Math.round(+seconds||0));return String(Math.floor(seconds/60)).padStart(2,'0')+'分'+String(seconds%60).padStart(2,'0')+'秒'}
   function routineProgressHtml(m){
     var p=routineProgress(m),pct=Math.max(0,Math.min(100,p.pct));
-    return '<div class="routine-total-progress" aria-label="ルーティン全体の進捗 '+Math.round(pct)+'パーセント"><div class="routine-total-head"><span>ルーティン全体</span><span>'+Math.round(pct)+'%</span></div><div class="routine-total-track"><div class="routine-total-fill" style="width:'+pct.toFixed(2)+'%"></div></div></div>';
+    var time=routineTimeText(p.elapsed)+' / '+routineTimeText(p.total);
+    return '<div class="routine-total-progress" aria-label="ルーティン全体の進捗 '+time+'"><div class="routine-total-head"><span>ルーティン全体</span><span>'+time+'</span></div><div class="routine-total-track"><div class="routine-total-fill" style="width:'+pct.toFixed(2)+'%"></div></div></div>';
   }
   function compactCore(){
     var paused=!!timerState.paused;
