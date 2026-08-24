@@ -37,7 +37,7 @@
     var version=document.getElementById('appVersion');
     var total=ensureHeaderTotal();
 
-    if(version)version.style.display=id==='home'?'inline':'none';
+    if(version)version.style.display=id==='home'||id==='tasks'?'inline':'none';
     if(total){
       if(id==='routineDetail'){
         total.textContent='トータル回数：'+totalCount();

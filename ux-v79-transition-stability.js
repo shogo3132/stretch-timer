@@ -11,8 +11,9 @@
   }
   function stabilize(id){
     var active=id||(document.querySelector('.screen.active')&&document.querySelector('.screen.active').id)||'';
-    var version=document.getElementById('appVersion');if(version)version.style.display=active==='home'?'inline':'none';
-    var refresh=document.getElementById('refreshBtn');if(refresh)refresh.style.display=active==='home'?'inline-block':'none';
+    var headerTools=active==='home'||active==='tasks';
+    var version=document.getElementById('appVersion');if(version)version.style.display=headerTools?'inline':'none';
+    var refresh=document.getElementById('refreshBtn');if(refresh)refresh.style.display=headerTools?'inline-block':'none';
     var total=document.getElementById('detailHeaderTotal');
     if(total){
       if(active==='routineDetail'){total.textContent='トータル回数：'+totalCount();total.style.display='inline'}
