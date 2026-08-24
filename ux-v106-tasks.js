@@ -4,6 +4,7 @@
 
   var addDaily=false;
   var addDueDay='';
+  var addDueTime='';
   var settingsReturn='home';
   var rolloverTimer=null;
 
@@ -32,8 +33,16 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
 .task-due-wrap{position:relative;display:flex;align-items:center;gap:3px}\
 .task-due-chip{min-height:30px;border:0;border-radius:999px;padding:5px 11px;background:#eef1f3;color:#69737d;font-size:12px;font-weight:700;cursor:pointer}\
 .task-due-chip.on{background:#e8f0f8;color:#39729f}\
+.task-time-chip{min-height:30px;border:0;border-radius:999px;padding:5px 11px;background:#edf1f3;color:#69737d;font-size:12px;font-weight:700;cursor:pointer}\
+.task-time-chip.on{background:#e8f0f8;color:#39729f}\
 .task-due-clear{width:27px;height:27px;border:0;border-radius:999px;background:transparent;color:#89939c;font-size:17px;line-height:1;cursor:pointer}\
 .task-due-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}\
+.task-time-overlay{position:fixed;inset:0;z-index:10050;display:grid;align-items:end;background:rgba(25,31,37,.34);padding:16px 12px max(16px,env(safe-area-inset-bottom))}\
+.task-time-panel{width:min(430px,100%);margin:0 auto;padding:18px;border-radius:22px;background:#f7f8fa;box-shadow:0 18px 45px rgba(20,27,34,.2)}\
+.task-time-title{font-size:16px;font-weight:800;color:#242a30;margin-bottom:14px}\
+.task-time-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}\
+.task-time-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px}\
+.task-time-actions button{min-height:45px}\
 .task-section{display:grid;gap:9px}\
 .task-section-head{display:flex;align-items:center;justify-content:space-between;color:#717b85;font-size:13px;font-weight:700;padding:0 3px}\
 .task-list{display:grid;gap:8px}\
@@ -71,6 +80,7 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
 .daily-manage-title{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\
 .daily-disable{min-height:36px;border:0;border-radius:11px;background:#eef1f3;color:#646e78;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer}\
 @media(min-width:780px){#modeNav{bottom:14px;border:1px solid #e4e8eb;border-radius:20px;box-shadow:0 9px 30px rgba(28,36,44,.12);padding-bottom:7px}body.paused-routine-away #modeNav{bottom:178px}body.mode-nav-visible.paused-routine-away .screen.active{padding-bottom:275px!important}}\
+@media(min-width:780px){.task-time-overlay{align-items:center}.task-time-panel{border-radius:22px}}\
 ';
   document.head.appendChild(style);
 
@@ -80,11 +90,13 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   }
   function currentDay(){return dayKey(Date.now(),state.taskSettings&&state.taskSettings.cutoffHour)}
+  function calendarDay(){return dayKey(Date.now(),0)}
   function validDay(value){return /^\d{4}-\d{2}-\d{2}$/.test(String(value||''))?String(value):''}
+  function validTime(value){var match=String(value||'').match(/^(\d{2}):(\d{2})$/);return match&&+match[1]<24&&+match[2]<60?match[1]+':'+match[2]:''}
   function shortDay(value){var parts=validDay(value).split('-');return parts.length===3?(+parts[1])+'/'+(+parts[2]):''}
   function cleanTask(x){
     x=x&&typeof x==='object'?x:{};
-    return {id:x.id||uid(),title:String(x.title||'').trim()||'名称未設定',repeatDaily:!!x.repeatDaily,dueDay:validDay(x.dueDay),createdDay:String(x.createdDay||''),carriedFrom:String(x.carriedFrom||''),completedAt:Math.max(0,+x.completedAt||0),completedDay:String(x.completedDay||'')};
+    return {id:x.id||uid(),title:String(x.title||'').trim()||'名称未設定',repeatDaily:!!x.repeatDaily,dueDay:validDay(x.dueDay),dueTime:validTime(x.dueTime),createdDay:String(x.createdDay||''),carriedFrom:String(x.carriedFrom||''),completedAt:Math.max(0,+x.completedAt||0),completedDay:String(x.completedDay||'')};
   }
   function cleanHistory(x){
     x=x&&typeof x==='object'?x:{};
@@ -123,7 +135,7 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
     state.tasks.forEach(function(task){
       if(task.completedAt){
         archiveCompleted(task,previous);
-        if(task.repeatDaily){task.completedAt=0;task.completedDay='';task.createdDay=today;task.carriedFrom='';if(task.dueDay)task.dueDay=today;next.push(task)}
+        if(task.repeatDaily){task.completedAt=0;task.completedDay='';task.createdDay=today;task.carriedFrom='';if(task.dueDay)task.dueDay=calendarDay();next.push(task)}
       }else{
         if(!task.carriedFrom)task.carriedFrom=task.createdDay||previous;
         next.push(task);
@@ -137,7 +149,7 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
     var app=document.querySelector('.app');if(!app)return;
     if(!document.getElementById('tasks')){
       var tasks=document.createElement('main');tasks.id='tasks';tasks.className='screen';
-      tasks.innerHTML='<div class="task-page"><form id="taskQuickAdd" class="card task-add-card"><div class="task-add-row"><input id="taskTitleNew" class="task-add-input" maxlength="200" autocomplete="off" placeholder="やることを入力"><button class="btn task-add-btn" type="submit">追加</button></div><div class="task-add-options"><button id="taskDailyNew" class="task-daily-chip" type="button" aria-pressed="false">↻ 毎日</button><div class="task-due-wrap"><button id="taskDueButton" class="task-due-chip" type="button">期限なし</button><input id="taskDueNew" class="task-due-input" type="date"><button id="taskDueClear" class="task-due-clear" type="button" aria-label="期限を外す" hidden>×</button></div></div></form><section class="task-section"><div class="task-section-head"><span>今日のタスク</span><span id="taskOpenCount"></span></div><div id="taskOpenList" class="task-list"></div></section><section id="taskCompletedWrap" class="task-section task-completed-wrap"><div class="task-section-head"><span>完了</span><span id="taskDoneCount"></span></div><div id="taskDoneList" class="task-list"></div></section></div>';
+      tasks.innerHTML='<div class="task-page"><form id="taskQuickAdd" class="card task-add-card"><div class="task-add-row"><input id="taskTitleNew" class="task-add-input" maxlength="200" autocomplete="off" placeholder="やることを入力"><button class="btn task-add-btn" type="submit">追加</button></div><div class="task-add-options"><button id="taskDailyNew" class="task-daily-chip" type="button" aria-pressed="false">↻ 毎日</button><div class="task-due-wrap"><button id="taskDueButton" class="task-due-chip" type="button">期限なし</button><input id="taskDueNew" class="task-due-input" type="date"><button id="taskTimeButton" class="task-time-chip" type="button" hidden>時間なし</button><button id="taskDueClear" class="task-due-clear" type="button" aria-label="期限を外す" hidden>×</button></div></div></form><section class="task-section"><div class="task-section-head"><span>今日のタスク</span><span id="taskOpenCount"></span></div><div id="taskOpenList" class="task-list"></div></section><section id="taskCompletedWrap" class="task-section task-completed-wrap"><div class="task-section-head"><span>完了</span><span id="taskDoneCount"></span></div><div id="taskDoneList" class="task-list"></div></section></div>';
       app.insertBefore(tasks,document.getElementById('timer'));
     }
     if(!document.getElementById('taskHistory')){
@@ -157,16 +169,29 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
   }
   function bindTaskForm(){
     var form=document.getElementById('taskQuickAdd');if(!form||form.dataset.bound)return;form.dataset.bound='1';
-    form.onsubmit=function(e){e.preventDefault();var input=document.getElementById('taskTitleNew'),title=(input.value||'').trim();if(!title){input.focus();return}rolloverIfNeeded();state.tasks.push({id:uid(),title:title,repeatDaily:addDaily,dueDay:addDueDay,createdDay:currentDay(),carriedFrom:'',completedAt:0,completedDay:''});input.value='';addDaily=false;addDueDay='';updateAddOptions();save();renderTaskLists();input.focus()};
+    form.onsubmit=function(e){e.preventDefault();var input=document.getElementById('taskTitleNew'),title=(input.value||'').trim();if(!title){input.focus();return}rolloverIfNeeded();state.tasks.push({id:uid(),title:title,repeatDaily:addDaily,dueDay:addDueDay,dueTime:addDueTime,createdDay:currentDay(),carriedFrom:'',completedAt:0,completedDay:''});input.value='';addDaily=false;addDueDay='';addDueTime='';updateAddOptions();save();renderTaskLists();input.focus()};
     document.getElementById('taskDailyNew').onclick=function(){addDaily=!addDaily;updateDailyChip()};
     var dueInput=document.getElementById('taskDueNew');
-    document.getElementById('taskDueButton').onclick=function(){dueInput.min=currentDay();try{if(dueInput.showPicker)dueInput.showPicker();else dueInput.click()}catch(e){dueInput.click()}};
-    dueInput.onchange=function(){addDueDay=validDay(dueInput.value);updateDueChip()};
-    document.getElementById('taskDueClear').onclick=function(){addDueDay='';dueInput.value='';updateDueChip()};
+    document.getElementById('taskDueButton').onclick=function(){dueInput.min=calendarDay();try{if(dueInput.showPicker)dueInput.showPicker();else dueInput.click()}catch(e){dueInput.click()}};
+    dueInput.onchange=function(){addDueDay=validDay(dueInput.value);if(!addDueDay)addDueTime='';updateDueChip()};
+    document.getElementById('taskTimeButton').onclick=openTimePicker;
+    document.getElementById('taskDueClear').onclick=function(){addDueDay='';addDueTime='';dueInput.value='';updateDueChip()};
   }
   function updateDailyChip(){var chip=document.getElementById('taskDailyNew');if(!chip)return;chip.classList.toggle('on',addDaily);chip.setAttribute('aria-pressed',String(addDaily))}
-  function updateDueChip(){var chip=document.getElementById('taskDueButton'),input=document.getElementById('taskDueNew'),clear=document.getElementById('taskDueClear');if(!chip||!input||!clear)return;input.value=addDueDay;chip.textContent=addDueDay?shortDay(addDueDay)+'まで':'期限なし';chip.classList.toggle('on',!!addDueDay);clear.hidden=!addDueDay}
+  function updateDueChip(){var chip=document.getElementById('taskDueButton'),time=document.getElementById('taskTimeButton'),input=document.getElementById('taskDueNew'),clear=document.getElementById('taskDueClear');if(!chip||!time||!input||!clear)return;input.value=addDueDay;chip.textContent=addDueDay?shortDay(addDueDay)+'まで':'期限なし';chip.classList.toggle('on',!!addDueDay);time.hidden=!addDueDay;time.textContent=addDueTime||'時間なし';time.classList.toggle('on',!!addDueTime);clear.hidden=!addDueDay}
   function updateAddOptions(){updateDailyChip();updateDueChip()}
+  function buildTaskTimeWheel(value,max,unit){
+    var wrap=document.createElement('div');wrap.className='item-time-wheel-wrap';var wheel=document.createElement('div');wheel.className='item-time-wheel';var label=document.createElement('span');label.className='item-time-unit';label.textContent=unit;wrap.append(wheel,label);
+    for(var n=0;n<=max;n++){var opt=document.createElement('div');opt.className='item-time-option'+(n===value?' selected':'');opt.dataset.value=String(n);opt.textContent=String(n).padStart(2,'0');wheel.appendChild(opt)}
+    wheel.dataset.selected=String(value);wheel.addEventListener('click',function(e){var opt=e.target.closest('.item-time-option');if(opt)wheel.scrollTo({top:(+opt.dataset.value)*40,behavior:'smooth'})});wheel.addEventListener('scroll',function(){var next=Math.max(0,Math.min(max,Math.round(wheel.scrollTop/40)));wheel.dataset.selected=String(next);Array.prototype.forEach.call(wheel.children,function(opt){opt.classList.toggle('selected',+opt.dataset.value===next)})},{passive:true});
+    requestAnimationFrame(function(){wheel.scrollTop=value*40});return {element:wrap,value:function(){return Math.max(0,Math.min(max,+wheel.dataset.selected||0))}};
+  }
+  function openTimePicker(){
+    if(!addDueDay)return;var existing=document.querySelector('.task-time-overlay');if(existing)existing.remove();var now=new Date(),parts=validTime(addDueTime).split(':'),hour=parts.length===2?+parts[0]:now.getHours(),minute=parts.length===2?+parts[1]:now.getMinutes();
+    var overlay=document.createElement('div');overlay.className='task-time-overlay';var panel=document.createElement('div');panel.className='task-time-panel';panel.innerHTML='<div class="task-time-title">締め切り時刻</div><div class="task-time-fields"></div><div class="task-time-actions"><button type="button" class="btn sub task-time-none">時間指定なし</button><button type="button" class="btn task-time-save">決定</button></div>';overlay.appendChild(panel);document.body.appendChild(overlay);
+    var h=buildTaskTimeWheel(hour,23,'時'),m=buildTaskTimeWheel(minute,59,'分'),fields=panel.querySelector('.task-time-fields');fields.append(h.element,m.element);
+    function close(){overlay.remove()};overlay.onclick=function(e){if(e.target===overlay)close()};panel.querySelector('.task-time-none').onclick=function(){addDueTime='';updateDueChip();close()};panel.querySelector('.task-time-save').onclick=function(){addDueTime=String(h.value()).padStart(2,'0')+':'+String(m.value()).padStart(2,'0');updateDueChip();close()};
+  }
   function updateNav(screen){
     var nav=document.getElementById('modeNav');if(!nav)return;
     var visible=screen==='home'||screen==='tasks';nav.hidden=!visible;document.body.classList.toggle('mode-nav-visible',visible);
@@ -179,7 +204,7 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
   function taskMeta(task){
     var meta=document.createElement('div');meta.className='task-meta';
     if(task.repeatDaily){var daily=document.createElement('span');daily.className='task-tag daily';daily.textContent='毎日';meta.appendChild(daily)}
-    if(task.dueDay){var due=document.createElement('span'),today=currentDay();due.className='task-tag due'+(task.dueDay<today?' overdue':task.dueDay===today?' today':'');due.textContent=shortDay(task.dueDay)+'まで';meta.appendChild(due)}
+    if(task.dueDay){var due=document.createElement('span'),today=calendarDay(),status=task.dueDay<today?'overdue':task.dueDay===today?'today':'';if(status==='today'&&task.dueTime){var p=task.dueTime.split(':'),now=new Date();if(now.getHours()*60+now.getMinutes()>=+p[0]*60+(+p[1]))status='overdue'}due.className='task-tag due'+(status?' '+status:'');due.textContent=shortDay(task.dueDay)+(task.dueTime?' '+task.dueTime:'')+'まで';meta.appendChild(due)}
     if(!task.completedAt&&task.carriedFrom&&task.carriedFrom!==currentDay()){var carry=document.createElement('span');carry.className='task-tag';carry.textContent='繰越';meta.appendChild(carry)}
     return meta;
   }
@@ -276,7 +301,7 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
   var back=document.getElementById('backBtn');if(back)back.onclick=function(){goBack()};
 
   document.addEventListener('visibilitychange',function(){if(!document.hidden&&rolloverIfNeeded()&&currentScreen==='tasks')renderTaskLists()});
-  rolloverTimer=setInterval(function(){if(rolloverIfNeeded()&&currentScreen==='tasks')renderTaskLists()},60000);
+  rolloverTimer=setInterval(function(){rolloverIfNeeded();if(currentScreen==='tasks')renderTaskLists()},60000);
   updateNav(currentScreen);
 
   window.__stretchTimerTasksV106={render:renderTasks,rollover:rolloverIfNeeded,dayKey:dayKey,history:renderTaskHistory};
