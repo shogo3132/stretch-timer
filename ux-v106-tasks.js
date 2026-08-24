@@ -55,10 +55,11 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
 .task-title-input{width:100%;min-width:0;border:0;background:transparent;color:#20262c;font-size:16px;line-height:1.35;padding:3px 0;outline:none;text-overflow:ellipsis}\
 .task-title-input:not([readonly]){background:#f3f6f5;border-radius:8px;padding:5px 7px;margin:-2px -7px}\
 .task-row.completed .task-title-input{text-decoration:line-through;color:#929aa2}\
-.task-meta{display:flex;align-items:center;gap:6px;min-height:0}\
+.task-meta{display:flex;align-items:center;flex-wrap:wrap;gap:6px;min-height:0}\
 .task-tag{font-size:10px;line-height:1;border-radius:999px;padding:4px 6px;background:#edf1f3;color:#717b84}\
 .task-tag.daily{background:#e7f6f1;color:#168465}\
 .task-tag.due{background:#e8f0f8;color:#39729f}\
+.task-tag.due.soon{background:#fde8ef;color:#b33f63}\
 .task-tag.due.today{background:#fff0d8;color:#a15d00}\
 .task-tag.due.overdue{background:#fde8e7;color:#b4453d}\
 .task-delete{width:34px;height:34px;border:0;border-radius:10px;background:transparent;color:#a0a8af;font-size:21px;line-height:1;cursor:pointer}\
@@ -94,6 +95,14 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
   function validDay(value){return /^\d{4}-\d{2}-\d{2}$/.test(String(value||''))?String(value):''}
   function validTime(value){var match=String(value||'').match(/^(\d{2}):(\d{2})$/);return match&&+match[1]<24&&+match[2]<60?match[1]+':'+match[2]:''}
   function shortDay(value){var parts=validDay(value).split('-');return parts.length===3?(+parts[1])+'/'+(+parts[2]):''}
+  function deadlineInfo(task){
+    var day=validDay(task&&task.dueDay),time=validTime(task&&task.dueTime)||'23:59';if(!day)return null;
+    var d=day.split('-'),t=time.split(':'),dueAt=new Date(+d[0],+d[1]-1,+d[2],+t[0],+t[1]).getTime(),remaining=dueAt-Date.now();
+    if(remaining<=0)return {status:'overdue',text:''};
+    var hours=Math.floor(remaining/3600000);if(hours<1)return {status:'soon',text:'あと1時間未満'};
+    if(hours<24)return {status:'soon',text:'あと'+hours+'時間'};
+    var days=Math.floor(hours/24),rest=hours%24;return {status:'',text:'あと'+days+'日'+(rest?rest+'時間':'')};
+  }
   function cleanTask(x){
     x=x&&typeof x==='object'?x:{};
     return {id:x.id||uid(),title:String(x.title||'').trim()||'名称未設定',repeatDaily:!!x.repeatDaily,dueDay:validDay(x.dueDay),dueTime:validTime(x.dueTime),createdDay:String(x.createdDay||''),carriedFrom:String(x.carriedFrom||''),completedAt:Math.max(0,+x.completedAt||0),completedDay:String(x.completedDay||'')};
@@ -202,7 +211,7 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
   function taskMeta(task){
     var meta=document.createElement('div');meta.className='task-meta';
     if(task.repeatDaily){var daily=document.createElement('span');daily.className='task-tag daily';daily.textContent='毎日';meta.appendChild(daily)}
-    if(task.dueDay){var due=document.createElement('span'),today=calendarDay(),status=task.dueDay<today?'overdue':task.dueDay===today?'today':'';if(status==='today'&&task.dueTime){var p=task.dueTime.split(':'),now=new Date();if(now.getHours()*60+now.getMinutes()>=+p[0]*60+(+p[1]))status='overdue'}due.className='task-tag due'+(status?' '+status:'');due.textContent=shortDay(task.dueDay)+(task.dueTime?' '+task.dueTime:'')+'まで';meta.appendChild(due)}
+    if(task.dueDay){var due=document.createElement('span'),today=calendarDay(),info=deadlineInfo(task),status=info?info.status:(task.dueDay<today?'overdue':task.dueDay===today?'today':'');due.className='task-tag due'+(status?' '+status:'');due.textContent=shortDay(task.dueDay)+(task.dueTime?' '+task.dueTime:'')+'まで'+(info&&info.text?'（'+info.text+'）':'');meta.appendChild(due)}
     if(!task.completedAt&&task.carriedFrom&&task.carriedFrom!==currentDay()){var carry=document.createElement('span');carry.className='task-tag';carry.textContent='繰越';meta.appendChild(carry)}
     return meta;
   }
