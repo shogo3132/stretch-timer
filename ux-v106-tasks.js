@@ -3,6 +3,7 @@
   window.__tasksV106=true;
 
   var addDaily=false;
+  var addDueDay='';
   var settingsReturn='home';
   var rolloverTimer=null;
 
@@ -25,9 +26,14 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
 .task-add-input{width:100%;min-width:0;height:48px;border:0;border-radius:14px;background:#f2f4f6;padding:0 14px;color:#1b1f24;font-size:16px;outline:none}\
 .task-add-input:focus{box-shadow:0 0 0 2px rgba(39,174,139,.28)}\
 .task-add-btn{min-width:64px;min-height:48px;border-radius:14px;padding:8px 14px;font-weight:800}\
-.task-add-options{display:flex;align-items:center;margin-top:9px}\
+.task-add-options{display:flex;align-items:center;gap:7px;margin-top:9px}\
 .task-daily-chip{min-height:30px;border:0;border-radius:999px;padding:5px 11px;background:#eef1f3;color:#69737d;font-size:12px;font-weight:700;cursor:pointer}\
 .task-daily-chip.on{background:#ddf3ec;color:#168465}\
+.task-due-wrap{position:relative;display:flex;align-items:center;gap:3px}\
+.task-due-chip{min-height:30px;border:0;border-radius:999px;padding:5px 11px;background:#eef1f3;color:#69737d;font-size:12px;font-weight:700;cursor:pointer}\
+.task-due-chip.on{background:#e8f0f8;color:#39729f}\
+.task-due-clear{width:27px;height:27px;border:0;border-radius:999px;background:transparent;color:#89939c;font-size:17px;line-height:1;cursor:pointer}\
+.task-due-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}\
 .task-section{display:grid;gap:9px}\
 .task-section-head{display:flex;align-items:center;justify-content:space-between;color:#717b85;font-size:13px;font-weight:700;padding:0 3px}\
 .task-list{display:grid;gap:8px}\
@@ -43,6 +49,9 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
 .task-meta{display:flex;align-items:center;gap:6px;min-height:0}\
 .task-tag{font-size:10px;line-height:1;border-radius:999px;padding:4px 6px;background:#edf1f3;color:#717b84}\
 .task-tag.daily{background:#e7f6f1;color:#168465}\
+.task-tag.due{background:#e8f0f8;color:#39729f}\
+.task-tag.due.today{background:#fff0d8;color:#a15d00}\
+.task-tag.due.overdue{background:#fde8e7;color:#b4453d}\
 .task-delete{width:34px;height:34px;border:0;border-radius:10px;background:transparent;color:#a0a8af;font-size:21px;line-height:1;cursor:pointer}\
 .task-empty{padding:48px 14px;text-align:center;color:#8a929a;font-size:14px}\
 .task-completed-wrap{margin-top:4px}\
@@ -71,9 +80,11 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   }
   function currentDay(){return dayKey(Date.now(),state.taskSettings&&state.taskSettings.cutoffHour)}
+  function validDay(value){return /^\d{4}-\d{2}-\d{2}$/.test(String(value||''))?String(value):''}
+  function shortDay(value){var parts=validDay(value).split('-');return parts.length===3?(+parts[1])+'/'+(+parts[2]):''}
   function cleanTask(x){
     x=x&&typeof x==='object'?x:{};
-    return {id:x.id||uid(),title:String(x.title||'').trim()||'名称未設定',repeatDaily:!!x.repeatDaily,createdDay:String(x.createdDay||''),carriedFrom:String(x.carriedFrom||''),completedAt:Math.max(0,+x.completedAt||0),completedDay:String(x.completedDay||'')};
+    return {id:x.id||uid(),title:String(x.title||'').trim()||'名称未設定',repeatDaily:!!x.repeatDaily,dueDay:validDay(x.dueDay),createdDay:String(x.createdDay||''),carriedFrom:String(x.carriedFrom||''),completedAt:Math.max(0,+x.completedAt||0),completedDay:String(x.completedDay||'')};
   }
   function cleanHistory(x){
     x=x&&typeof x==='object'?x:{};
@@ -112,7 +123,7 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
     state.tasks.forEach(function(task){
       if(task.completedAt){
         archiveCompleted(task,previous);
-        if(task.repeatDaily){task.completedAt=0;task.completedDay='';task.createdDay=today;task.carriedFrom='';next.push(task)}
+        if(task.repeatDaily){task.completedAt=0;task.completedDay='';task.createdDay=today;task.carriedFrom='';if(task.dueDay)task.dueDay=today;next.push(task)}
       }else{
         if(!task.carriedFrom)task.carriedFrom=task.createdDay||previous;
         next.push(task);
@@ -126,7 +137,7 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
     var app=document.querySelector('.app');if(!app)return;
     if(!document.getElementById('tasks')){
       var tasks=document.createElement('main');tasks.id='tasks';tasks.className='screen';
-      tasks.innerHTML='<div class="task-page"><form id="taskQuickAdd" class="card task-add-card"><div class="task-add-row"><input id="taskTitleNew" class="task-add-input" maxlength="200" autocomplete="off" placeholder="やることを入力"><button class="btn task-add-btn" type="submit">追加</button></div><div class="task-add-options"><button id="taskDailyNew" class="task-daily-chip" type="button" aria-pressed="false">↻ 毎日</button></div></form><section class="task-section"><div class="task-section-head"><span>今日のタスク</span><span id="taskOpenCount"></span></div><div id="taskOpenList" class="task-list"></div></section><section id="taskCompletedWrap" class="task-section task-completed-wrap"><div class="task-section-head"><span>完了</span><span id="taskDoneCount"></span></div><div id="taskDoneList" class="task-list"></div></section></div>';
+      tasks.innerHTML='<div class="task-page"><form id="taskQuickAdd" class="card task-add-card"><div class="task-add-row"><input id="taskTitleNew" class="task-add-input" maxlength="200" autocomplete="off" placeholder="やることを入力"><button class="btn task-add-btn" type="submit">追加</button></div><div class="task-add-options"><button id="taskDailyNew" class="task-daily-chip" type="button" aria-pressed="false">↻ 毎日</button><div class="task-due-wrap"><button id="taskDueButton" class="task-due-chip" type="button">期限なし</button><input id="taskDueNew" class="task-due-input" type="date"><button id="taskDueClear" class="task-due-clear" type="button" aria-label="期限を外す" hidden>×</button></div></div></form><section class="task-section"><div class="task-section-head"><span>今日のタスク</span><span id="taskOpenCount"></span></div><div id="taskOpenList" class="task-list"></div></section><section id="taskCompletedWrap" class="task-section task-completed-wrap"><div class="task-section-head"><span>完了</span><span id="taskDoneCount"></span></div><div id="taskDoneList" class="task-list"></div></section></div>';
       app.insertBefore(tasks,document.getElementById('timer'));
     }
     if(!document.getElementById('taskHistory')){
@@ -146,10 +157,16 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
   }
   function bindTaskForm(){
     var form=document.getElementById('taskQuickAdd');if(!form||form.dataset.bound)return;form.dataset.bound='1';
-    form.onsubmit=function(e){e.preventDefault();var input=document.getElementById('taskTitleNew'),title=(input.value||'').trim();if(!title){input.focus();return}rolloverIfNeeded();state.tasks.push({id:uid(),title:title,repeatDaily:addDaily,createdDay:currentDay(),carriedFrom:'',completedAt:0,completedDay:''});input.value='';addDaily=false;updateDailyChip();save();renderTaskLists();input.focus()};
+    form.onsubmit=function(e){e.preventDefault();var input=document.getElementById('taskTitleNew'),title=(input.value||'').trim();if(!title){input.focus();return}rolloverIfNeeded();state.tasks.push({id:uid(),title:title,repeatDaily:addDaily,dueDay:addDueDay,createdDay:currentDay(),carriedFrom:'',completedAt:0,completedDay:''});input.value='';addDaily=false;addDueDay='';updateAddOptions();save();renderTaskLists();input.focus()};
     document.getElementById('taskDailyNew').onclick=function(){addDaily=!addDaily;updateDailyChip()};
+    var dueInput=document.getElementById('taskDueNew');
+    document.getElementById('taskDueButton').onclick=function(){dueInput.min=currentDay();try{if(dueInput.showPicker)dueInput.showPicker();else dueInput.click()}catch(e){dueInput.click()}};
+    dueInput.onchange=function(){addDueDay=validDay(dueInput.value);updateDueChip()};
+    document.getElementById('taskDueClear').onclick=function(){addDueDay='';dueInput.value='';updateDueChip()};
   }
   function updateDailyChip(){var chip=document.getElementById('taskDailyNew');if(!chip)return;chip.classList.toggle('on',addDaily);chip.setAttribute('aria-pressed',String(addDaily))}
+  function updateDueChip(){var chip=document.getElementById('taskDueButton'),input=document.getElementById('taskDueNew'),clear=document.getElementById('taskDueClear');if(!chip||!input||!clear)return;input.value=addDueDay;chip.textContent=addDueDay?shortDay(addDueDay)+'まで':'期限なし';chip.classList.toggle('on',!!addDueDay);clear.hidden=!addDueDay}
+  function updateAddOptions(){updateDailyChip();updateDueChip()}
   function updateNav(screen){
     var nav=document.getElementById('modeNav');if(!nav)return;
     var visible=screen==='home'||screen==='tasks';nav.hidden=!visible;document.body.classList.toggle('mode-nav-visible',visible);
@@ -162,6 +179,7 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
   function taskMeta(task){
     var meta=document.createElement('div');meta.className='task-meta';
     if(task.repeatDaily){var daily=document.createElement('span');daily.className='task-tag daily';daily.textContent='毎日';meta.appendChild(daily)}
+    if(task.dueDay){var due=document.createElement('span'),today=currentDay();due.className='task-tag due'+(task.dueDay<today?' overdue':task.dueDay===today?' today':'');due.textContent=shortDay(task.dueDay)+'まで';meta.appendChild(due)}
     if(!task.completedAt&&task.carriedFrom&&task.carriedFrom!==currentDay()){var carry=document.createElement('span');carry.className='task-tag';carry.textContent='繰越';meta.appendChild(carry)}
     return meta;
   }
@@ -197,7 +215,7 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
     var openList=document.getElementById('taskOpenList'),doneList=document.getElementById('taskDoneList');if(!openList||!doneList)return;openList.innerHTML='';doneList.innerHTML='';
     if(!open.length){var empty=document.createElement('div');empty.className='task-empty';empty.textContent='今日のタスクはありません';openList.appendChild(empty)}else open.forEach(function(task){openList.appendChild(makeTaskRow(task,false))});
     done.forEach(function(task){doneList.appendChild(makeTaskRow(task,true))});
-    document.getElementById('taskCompletedWrap').style.display=done.length?'grid':'none';document.getElementById('taskOpenCount').textContent=open.length+'件';document.getElementById('taskDoneCount').textContent=done.length+'件';updateDailyChip();
+    document.getElementById('taskCompletedWrap').style.display=done.length?'grid':'none';document.getElementById('taskOpenCount').textContent=open.length+'件';document.getElementById('taskDoneCount').textContent=done.length+'件';updateAddOptions();
   }
   function openTaskSettings(){settingsReturn='tasks';renderSettings()}
   function renderTasks(){
