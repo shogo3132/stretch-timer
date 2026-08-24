@@ -7,6 +7,12 @@
   var addDueTime='';
   var settingsReturn='home';
   var rolloverTimer=null;
+  var detailTaskId='';
+  var detailDueDay='';
+  var detailDueTime='';
+  var detailDaily=false;
+  var detailViewDate=new Date();
+  var taskSwipeClickUntil=0;
 
   var style=document.createElement('style');
   style.setAttribute('data-tasks-v106','');
@@ -46,15 +52,15 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
 .task-section{display:grid;gap:9px}\
 .task-section-head{display:flex;align-items:center;justify-content:space-between;color:#717b85;font-size:13px;font-weight:700;padding:0 3px}\
 .task-list{display:grid;gap:8px}\
-.task-row{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;min-height:54px;padding:8px 9px 8px 12px;border-radius:16px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04);touch-action:pan-y}\
+.task-row{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;min-height:54px;padding:8px 9px 8px 12px;border-radius:16px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04);touch-action:pan-y;overflow:hidden}\
 .task-row.task-dragging{opacity:.55}\
 .task-row.task-drop-target{outline:2px solid #27ae8b}\
 .task-check{width:25px;height:25px;border:2px solid #aeb7bf;border-radius:8px;background:#fff;color:#fff;padding:0;display:grid;place-items:center;font-size:16px;font-weight:900;cursor:pointer}\
 .task-check.checked{border-color:#27ae8b;background:#27ae8b}\
 .task-main{min-width:0;display:grid;gap:3px}\
-.task-title-input{width:100%;min-width:0;border:0;background:transparent;color:#20262c;font-size:16px;line-height:1.35;padding:3px 0;outline:none;text-overflow:ellipsis}\
+.task-title-text{width:100%;min-width:0;border:0;background:transparent;outline:none;color:#20262c;font-size:16px;line-height:1.35;padding:3px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\
 .task-title-input:not([readonly]){background:#f3f6f5;border-radius:8px;padding:5px 7px;margin:-2px -7px}\
-.task-row.completed .task-title-input{text-decoration:line-through;color:#929aa2}\
+.task-row.completed .task-title-text{text-decoration:line-through;color:#929aa2}\
 .task-meta{display:flex;align-items:center;flex-wrap:wrap;gap:6px;min-height:0}\
 .task-tag{font-size:10px;line-height:1;border-radius:999px;padding:4px 6px;background:#edf1f3;color:#717b84}\
 .task-tag.daily{background:#e7f6f1;color:#168465}\
@@ -62,7 +68,35 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
 .task-tag.due.soon{background:#fde8ef;color:#b33f63}\
 .task-tag.due.today{background:#fff0d8;color:#a15d00}\
 .task-tag.due.overdue{background:#fde8e7;color:#b4453d}\
-.task-delete{width:34px;height:34px;border:0;border-radius:10px;background:transparent;color:#a0a8af;font-size:21px;line-height:1;cursor:pointer}\
+.task-more{width:34px;height:34px;border:0;border-radius:10px;background:transparent;color:#7f8992;font-size:22px;line-height:1;letter-spacing:1px;cursor:pointer}\
+.task-action-pop{position:fixed;z-index:10020;display:grid;min-width:132px;padding:6px;border-radius:14px;background:#fff;box-shadow:0 10px 30px rgba(25,32,39,.2)}\
+.task-action-pop button{min-height:40px;border:0;border-radius:9px;background:transparent;color:#31383f;text-align:left;padding:8px 11px;font-size:14px;font-weight:700}\
+.task-action-pop button.danger{color:#bf4653}\
+.task-row>*:not(.task-swipe-delete):not(.task-swipe-duplicate){transition:transform .18s ease}\
+.task-row.swipe-open>*:not(.task-swipe-delete):not(.task-swipe-duplicate){transform:translateX(-76px)}\
+.task-row.swipe-copy-open>*:not(.task-swipe-delete):not(.task-swipe-duplicate){transform:translateX(76px)}\
+.task-swipe-delete,.task-swipe-duplicate{position:absolute;top:0;bottom:0;width:76px;border:0;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;opacity:0;z-index:30;transition:transform .18s ease,opacity .08s ease}\
+.task-swipe-delete{right:0;background:#d9535f;transform:translateX(100%)}\
+.task-swipe-duplicate{left:0;background:#7f8a96;transform:translateX(-100%)}\
+.task-row.swipe-open>.task-swipe-delete,.task-row.swipe-copy-open>.task-swipe-duplicate{transform:translateX(0);opacity:1}\
+.task-detail-wrap{display:grid;gap:16px}\
+.task-detail-edit{display:grid;gap:12px;padding:15px}\
+.task-detail-name{width:100%;height:48px;border:0;border-radius:13px;background:#f2f4f6;padding:0 13px;color:#20262c;font-size:16px;outline:none}\
+.task-detail-options{display:flex;align-items:center;flex-wrap:wrap;gap:7px}\
+.task-detail-save{width:100%;min-height:46px}\
+.task-calendar-card{background:#fff;border-radius:20px;padding:15px;box-shadow:0 1px 2px rgba(0,0,0,.04);touch-action:pan-y;overflow:hidden}\
+.task-cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}\
+.task-cal-title{font-size:17px;font-weight:800}\
+.task-cal-nav{border:0;background:#f2f4f6;border-radius:11px;width:36px;height:34px;font-size:18px;color:#4e5863}\
+.task-cal-week,.task-cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}\
+.task-cal-week{margin-bottom:5px;color:#8a929c;font-size:11px;text-align:center}\
+.task-cal-day{aspect-ratio:1;border:0;border-radius:8px;background:#eef0f2;color:#737c86;font-size:13px;padding:0;display:grid;place-items:center;position:relative}\
+.task-cal-day.blank{visibility:hidden}\
+.task-cal-day.today{box-shadow:inset 0 0 0 2px #27ae8b;color:#14785f;font-weight:800}\
+.task-cal-day.deadline{background:#ef7698;color:#fff;font-weight:800;box-shadow:none}\
+.task-cal-day.today.deadline{box-shadow:inset 0 0 0 2px #168465}\
+.task-cal-legend{display:flex;gap:14px;color:#6f7881;font-size:12px;padding:0 4px}\
+.task-cal-key{display:inline-flex;align-items:center;gap:5px}.task-cal-key::before{content:"";width:9px;height:9px;border-radius:3px;box-shadow:inset 0 0 0 2px #27ae8b}.task-cal-key.deadline::before{background:#ef7698;box-shadow:none}\
 .task-empty{padding:48px 14px;text-align:center;color:#8a929a;font-size:14px}\
 .task-completed-wrap{margin-top:4px}\
 .task-settings-card{display:grid;gap:12px}\
@@ -167,6 +201,10 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
     if(!document.getElementById('dailyTasks')){
       var daily=document.createElement('main');daily.id='dailyTasks';daily.className='screen';daily.innerHTML='<div id="dailyTaskList" class="daily-task-page"></div>';app.insertBefore(daily,document.getElementById('timer'));
     }
+    if(!document.getElementById('taskDetail')){
+      var detail=document.createElement('main');detail.id='taskDetail';detail.className='screen';detail.innerHTML='<div class="task-detail-wrap"><div class="card task-detail-edit"><input id="taskDetailName" class="task-detail-name" maxlength="200" aria-label="タスク名"><div class="task-detail-options"><button id="taskDetailDaily" class="task-daily-chip" type="button">↻ 毎日</button><div class="task-due-wrap"><button id="taskDetailDue" class="task-due-chip" type="button">期限なし</button><input id="taskDetailDueInput" class="task-due-input" type="date"><button id="taskDetailTime" class="task-time-chip" type="button" hidden>時間なし</button><button id="taskDetailClear" class="task-due-clear" type="button" aria-label="期限を外す" hidden>×</button></div></div><button id="taskDetailSave" class="btn task-detail-save" type="button">保存</button></div><div class="task-calendar-card"><div class="task-cal-head"><button id="taskCalPrev" class="task-cal-nav" type="button">‹</button><div id="taskCalTitle" class="task-cal-title"></div><button id="taskCalNext" class="task-cal-nav" type="button">›</button></div><div class="task-cal-week"><div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div></div><div id="taskCalDays" class="task-cal-days"></div></div><div class="task-cal-legend"><span class="task-cal-key">今日</span><span class="task-cal-key deadline">締切日</span></div></div>';app.insertBefore(detail,document.getElementById('timer'));
+      bindTaskDetail();
+    }
     if(!document.getElementById('modeNav')){
       var nav=document.createElement('nav');nav.id='modeNav';nav.setAttribute('aria-label','機能の切り替え');
       nav.innerHTML='<button type="button" class="mode-nav-btn" data-mode="routine"><span class="mode-nav-icon">◷</span><span>ルーティン</span></button><button type="button" class="mode-nav-btn" data-mode="tasks"><span class="mode-nav-icon">✓</span><span>タスク</span></button>';
@@ -194,10 +232,13 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
     input.onfocus=function(){try{input.select()}catch(e){}};return {element:wrap,input:input,value:function(){return Math.max(0,Math.min(max,Math.floor(+input.value||0)))}};
   }
   function openTimePicker(){
-    if(!addDueDay)return;var existing=document.querySelector('.task-time-overlay');if(existing)existing.remove();var parts=validTime(addDueTime).split(':'),hour=parts.length===2?+parts[0]:0,minute=parts.length===2?+parts[1]:0;
+    if(!addDueDay)return;openTimeEditor(addDueTime,function(value){addDueTime=value;updateDueChip()});
+  }
+  function openTimeEditor(initial,onSave){
+    var existing=document.querySelector('.task-time-overlay');if(existing)existing.remove();var parts=validTime(initial).split(':'),hour=parts.length===2?+parts[0]:0,minute=parts.length===2?+parts[1]:0;
     var overlay=document.createElement('div');overlay.className='task-time-overlay';var panel=document.createElement('div');panel.className='task-time-panel';panel.innerHTML='<div class="task-time-title">締め切り時刻</div><div class="task-time-fields"></div><div class="task-time-actions"><button type="button" class="btn sub task-time-none">時間指定なし</button><button type="button" class="btn task-time-save">決定</button></div>';overlay.appendChild(panel);document.body.appendChild(overlay);
     var h=buildTaskTimeInput(hour,23,'時'),m=buildTaskTimeInput(minute,59,'分'),fields=panel.querySelector('.task-time-fields');fields.append(h.element,m.element);setTimeout(function(){try{h.input.focus();h.input.select()}catch(e){}},0);
-    function close(){overlay.remove()};overlay.onclick=function(e){if(e.target===overlay)close()};panel.querySelector('.task-time-none').onclick=function(){addDueTime='';updateDueChip();close()};panel.querySelector('.task-time-save').onclick=function(){addDueTime=String(h.value()).padStart(2,'0')+':'+String(m.value()).padStart(2,'0');updateDueChip();close()};
+    function close(){overlay.remove()};overlay.onclick=function(e){if(e.target===overlay)close()};panel.querySelector('.task-time-none').onclick=function(){onSave('');close()};panel.querySelector('.task-time-save').onclick=function(){onSave(String(h.value()).padStart(2,'0')+':'+String(m.value()).padStart(2,'0'));close()};
   }
   function updateNav(screen){
     var nav=document.getElementById('modeNav');if(!nav)return;
@@ -205,8 +246,36 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
     if(screen==='tasks'){var back=document.getElementById('backBtn');if(back)back.style.display='none'}
     nav.querySelectorAll('.mode-nav-btn').forEach(function(btn){btn.classList.toggle('active',(screen==='home'&&btn.dataset.mode==='routine')||(screen==='tasks'&&btn.dataset.mode==='tasks'))});
   }
+  function taskById(id){return state.tasks.find(function(x){return x.id===id})||null}
+  function updateTaskDetailOptions(){
+    var daily=document.getElementById('taskDetailDaily'),due=document.getElementById('taskDetailDue'),input=document.getElementById('taskDetailDueInput'),time=document.getElementById('taskDetailTime'),clear=document.getElementById('taskDetailClear');if(!daily||!due||!input||!time||!clear)return;
+    daily.classList.toggle('on',detailDaily);daily.setAttribute('aria-pressed',String(detailDaily));input.value=detailDueDay;due.textContent=detailDueDay?shortDay(detailDueDay)+'まで':'期限なし';due.classList.toggle('on',!!detailDueDay);time.hidden=!detailDueDay;time.textContent=detailDueTime||'時間なし';time.classList.toggle('on',!!detailDueTime);clear.hidden=!detailDueDay;
+  }
+  function renderTaskCalendar(){
+    var title=document.getElementById('taskCalTitle'),box=document.getElementById('taskCalDays');if(!title||!box)return;var y=detailViewDate.getFullYear(),mo=detailViewDate.getMonth(),today=calendarDay();title.textContent=y+'年 '+(mo+1)+'月';box.innerHTML='';var first=new Date(y,mo,1).getDay(),days=new Date(y,mo+1,0).getDate();
+    for(var i=0;i<first;i++){var blank=document.createElement('div');blank.className='task-cal-day blank';box.appendChild(blank)}
+    for(var day=1;day<=days;day++){var key=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(day).padStart(2,'0'),cell=document.createElement('div');cell.className='task-cal-day'+(key===today?' today':'')+(key===detailDueDay?' deadline':'');cell.textContent=day;box.appendChild(cell)}
+  }
+  function changeTaskMonth(delta){detailViewDate=new Date(detailViewDate.getFullYear(),detailViewDate.getMonth()+delta,1);renderTaskCalendar()}
+  function bindTaskDetail(){
+    var dueInput=document.getElementById('taskDetailDueInput');document.getElementById('taskDetailDaily').onclick=function(){detailDaily=!detailDaily;updateTaskDetailOptions()};document.getElementById('taskDetailDue').onclick=function(){try{if(dueInput.showPicker)dueInput.showPicker();else dueInput.click()}catch(e){dueInput.click()}};
+    dueInput.onchange=function(){detailDueDay=validDay(dueInput.value);if(!detailDueDay)detailDueTime='';if(detailDueDay){var p=detailDueDay.split('-');detailViewDate=new Date(+p[0],+p[1]-1,1)}updateTaskDetailOptions();renderTaskCalendar()};
+    document.getElementById('taskDetailTime').onclick=function(){if(detailDueDay)openTimeEditor(detailDueTime,function(value){detailDueTime=value;updateTaskDetailOptions()})};document.getElementById('taskDetailClear').onclick=function(){detailDueDay='';detailDueTime='';updateTaskDetailOptions();renderTaskCalendar()};
+    document.getElementById('taskDetailSave').onclick=function(){var task=taskById(detailTaskId);if(!task)return;task.title=(document.getElementById('taskDetailName').value||'').trim()||task.title;task.repeatDaily=detailDaily;task.dueDay=detailDueDay;task.dueTime=detailDueTime;save();renderTaskDetail()};document.getElementById('taskCalPrev').onclick=function(){changeTaskMonth(-1)};document.getElementById('taskCalNext').onclick=function(){changeTaskMonth(1)};
+    var card=document.querySelector('#taskDetail .task-calendar-card'),x0=0,y0=0;card.addEventListener('touchstart',function(e){if(e.touches.length===1){x0=e.touches[0].clientX;y0=e.touches[0].clientY}},{passive:true});card.addEventListener('touchend',function(e){if(!e.changedTouches.length)return;var dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;if(Math.abs(dx)>=42&&Math.abs(dx)>Math.abs(dy)*1.25)changeTaskMonth(dx<0?1:-1)},{passive:true});
+  }
+  function renderTaskDetail(){var task=taskById(detailTaskId);if(!task){renderTasks();return}document.getElementById('taskDetailName').value=task.title;updateTaskDetailOptions();renderTaskCalendar()}
+  function openTaskDetail(id){var task=taskById(id);if(!task)return;detailTaskId=id;detailDueDay=task.dueDay;detailDueTime=task.dueTime;detailDaily=task.repeatDaily;if(detailDueDay){var p=detailDueDay.split('-');detailViewDate=new Date(+p[0],+p[1]-1,1)}else detailViewDate=new Date();show('taskDetail','タスク詳細');renderTaskDetail();window.scrollTo(0,0)}
   function saveTaskTitle(task,input,old){
     var title=(input.value||'').trim();task.title=title||old;input.value=task.title;input.readOnly=true;if(task.title!==old)save();
+  }
+  function removeTask(id){state.tasks=state.tasks.filter(function(x){return x.id!==id});save();renderTaskLists()}
+  function duplicateTask(id){var task=taskById(id);if(!task)return;var copy=JSON.parse(JSON.stringify(task));copy.id=uid();copy.title=(task.title||'タスク')+' コピー';copy.completedAt=0;copy.completedDay='';copy.createdDay=currentDay();copy.carriedFrom='';var index=state.tasks.findIndex(function(x){return x.id===id});state.tasks.splice(index+1,0,copy);save();renderTaskLists()}
+  function closeTaskAction(){var pop=document.getElementById('taskActionPop');if(pop)pop.remove()}
+  function beginInlineTaskEdit(id){var row=document.querySelector('.task-row[data-id="'+id+'"]'),input=row&&row.querySelector('.task-title-input');if(!input)return;input.readOnly=false;input.dataset.old=input.value;row.draggable=false;input.focus();input.setSelectionRange(input.value.length,input.value.length)}
+  function openTaskAction(button,id){
+    closeTaskAction();var pop=document.createElement('div');pop.id='taskActionPop';pop.className='task-action-pop';pop.innerHTML='<button type="button" data-act="edit">編集</button><button type="button" data-act="detail">詳細</button><button type="button" data-act="delete" class="danger">削除</button>';document.body.appendChild(pop);var r=button.getBoundingClientRect(),w=132;pop.style.left=Math.max(8,Math.min(innerWidth-w-8,r.right-w))+'px';pop.style.top=Math.min(innerHeight-pop.offsetHeight-8,r.bottom+5)+'px';
+    pop.onclick=function(e){var b=e.target.closest('button');if(!b)return;e.stopPropagation();var act=b.dataset.act;closeTaskAction();if(act==='edit')beginInlineTaskEdit(id);else if(act==='detail')openTaskDetail(id);else if(act==='delete')removeTask(id)};setTimeout(function(){document.addEventListener('pointerdown',function close(e){if(!e.target.closest('#taskActionPop')){closeTaskAction();document.removeEventListener('pointerdown',close,true)}},true)},0);
   }
   function taskMeta(task){
     var meta=document.createElement('div');meta.className='task-meta';
@@ -219,14 +288,17 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
     var row=document.createElement('div');row.className='task-row'+(completed?' completed':'');row.dataset.id=task.id;row.draggable=!completed;
     var check=document.createElement('button');check.type='button';check.className='task-check'+(completed?' checked':'');check.setAttribute('aria-label',completed?'未完了に戻す':'完了にする');check.textContent=completed?'✓':'';
     check.onclick=function(){if(task.completedAt){task.completedAt=0;task.completedDay=''}else{task.completedAt=Date.now();task.completedDay=currentDay()}save();renderTaskLists()};
-    var main=document.createElement('div');main.className='task-main';var input=document.createElement('input');input.className='task-title-input';input.value=task.title;input.readOnly=true;input.setAttribute('aria-label','タスク名');
-    input.onclick=function(){var old=task.title;input.readOnly=false;input.focus();input.setSelectionRange(input.value.length,input.value.length);input.dataset.old=old};
+    var main=document.createElement('div');main.className='task-main';main.setAttribute('role','button');main.tabIndex=0;var input=document.createElement('input');input.className='task-title-input task-title-text';input.value=task.title;input.readOnly=true;input.setAttribute('aria-label','タスク名');
+    input.onclick=function(e){e.stopPropagation();if(input.readOnly)openTaskDetail(task.id)};
     input.onkeydown=function(e){if(e.key==='Enter'){e.preventDefault();input.blur()}else if(e.key==='Escape'){input.value=input.dataset.old||task.title;input.readOnly=true;input.blur()}};
-    input.onblur=function(){if(!input.readOnly)saveTaskTitle(task,input,input.dataset.old||task.title)};
+    input.onblur=function(){if(!input.readOnly){saveTaskTitle(task,input,input.dataset.old||task.title);row.draggable=!completed}};
+    main.onclick=function(e){if(e.target!==input)openTaskDetail(task.id)};main.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openTaskDetail(task.id)}};
     main.append(input,taskMeta(task));
-    var remove=document.createElement('button');remove.type='button';remove.className='task-delete';remove.setAttribute('aria-label','削除');remove.textContent='×';remove.onclick=function(){state.tasks=state.tasks.filter(function(x){return x.id!==task.id});save();renderTaskLists()};
-    row.append(check,main,remove);if(!completed)wireTaskReorder(row,task.id);return row;
+    var more=document.createElement('button');more.type='button';more.className='task-more';more.setAttribute('aria-label','タスク操作');more.textContent='…';more.onclick=function(e){e.stopPropagation();openTaskAction(more,task.id)};
+    var del=document.createElement('button');del.type='button';del.className='task-swipe-delete';del.textContent='削除';del.onclick=function(e){e.preventDefault();e.stopPropagation();removeTask(task.id)};var dup=document.createElement('button');dup.type='button';dup.className='task-swipe-duplicate';dup.textContent='複製';dup.onclick=function(e){e.preventDefault();e.stopPropagation();duplicateTask(task.id)};
+    row.append(check,main,more,del,dup);wireTaskSwipe(row);if(!completed)wireTaskReorder(row,task.id);return row;
   }
+  function wireTaskSwipe(row){var x0=0,y0=0,moved=false;row.addEventListener('touchstart',function(e){if(e.touches.length!==1)return;x0=e.touches[0].clientX;y0=e.touches[0].clientY;moved=false},{passive:true});row.addEventListener('touchmove',function(e){if(e.touches.length!==1)return;var dx=e.touches[0].clientX-x0,dy=e.touches[0].clientY-y0;if(Math.abs(dx)>22&&Math.abs(dx)>Math.abs(dy)*1.25)moved=true},{passive:true});row.addEventListener('touchend',function(e){if(!moved||!e.changedTouches.length)return;var dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;if(Math.abs(dx)<=45||Math.abs(dx)<=Math.abs(dy)*1.25)return;taskSwipeClickUntil=Date.now()+550;document.querySelectorAll('.task-row.swipe-open,.task-row.swipe-copy-open').forEach(function(x){if(x!==row)x.classList.remove('swipe-open','swipe-copy-open')});row.classList.remove('swipe-open','swipe-copy-open');row.classList.add(dx<0?'swipe-open':'swipe-copy-open')},{passive:true});row.addEventListener('click',function(e){var action=e.target.closest('.task-swipe-delete,.task-swipe-duplicate');if(Date.now()<taskSwipeClickUntil&&!action){e.preventDefault();e.stopPropagation();return}if((row.classList.contains('swipe-open')||row.classList.contains('swipe-copy-open'))&&!action){row.classList.remove('swipe-open','swipe-copy-open');e.preventDefault();e.stopPropagation()}},true)}
   function moveTask(fromId,toId){
     if(fromId===toId)return;var from=state.tasks.findIndex(function(x){return x.id===fromId}),to=state.tasks.findIndex(function(x){return x.id===toId});if(from<0||to<0)return;var task=state.tasks.splice(from,1)[0];to=state.tasks.findIndex(function(x){return x.id===toId});state.tasks.splice(Math.max(0,to),0,task);save();renderTaskLists();
   }
@@ -293,12 +365,13 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
 
   var previousGoBack=typeof goBack==='function'?goBack:null;
   if(previousGoBack)goBack=function(){
-    var custom=currentScreen==='tasks'||currentScreen==='taskHistory'||currentScreen==='dailyTasks'||(currentScreen==='settings'&&settingsReturn==='tasks');
+    var custom=currentScreen==='tasks'||currentScreen==='taskDetail'||currentScreen==='taskHistory'||currentScreen==='dailyTasks'||(currentScreen==='settings'&&settingsReturn==='tasks');
     if(custom){
       var target=history.state&&history.state.stretchTimerScreen;
       if(target&&target!==currentScreen){if(target==='tasks')return renderTasks();if(target==='settings')return renderSettings();if(target==='home')return renderHome()}
       var depth=history.state&&history.state.stretchTimerApp?Math.max(0,+history.state.stretchTimerDepth||0):0;
       if(depth>0&&typeof history.back==='function'){history.back();return}
+      if(currentScreen==='taskDetail')return renderTasks();
       if(currentScreen==='taskHistory'||currentScreen==='dailyTasks')return renderSettings();
       if(currentScreen==='settings')return renderTasks();
       return renderHome();
