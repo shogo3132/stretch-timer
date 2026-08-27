@@ -95,6 +95,18 @@ body.paused-routine-away .screen.active{padding-bottom:170px!important}\
     });
   }
 
+  function pauseAndLeaveHome(){
+    if(typeof currentScreen==='undefined'||currentScreen!=='timer'||!timerState)return false;
+    timerState.paused=true;
+    capturePausedTimer();
+    if(!session)return false;
+    if(typeof releaseAwake==='function')releaseAwake();
+    if(typeof renderHome==='function')renderHome();
+    else if(typeof show==='function')show('home','ストレッチ');
+    renderDock();
+    return true;
+  }
+
   if(coreOpenItem){
     openItem=function(){capturePausedTimer();var r=coreOpenItem.apply(this,arguments);setTimeout(renderDock,0);return r};
   }
@@ -170,6 +182,6 @@ body.paused-routine-away .screen.active{padding-bottom:170px!important}\
     clearRuntimeSnapshot();renderDock();
   }
 
-  window.__stretchTimerPausedSessionV97={resume:resumeSession,stop:stopSession,active:function(){return !!session}};
+  window.__stretchTimerPausedSessionV97={resume:resumeSession,stop:stopSession,pauseAndLeaveHome:pauseAndLeaveHome,active:function(){return !!session}};
   restoreStoredSession();
 })();
