@@ -1,7 +1,7 @@
-const CACHE='stretch-timer-v126';
-const APP_VERSION='0.12.112';
+const CACHE='stretch-timer-v127';
+const APP_VERSION='0.12.113';
 const ITEM_MEDIA_CACHE='stretch-timer-item-media-v1';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./favicon.svg','./vendor/xlsx.mini.min.js?v=96','./ux-v22.js?v=115','./ux-v18.js?v=101','./ux-v26-detail.js?v=96','./ux-v34-timer.js?v=96','./ux-v35-history.js?v=96','./ux-v36-sample.js?v=96','./ux-v38-polish.js?v=115','./ux-v41-timer-compact.js?v=107','./ux-v43-timer-back.js?v=96','./ux-v46-desktop-dnd.js?v=96','./ux-v79-item-editor-core.js?v=122','./ux-v79-item-card-sync.js?v=96','./ux-v52-scroll-restore.js?v=96','./ux-v51-update-watch.js?v=126','./ux-v54-refresh-motion.js?v=96','./ux-v79-transition-stability.js?v=115','./ux-v56-browser-history.js?v=96','./ux-v81-timer-edit-save.js?v=120','./ux-v82-timer-runtime.js?v=120','./ux-v85-xlsx-import.js?v=96','./ux-v86-video-reference.js?v=96','./ux-v88-focus-variants.js?v=96','./ux-v96-native-pip.js?v=105','./ux-v106-tasks.js?v=126','./ux-v107-timer-exit.js?v=119','./ux-v108-small-fixes.js?v=121','./ux-v109-item-media.js?v=123','./ux-v110-recipes.js?v=125'];
+const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./favicon.svg','./vendor/xlsx.mini.min.js?v=96','./ux-v22.js?v=115','./ux-v18.js?v=101','./ux-v26-detail.js?v=96','./ux-v34-timer.js?v=96','./ux-v35-history.js?v=96','./ux-v36-sample.js?v=96','./ux-v38-polish.js?v=115','./ux-v41-timer-compact.js?v=107','./ux-v43-timer-back.js?v=96','./ux-v46-desktop-dnd.js?v=96','./ux-v79-item-editor-core.js?v=122','./ux-v79-item-card-sync.js?v=96','./ux-v52-scroll-restore.js?v=96','./ux-v51-update-watch.js?v=127','./ux-v54-refresh-motion.js?v=96','./ux-v79-transition-stability.js?v=115','./ux-v56-browser-history.js?v=96','./ux-v81-timer-edit-save.js?v=120','./ux-v82-timer-runtime.js?v=120','./ux-v85-xlsx-import.js?v=96','./ux-v86-video-reference.js?v=96','./ux-v88-focus-variants.js?v=96','./ux-v96-native-pip.js?v=105','./ux-v106-tasks.js?v=127','./ux-v107-timer-exit.js?v=119','./ux-v108-small-fixes.js?v=121','./ux-v109-item-media.js?v=123','./ux-v110-recipes.js?v=125','./ux-v113-daily-schedule.js?v=127'];
 
 function patchHtml(html){
   if(!html.includes('rel="icon"')){
@@ -74,7 +74,8 @@ function patchHtml(html){
     '<script src="./ux-v107-timer-exit.js?v=119"></script>'+
     '<script src="./ux-v108-small-fixes.js?v=121"></script>'+
     '<script src="./ux-v109-item-media.js?v=123"></script>'+
-    '<script src="./ux-v110-recipes.js?v=124"></script></body>'
+    '<script src="./ux-v110-recipes.js?v=125"></script>'+
+    '<script src="./ux-v113-daily-schedule.js?v=127"></script></body>'
   );
   return html;
 }
