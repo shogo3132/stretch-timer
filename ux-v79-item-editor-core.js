@@ -171,7 +171,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
     var wrap=screen.querySelector('.item-photo-preview-wrap');
     wrap.addEventListener('click',function(e){if(e.target&&e.target.closest('#itemPhotoDeleteX'))return;e.preventDefault();openPhotoPicker()});
     wrap.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openPhotoPicker()}});
-    document.getElementById('itemPhotoDeleteX').onclick=function(e){e.preventDefault();e.stopPropagation();if(!draft||!draft.value.photo)return;draft.value.photo='';refreshPhoto()};
+    document.getElementById('itemPhotoDeleteX').onclick=function(e){e.preventDefault();e.stopPropagation();if(!draft||(!draft.value.photo&&!draft.value.photoPath))return;draft.value.photo='';draft.value.photoPath='';refreshPhoto()};
     document.getElementById('photoInput').onchange=handlePhotoChange;
     document.getElementById('itemName').oninput=function(e){if(draft)draft.value.name=e.target.value||'名称未設定'};
     document.getElementById('itemDesc').oninput=function(e){if(draft)draft.value.desc=e.target.value};
@@ -210,7 +210,11 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
     try{
       var compressed=await compressFile(f);
       if(!draft||draft.itemId!==token)return;
-      draft.value.photo=compressed;refreshPhoto();toast('画像を軽量化して保存しました');
+      if(window.__stretchTimerItemMedia&&typeof window.__stretchTimerItemMedia.storeDataUrl==='function'){
+        var stored=await window.__stretchTimerItemMedia.storeDataUrl(compressed);
+        draft.value.photo=stored.src;draft.value.photoPath=stored.path;
+      }else draft.value.photo=compressed;
+      refreshPhoto();toast('画像を軽量化して保存しました');
     }catch(err){console.error(err);toast('画像の保存に失敗しました')}
     finally{input.disabled=false;input.value=''}
   }
