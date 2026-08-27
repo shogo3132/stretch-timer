@@ -29,20 +29,20 @@ body.timer-exit-dialog-open{overflow:hidden}\
     root.innerHTML='<div class="timer-exit-card"><h2 class="timer-exit-title" id="timerExitTitle">ルーティンをどうしますか？</h2><p class="timer-exit-message">ホームに戻る場合は、現在位置を保存して一時停止します。</p><div class="timer-exit-actions"><button type="button" class="timer-exit-pause">一時停止してホームへ</button><button type="button" class="timer-exit-continue">このまま続ける</button><button type="button" class="timer-exit-stop">終了する</button></div></div>';
     document.body.appendChild(root);
     root.querySelector('.timer-exit-pause').onclick=function(){
-      closeDialog(false);
+      closeDialog(false,false);
       var api=window.__stretchTimerPausedSessionV97;
       if(api&&typeof api.pauseAndLeaveHome==='function'&&api.pauseAndLeaveHome())return;
       if(timerState)timerState.paused=false;
       if(typeof renderTimer==='function')renderTimer();
       alert('一時停止状態を保存できませんでした。ルーティンを続けます。');
     };
-    root.querySelector('.timer-exit-continue').onclick=function(){closeDialog(true)};
+    root.querySelector('.timer-exit-continue').onclick=function(){closeDialog(true,true)};
     root.querySelector('.timer-exit-stop').onclick=function(){
-      closeDialog(false);
+      closeDialog(false,false);
       if(typeof stopTimer==='function')stopTimer();
       if(typeof renderHome==='function')renderHome();
     };
-    root.addEventListener('click',function(e){if(e.target===root)closeDialog(true)});
+    root.addEventListener('click',function(e){if(e.target===root)closeDialog(true,true)});
     return root;
   }
 
@@ -58,16 +58,28 @@ body.timer-exit-dialog-open{overflow:hidden}\
     }catch(e){}
   }
 
-  function closeDialog(restoreHistory){
+  function closeDialog(restoreHistory,resumeTimer){
     if(!dialogOpen)return;
     dialogOpen=false;
     var root=ensureDialog();root.hidden=true;
     document.body.classList.remove('timer-exit-dialog-open');
     if(restoreHistory)restoreTimerHistory();
+    if(resumeTimer&&timerState){
+      timerState.paused=false;
+      if(typeof renderTimer==='function')renderTimer();
+      if(timerState.phase==='pre'&&typeof runPreStart==='function')runPreStart();
+      else if(typeof runTick==='function')runTick();
+    }
   }
 
   function requestExit(){
     if(dialogOpen)return true;
+    if(timerState){
+      timerState.paused=true;
+      try{if(timerState.interval)clearInterval(timerState.interval)}catch(e){}
+      timerState.interval=null;
+      if(typeof renderTimer==='function')renderTimer();
+    }
     var root=ensureDialog();dialogOpen=true;root.hidden=false;
     document.body.classList.add('timer-exit-dialog-open');
     setTimeout(function(){var b=root.querySelector('.timer-exit-continue');if(b)b.focus()},0);
@@ -82,5 +94,5 @@ body.timer-exit-dialog-open{overflow:hidden}\
 
   var back=document.getElementById('backBtn');
   if(back)back.onclick=function(){goBack()};
-  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&dialogOpen){e.preventDefault();closeDialog(true)}});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&dialogOpen){e.preventDefault();closeDialog(true,true)}});
 })();
