@@ -124,6 +124,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
         if(+x.seconds!==w){x.seconds=w;changed=true}
         if(+x.restSeconds!==r){x.restSeconds=r;changed=true}
         if(typeof x.videoUrl!=='string'){x.videoUrl='';changed=true}
+        if(typeof x.reverseSide!=='boolean'){x.reverseSide=false;changed=true}
       })});
       if(changed&&typeof save==='function')save(false);
     }catch(e){console.error(e)}
@@ -161,6 +162,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
       '<label class="field">説明・メモ<textarea id="itemDesc" placeholder="フォームや注意点など"></textarea></label>'+
       '<label class="field">参考動画URL<input id="itemVideoUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://youtu.be/…?t=90"></label>'+
       '<div class="tip" style="margin-top:-13px">YouTubeの時間指定付きURLを入力できます。</div>'+
+      '<label class="item-reverse-side"><input id="itemReverseSide" type="checkbox"><span><strong>逆サイドあり</strong><small>休憩後に同じ時間でもう一度行います</small></span></label>'+
       '<div id="itemTimeFields"></div>'+
       '<button id="itemCommitBtn" type="button" class="btn">決定</button>'+
       '<div class="row item-delete-row-spaced"><button id="duplicateItemBtn" class="btn sub" type="button">複製</button><button id="deleteItemBtn" class="btn danger" type="button">削除</button></div>'+
@@ -174,6 +176,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
     document.getElementById('itemName').oninput=function(e){if(draft)draft.value.name=e.target.value||'名称未設定'};
     document.getElementById('itemDesc').oninput=function(e){if(draft)draft.value.desc=e.target.value};
     document.getElementById('itemVideoUrl').oninput=function(e){if(draft)draft.value.videoUrl=e.target.value.trim()};
+    document.getElementById('itemReverseSide').onchange=function(e){if(draft)draft.value.reverseSide=!!e.target.checked};
     document.getElementById('itemCommitBtn').onclick=commitAndBack;
     document.getElementById('deleteItemBtn').onclick=deleteCurrentItem;
     document.getElementById('duplicateItemBtn').onclick=duplicateCurrentItem;
@@ -257,9 +260,9 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
   function updateResumeBar(){var bar=document.getElementById('timerResumeEditBar');if(bar)bar.classList.toggle('active',!!editContext)}
   function beginDraft(id){
     currentItemId=id;var x=currentItemSafe();if(!x)return false;
-    draft={menuId:currentMenuId,itemId:x.id,value:clone(x)};draft.value.seconds=clampWork(draft.value.seconds);draft.value.restSeconds=clampRest(draft.value.restSeconds);committed=false;navigating=false;
+    draft={menuId:currentMenuId,itemId:x.id,value:clone(x)};draft.value.seconds=clampWork(draft.value.seconds);draft.value.restSeconds=clampRest(draft.value.restSeconds);draft.value.reverseSide=!!draft.value.reverseSide;committed=false;navigating=false;
     draft.value.videoUrl=typeof draft.value.videoUrl==='string'?draft.value.videoUrl.trim():'';
-    var name=document.getElementById('itemName'),desc=document.getElementById('itemDesc'),video=document.getElementById('itemVideoUrl');if(name)name.value=draft.value.name||'';if(desc)desc.value=draft.value.desc||'';if(video)video.value=draft.value.videoUrl;refreshPhoto();updateResumeBar();return true;
+    var name=document.getElementById('itemName'),desc=document.getElementById('itemDesc'),video=document.getElementById('itemVideoUrl'),reverse=document.getElementById('itemReverseSide');if(name)name.value=draft.value.name||'';if(desc)desc.value=draft.value.desc||'';if(video)video.value=draft.value.videoUrl;if(reverse)reverse.checked=!!draft.value.reverseSide;refreshPhoto();updateResumeBar();return true;
   }
   function isDirty(){if(!draft)return false;var x=currentItemSafe();return !!x&&!same(draft.value,x)}
   function discardDraft(){draft=null;committed=false}

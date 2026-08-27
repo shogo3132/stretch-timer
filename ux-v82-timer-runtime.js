@@ -33,7 +33,7 @@ body.timer-active.timer-rest .timer-count{color:#628171!important}\
       if(typeof currentScreen==='undefined'||currentScreen!=='timer'||!timerState||typeof currentMenuId==='undefined'||!currentMenuId)return;
       localStorage.setItem(SNAP,JSON.stringify({
         menuId:currentMenuId,
-        timer:{index:+timerState.index||0,phase:timerState.phase||'item',remaining:Math.max(0,+timerState.remaining||0),total:Math.max(1,+timerState.total||1),paused:!!timerState.paused},
+        timer:{index:+timerState.index||0,phase:timerState.phase||'item',remaining:Math.max(0,+timerState.remaining||0),total:Math.max(1,+timerState.total||1),paused:!!timerState.paused,reverseSide:!!timerState.reverseSide,restTarget:timerState.restTarget||''},
         savedAt:Date.now()
       }));
     }catch(e){}
@@ -71,7 +71,7 @@ body.timer-active.timer-rest .timer-count{color:#628171!important}\
     var m=state.menus.find(function(x){return x.id===s.menuId});if(!m||!Array.isArray(m.items)||!m.items.length){clearSnapshot();return false}
     var idx=Math.max(0,Math.min(m.items.length-1,+s.timer.index||0));
     currentMenuId=s.menuId;
-    timerState={index:idx,phase:s.timer.phase==='rest'?'rest':'item',remaining:Math.max(0,+s.timer.remaining||0),total:Math.max(1,+s.timer.total||1),paused:!!s.timer.paused,interval:null};
+    timerState={index:idx,phase:s.timer.phase==='rest'?'rest':'item',remaining:Math.max(0,+s.timer.remaining||0),total:Math.max(1,+s.timer.total||1),paused:!!s.timer.paused,reverseSide:!!s.timer.reverseSide,restTarget:s.timer.restTarget||'',interval:null};
     if(timerState.remaining<=0){timerState.remaining=timerState.phase==='rest'?Math.max(1,+m.items[Math.max(0,idx-1)]?.restSeconds||20):Math.max(1,+m.items[idx].seconds||1);timerState.total=timerState.remaining}
     if(typeof show==='function')show('timer',m.name);
     if(typeof renderTimer==='function')renderTimer();

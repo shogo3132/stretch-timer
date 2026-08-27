@@ -1,6 +1,6 @@
-const CACHE='stretch-timer-v119';
-const APP_VERSION='0.12.105';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./favicon.svg','./vendor/xlsx.mini.min.js?v=96','./ux-v22.js?v=115','./ux-v18.js?v=101','./ux-v26-detail.js?v=96','./ux-v34-timer.js?v=96','./ux-v35-history.js?v=96','./ux-v36-sample.js?v=96','./ux-v38-polish.js?v=115','./ux-v41-timer-compact.js?v=107','./ux-v43-timer-back.js?v=96','./ux-v46-desktop-dnd.js?v=96','./ux-v79-item-editor-core.js?v=98','./ux-v79-item-card-sync.js?v=96','./ux-v52-scroll-restore.js?v=96','./ux-v51-update-watch.js?v=119','./ux-v54-refresh-motion.js?v=96','./ux-v79-transition-stability.js?v=115','./ux-v56-browser-history.js?v=96','./ux-v81-timer-edit-save.js?v=118','./ux-v82-timer-runtime.js?v=96','./ux-v85-xlsx-import.js?v=96','./ux-v86-video-reference.js?v=96','./ux-v88-focus-variants.js?v=96','./ux-v96-native-pip.js?v=105','./ux-v106-tasks.js?v=117','./ux-v107-timer-exit.js?v=119'];
+const CACHE='stretch-timer-v120';
+const APP_VERSION='0.12.106';
+const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./favicon.svg','./vendor/xlsx.mini.min.js?v=96','./ux-v22.js?v=115','./ux-v18.js?v=101','./ux-v26-detail.js?v=96','./ux-v34-timer.js?v=96','./ux-v35-history.js?v=96','./ux-v36-sample.js?v=96','./ux-v38-polish.js?v=115','./ux-v41-timer-compact.js?v=107','./ux-v43-timer-back.js?v=96','./ux-v46-desktop-dnd.js?v=96','./ux-v79-item-editor-core.js?v=120','./ux-v79-item-card-sync.js?v=96','./ux-v52-scroll-restore.js?v=96','./ux-v51-update-watch.js?v=120','./ux-v54-refresh-motion.js?v=96','./ux-v79-transition-stability.js?v=115','./ux-v56-browser-history.js?v=96','./ux-v81-timer-edit-save.js?v=120','./ux-v82-timer-runtime.js?v=120','./ux-v85-xlsx-import.js?v=96','./ux-v86-video-reference.js?v=96','./ux-v88-focus-variants.js?v=96','./ux-v96-native-pip.js?v=105','./ux-v106-tasks.js?v=117','./ux-v107-timer-exit.js?v=119','./ux-v108-small-fixes.js?v=120'];
 
 function patchHtml(html){
   if(!html.includes('rel="icon"')){
@@ -70,7 +70,8 @@ function patchHtml(html){
     '<script src="./ux-v88-focus-variants.js?v=96"></script>'+
     '<script src="./ux-v96-native-pip.js?v=105"></script>'+
     '<script src="./ux-v106-tasks.js?v=117"></script>'+
-    '<script src="./ux-v107-timer-exit.js?v=119"></script></body>'
+    '<script src="./ux-v107-timer-exit.js?v=119"></script>'+
+    '<script src="./ux-v108-small-fixes.js?v=120"></script></body>'
   );
   return html;
 }

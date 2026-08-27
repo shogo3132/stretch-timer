@@ -89,7 +89,9 @@ body.paused-routine-away .screen.active{padding-bottom:170px!important}\
         phase:timerState.phase==='rest'?'rest':'item',
         remaining:Math.max(0,+timerState.remaining||0),
         total:Math.max(1,+timerState.total||1),
-        paused:true
+        paused:true,
+        reverseSide:!!timerState.reverseSide,
+        restTarget:timerState.restTarget||''
       },
       savedAt:Date.now()
     });
