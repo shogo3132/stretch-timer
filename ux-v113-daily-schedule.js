@@ -11,7 +11,7 @@
     {bg:'#eee8fb',line:'#8b72cf',text:'#59469a'},
     {bg:'#dff3f4',line:'#45aeb3',text:'#276f73'}
   ];
-  var dragTaskId='',dragTouchActive=false,dragHold=null,editorId='',actionTaskId='',clockTimer=null,observer=null;
+  var dragTaskId='',dragTouchActive=false,dragHold=null,dragHeld=null,dragTarget=null,dragBefore=true,dragStartX=0,dragStartY=0,dragPointerY=0,dragScrollSpeed=0,dragScrollFrame=null,dragLastScrollAt=0,dragSuppressClickUntil=0,editorId='',actionTaskId='',clockTimer=null,observer=null;
 
   var style=document.createElement('style');
   style.setAttribute('data-daily-schedule-v113','');
@@ -133,10 +133,34 @@
   }
   function wireTaskToPool(row){if(row.dataset.scheduleBound)return;row.dataset.scheduleBound='1';
     row.addEventListener('dragstart',function(e){dragTaskId=row.dataset.id;e.dataTransfer.setData('text/plain',dragTaskId)});row.addEventListener('dragend',function(){dragTaskId='';document.getElementById('dailyPool')&&document.getElementById('dailyPool').classList.remove('drop-active')});
-    row.addEventListener('touchstart',function(e){if(e.target.closest('button,input,textarea')||e.touches.length!==1)return;clearTimeout(dragHold);dragHold=setTimeout(function(){dragTouchActive=true;dragTaskId=row.dataset.id;row.classList.add('schedule-dragging')},430)},{passive:true});
-    row.addEventListener('touchmove',function(e){if(!dragTouchActive||dragTaskId!==row.dataset.id)return;var p=e.touches[0],pool=document.getElementById('dailyPool'),hit=document.elementFromPoint(p.clientX,p.clientY);if(p.clientY<100)window.scrollBy(0,-18);pool&&pool.classList.toggle('drop-active',!!(hit&&hit.closest('#dailyPool')))},{passive:true});
-    row.addEventListener('touchend',function(e){clearTimeout(dragHold);if(dragTouchActive&&dragTaskId===row.dataset.id){var p=e.changedTouches[0],hit=document.elementFromPoint(p.clientX,p.clientY);if(hit&&hit.closest('#dailyPool'))addTask(row.dataset.id,false)}row.classList.remove('schedule-dragging');var pool=document.getElementById('dailyPool');if(pool)pool.classList.remove('drop-active');dragTouchActive=false;dragTaskId=''},{passive:true});
-    row.addEventListener('touchcancel',function(){clearTimeout(dragHold);row.classList.remove('schedule-dragging');dragTouchActive=false;dragTaskId=''});
+  }
+  function clearTaskTargets(){document.querySelectorAll('#taskOpenList .task-drop-target').forEach(function(x){x.classList.remove('task-drop-target')});dragTarget=null}
+  function pointInPool(y){var pool=document.getElementById('dailyPool');if(!pool)return false;var r=pool.getBoundingClientRect();return y>=r.top-8&&y<=r.bottom+8}
+  function updateTaskDropTarget(y){
+    var pool=document.getElementById('dailyPool');clearTaskTargets();if(pool)pool.classList.toggle('drop-active',pointInPool(y));if(pointInPool(y))return;
+    var rows=Array.prototype.slice.call(document.querySelectorAll('#taskOpenList .task-row:not(.completed)')).filter(function(x){return x!==dragHeld}),best=null,bestDist=Infinity,before=true;
+    rows.forEach(function(row){var r=row.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight)return;var mid=r.top+r.height/2,dist=Math.abs(y-mid);if(dist<bestDist){bestDist=dist;best=row;before=y<mid}});if(best){dragTarget=best;dragBefore=before;best.classList.add('task-drop-target')}
+  }
+  function stopTaskAutoScroll(){dragScrollSpeed=0;dragLastScrollAt=0;if(dragScrollFrame!==null){cancelAnimationFrame(dragScrollFrame);dragScrollFrame=null}}
+  function taskAutoScrollStep(now){
+    if(!dragTouchActive||!dragHeld||!dragScrollSpeed){dragScrollFrame=null;return}var scroller=document.scrollingElement||document.documentElement,beforeY=scroller.scrollTop,maxY=Math.max(0,scroller.scrollHeight-scroller.clientHeight);
+    if((dragScrollSpeed<0&&beforeY<=0)||(dragScrollSpeed>0&&beforeY>=maxY-.5)){stopTaskAutoScroll();return}if(!dragLastScrollAt)dragLastScrollAt=now;var elapsed=Math.max(0,Math.min(34,now-dragLastScrollAt));dragLastScrollAt=now;scroller.scrollTop=Math.max(0,Math.min(maxY,beforeY+dragScrollSpeed*elapsed/1000));updateTaskDropTarget(dragPointerY);dragScrollFrame=requestAnimationFrame(taskAutoScrollStep)
+  }
+  function updateTaskAutoScroll(y){
+    var viewportHeight=window.visualViewport&&window.visualViewport.height||window.innerHeight,topEdge=Math.max(80,Math.min(120,viewportHeight/6)),bottomEdge=Math.max(110,Math.min(160,viewportHeight/6)),next=0,ratio=0;
+    if(y<topEdge){ratio=clamp((topEdge-y)/topEdge,0,1);next=-Math.round(90+ratio*550)}else if(y>viewportHeight-bottomEdge){ratio=clamp((y-(viewportHeight-bottomEdge))/bottomEdge,0,1);next=Math.round(90+ratio*550)}if(!dragScrollSpeed&&next)dragLastScrollAt=0;dragScrollSpeed=next;if(next&&dragScrollFrame===null)dragScrollFrame=requestAnimationFrame(taskAutoScrollStep);if(!next)stopTaskAutoScroll()
+  }
+  function reorderTaskDirect(id,targetId,before){
+    if(!id||!targetId||id===targetId)return;var from=(state.tasks||[]).findIndex(function(x){return x.id===id}),to=(state.tasks||[]).findIndex(function(x){return x.id===targetId});if(from<0||to<0)return;var moved=state.tasks.splice(from,1)[0];to=state.tasks.findIndex(function(x){return x.id===targetId});state.tasks.splice(before?to:to+1,0,moved);if(typeof save==='function')save();var nav=document.querySelector('#modeNav [data-mode="tasks"]');if(nav)nav.click()
+  }
+  function resetTaskGesture(){
+    clearTimeout(dragHold);dragHold=null;stopTaskAutoScroll();clearTaskTargets();var pool=document.getElementById('dailyPool');if(pool)pool.classList.remove('drop-active');document.querySelectorAll('#taskOpenList .task-row').forEach(function(x){x.classList.remove('schedule-dragging','task-dragging')});dragHeld=null;dragTarget=null;dragTouchActive=false;dragTaskId=''
+  }
+  function bindUnifiedTaskDrag(){
+    document.addEventListener('touchstart',function(e){if(e.touches.length!==1)return;var row=e.target&&e.target.closest?e.target.closest('#taskOpenList .task-row:not(.completed)'):null;if(!row||e.target.closest('button,input,textarea,select,a'))return;resetTaskGesture();dragHeld=row;dragTaskId=row.dataset.id;dragStartX=e.touches[0].clientX;dragStartY=e.touches[0].clientY;dragPointerY=dragStartY;dragHold=setTimeout(function(){if(!dragHeld)return;dragTouchActive=true;dragHeld.classList.remove('swipe-open','swipe-copy-open');dragHeld.classList.add('schedule-dragging','task-dragging');updateTaskDropTarget(dragPointerY);updateTaskAutoScroll(dragPointerY);if(navigator.vibrate)navigator.vibrate(25)},420)},{passive:true,capture:true});
+    document.addEventListener('touchmove',function(e){if(!dragHeld||e.touches.length!==1)return;var p=e.touches[0],dx=p.clientX-dragStartX,dy=p.clientY-dragStartY;dragPointerY=p.clientY;if(!dragTouchActive){if(Math.hypot(dx,dy)>16)resetTaskGesture();return}if(e.cancelable)e.preventDefault();e.stopImmediatePropagation();updateTaskDropTarget(dragPointerY);updateTaskAutoScroll(dragPointerY)},{passive:false,capture:true});
+    function finish(e){if(!dragHeld)return;clearTimeout(dragHold);dragHold=null;if(!dragTouchActive){resetTaskGesture();return}if(e&&e.stopImmediatePropagation)e.stopImmediatePropagation();var id=dragTaskId,targetId=dragTarget&&dragTarget.dataset.id,before=dragBefore,inPool=pointInPool(dragPointerY);dragSuppressClickUntil=Date.now()+600;resetTaskGesture();if(inPool)addTask(id,false);else if(targetId)reorderTaskDirect(id,targetId,before)}
+    document.addEventListener('touchend',finish,{passive:true,capture:true});document.addEventListener('touchcancel',finish,{passive:true,capture:true});document.addEventListener('click',function(e){if(Date.now()<dragSuppressClickUntil&&e.target.closest('#taskOpenList .task-row')){e.preventDefault();e.stopImmediatePropagation()}},true)
   }
   function wireEvent(el,entry,range){el.addEventListener('pointerdown',function(e){if(e.button!=null&&e.button!==0)return;e.preventDefault();var mode=e.target.dataset.resize||'move',startY=e.clientY,initialStart=entry.start,initialEnd=entry.end,moved=false;el.setPointerCapture&&el.setPointerCapture(e.pointerId);el.classList.add('moving');
       function move(ev){var delta=snap((ev.clientY-startY)/HOUR_PX*60),nextStart=initialStart,nextEnd=initialEnd;if(Math.abs(ev.clientY-startY)>4)moved=true;if(mode==='top')nextStart=clamp(initialStart+delta,0,initialEnd-SNAP);else if(mode==='bottom')nextEnd=clamp(initialEnd+delta,initialStart+SNAP,1440);else{var duration=initialEnd-initialStart;nextStart=clamp(initialStart+delta,0,1440-duration);nextEnd=nextStart+duration}entry.start=nextStart;entry.end=nextEnd;el.style.top=((entry.start-range.start)/60*HOUR_PX)+'px';el.style.height=Math.max(22,(entry.end-entry.start)/60*HOUR_PX-2)+'px';el.querySelector('.daily-event-time').textContent=timeText(entry.start)+'〜'+timeText(entry.end)}
@@ -153,6 +177,7 @@
   var previousShow=typeof show==='function'?show:null;if(previousShow)show=function(id){var result=previousShow.apply(this,arguments);if(id==='tasks')setTimeout(renderSchedule,0);return result};
   var previousSyncPayload=typeof syncPayload==='function'?syncPayload:null;if(previousSyncPayload)syncPayload=function(){var payload=JSON.parse(previousSyncPayload());payload.taskSchedule=cleanSchedule(state.taskSchedule);return JSON.stringify(payload)};
   var previousApplyRemote=typeof applyRemote==='function'?applyRemote:null;if(previousApplyRemote)applyRemote=function(raw,remoteTime){var remote={};try{remote=JSON.parse(raw)||{}}catch(e){}var result=previousApplyRemote.apply(this,arguments);state.taskSchedule=cleanSchedule(remote.taskSchedule);if(typeof save==='function')save(false);if(typeof currentScreen!=='undefined'&&currentScreen==='tasks')renderSchedule();return result};
+  bindUnifiedTaskDrag();
   document.addEventListener('click',function(e){var more=e.target.closest('#taskOpenList .task-more');if(more){var row=more.closest('.task-row');actionTaskId=row&&row.dataset.id||'';enhanceActionMenu()}},true);
   var openList=document.getElementById('taskOpenList'),doneList=document.getElementById('taskDoneList');if(window.MutationObserver&&openList){observer=new MutationObserver(function(){if(typeof currentScreen!=='undefined'&&currentScreen==='tasks')renderSchedule()});observer.observe(openList,{childList:true});if(doneList)observer.observe(doneList,{childList:true})}
   document.addEventListener('visibilitychange',function(){if(!document.hidden){ensureData(true);if(typeof currentScreen!=='undefined'&&currentScreen==='tasks')renderSchedule()}});
