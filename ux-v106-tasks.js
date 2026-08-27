@@ -19,7 +19,7 @@
   style.textContent='\
 body.mode-nav-visible .screen.active{padding-bottom:108px!important}\
 body.mode-nav-visible #appToast{bottom:88px!important}\
-#modeNav{position:fixed;left:50%;bottom:0;z-index:9000;width:min(760px,100%);transform:translateX(-50%);display:grid;grid-template-columns:1fr 1fr;padding:6px 14px max(6px,env(safe-area-inset-bottom));background:rgba(255,255,255,.96);border-top:1px solid #e5e9ec;box-shadow:0 -6px 20px rgba(29,38,46,.06);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}\
+#modeNav{position:fixed;left:50%;bottom:0;z-index:9000;width:min(760px,100%);transform:translateX(-50%);display:grid;grid-template-columns:1fr 1fr;padding:6px 14px;background:rgba(255,255,255,.96);border-top:1px solid #e5e9ec;box-shadow:0 -6px 20px rgba(29,38,46,.06);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}\
 #modeNav[hidden]{display:none!important}\
 .mode-nav-btn{min-height:44px;border:0;border-radius:14px;background:transparent;color:#7a838d;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer}\
 .mode-nav-btn.active{background:#eaf7f3;color:#168465}\
