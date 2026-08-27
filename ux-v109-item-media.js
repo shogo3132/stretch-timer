@@ -11,7 +11,7 @@
   async function download(path){var token=await accessToken(),r=await fetch('https://content.dropboxapi.com/2/files/download',{method:'POST',headers:{Authorization:'Bearer '+token,'Dropbox-API-Arg':JSON.stringify({path:path})}});if(!r.ok)throw new Error('画像をDropboxから取得できませんでした');return r.blob()}
   async function storeBlob(blob){var key=await blobKey(blob),path='/item-media/'+key+'.jpg',src=cacheUrl(key);await upload(path,blob);try{await cacheBlob(key,blob)}catch(e){src=URL.createObjectURL(blob)}return {path:path,src:src}}
   async function storeDataUrl(src){return storeBlob(await dataUrlBlob(src))}
-  function items(){var out=[];try{(state.menus||[]).forEach(function(m){(m.items||[]).forEach(function(x){out.push(x)})})}catch(e){}return out}
+  function items(){var out=[];try{(state.menus||[]).forEach(function(m){(m.items||[]).forEach(function(x){out.push(x)})});(state.recipes||[]).forEach(function(x){out.push({photoPath:x.imagePath})})}catch(e){}return out}
   function findPathByKey(key){var list=items();for(var i=0;i<list.length;i++)if(keyFromPath(list[i].photoPath)===key)return list[i].photoPath;return ''}
   function rerender(){try{if(currentScreen==='home'&&typeof renderHome==='function')renderHome();else if(currentScreen==='menuEdit'&&typeof renderItems==='function')renderItems();else if(currentScreen==='itemEdit'&&currentItemId&&typeof openItem==='function')openItem(currentItemId);else if(currentScreen==='timer'&&typeof renderTimer==='function')renderTimer()}catch(e){console.error(e)}}
   async function ensurePath(path){var key=keyFromPath(path);if(!key)return '';var src=cacheUrl(key),hit=await caches.match(src);if(hit)return src;if(pending[key])return pending[key];pending[key]=(async function(){var blob=await download(path);try{await cacheBlob(key,blob);return src}catch(e){return URL.createObjectURL(blob)}})().finally(function(){delete pending[key]});return pending[key]}
@@ -21,6 +21,6 @@
   function normalizeRefs(){items().forEach(function(x){if(x.photoPath){var key=keyFromPath(x.photoPath);if(key)x.photo=cacheUrl(key)}})}
   if(typeof syncPayload==='function'){var oldSync=syncPayload;syncPayload=function(){var payload=JSON.parse(oldSync());(payload.menus||[]).forEach(function(m){var source=(state.menus||[]).find(function(x){return x.id===m.id});(m.items||[]).forEach(function(x,i){var item=source&&source.items&&source.items[i];if(item&&item.photoPath){x.photoPath=item.photoPath;x.photoData=''}})});return JSON.stringify(payload)}}
   if(typeof applyRemote==='function'){var oldApply=applyRemote;applyRemote=function(){var result=oldApply.apply(this,arguments);normalizeRefs();if(typeof save==='function')save(false);setTimeout(rerender,0);return result}}
-  window.__stretchTimerItemMedia={storeDataUrl:storeDataUrl,migrate:migrate,cacheName:MEDIA_CACHE};
+  window.__stretchTimerItemMedia={storeDataUrl:storeDataUrl,migrate:migrate,cacheName:MEDIA_CACHE,srcForPath:function(path){var key=keyFromPath(path);return key?cacheUrl(key):''}};
   normalizeRefs();setTimeout(migrate,600);
 })();
