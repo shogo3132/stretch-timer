@@ -45,7 +45,7 @@
 | 共通 | 下部ナビでストレッチ・タスク・レシピ・設定を切替 | PC/Android | tasks / recipes / diagnostics | ナビ共通管理へ統合 | 現行確認 |
 | 共通 | ヘッダーの戻る・設定・同期・更新・バージョン表示 | PC/Android | index / tasks / update-watch | ヘッダー状態管理を一元化 | 現行確認 |
 | 共通 | Dropbox自動・手動同期 | PC/Android | index | データ互換を維持 | 現行確認 |
-| 共通 | 別デバイス編集ロックと読取専用表示 | PC/Android | device-lock | 固有機能として保全 | 現行確認 |
+| 共通 | 別デバイス編集ロックと読取専用表示。同一端末の更新・再起動時は旧セッションを引継ぎ | PC/Android | device-lock | 固有機能として保全 | 移行済み |
 | 共通 | Service Worker更新通知とキャッシュ更新 | PC/Android | sw / update-watch | 読み込み一覧を整理 | 現行確認 |
 | ストレッチ | FOCUS文章・画像・動画の表示と編集 | PC/Android | focus-variants | 固有機能として保全 | 現行確認 |
 | ストレッチ | ルーティンの作成・編集・複製・削除 | PC/Android | index / ux-v18 | カード操作のみ共通化 | 現行確認 |

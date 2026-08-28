@@ -3,8 +3,9 @@
   window.__deviceLockV116=true;
 
   var LOCK_PATH='/active-device.json',HEARTBEAT_MS=20000,LEASE_MS=60000;
-  var SESSION_KEY='stretchTimer.deviceSession',sessionId=sessionStorage.getItem(SESSION_KEY)||makeId(),owner=false,readOnly=false,checking=false,syncPermit=false,heartbeatTimer=null,lastOwnerLabel='',originalSyncNow=typeof syncNow==='function'?syncNow:null;
+  var SESSION_KEY='stretchTimer.deviceSession',DEVICE_KEY='stretchTimer.deviceId',sessionId=sessionStorage.getItem(SESSION_KEY)||makeId(),deviceId=localStorage.getItem(DEVICE_KEY)||makeId(),owner=false,readOnly=false,checking=false,syncPermit=false,heartbeatTimer=null,lastOwnerLabel='',originalSyncNow=typeof syncNow==='function'?syncNow:null;
   sessionStorage.setItem(SESSION_KEY,sessionId);
+  localStorage.setItem(DEVICE_KEY,deviceId);
 
   var style=document.createElement('style');
   style.setAttribute('data-device-lock-v116','');
@@ -27,9 +28,10 @@ body.device-readonly .task-check,body.device-readonly .task-more,body.device-rea
   document.head.appendChild(style);
 
   function makeId(){return (crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2))}
-  function deviceLabel(){var ua=navigator.userAgent||'',android=/Android/i.test(ua),standalone=window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches;return android?(standalone?'Androidアプリ':'Androidブラウザ'):'PCブラウザ'}
-  function lockRecord(expiresAt){return {sessionId:sessionId,label:deviceLabel(),updatedAt:Date.now(),expiresAt:expiresAt}}
-  function isActiveOther(lock){return !!(lock&&lock.sessionId&&lock.sessionId!==sessionId&&+lock.expiresAt>Date.now())}
+  function deviceLabel(){var ua=navigator.userAgent||'',android=/Android/i.test(ua),appShell=/StretchTimerApp/i.test(ua),standalone=window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches;return android?(appShell||standalone?'Androidアプリ':'Androidブラウザ'):'PCブラウザ'}
+  function lockRecord(expiresAt){return {sessionId:sessionId,deviceId:deviceId,label:deviceLabel(),updatedAt:Date.now(),expiresAt:expiresAt}}
+  function isSameDevice(lock){return !!(lock&&lock.deviceId&&lock.deviceId===deviceId)}
+  function isActiveOther(lock){return !!(lock&&lock.sessionId&&lock.sessionId!==sessionId&&!isSameDevice(lock)&&+lock.expiresAt>Date.now())}
   function ensureGate(){var gate=document.getElementById('deviceGate');if(gate)return gate;gate=document.createElement('div');gate.id='deviceGate';gate.hidden=true;gate.innerHTML='<div class="device-gate-card"><div id="deviceGateStatus"></div><div id="deviceGateTitle" class="device-gate-title"></div><div id="deviceGateText" class="device-gate-text"></div><div id="deviceGateActions" class="device-gate-actions"></div></div>';document.body.appendChild(gate);return gate}
   function setGate(kind,title,text,actions){var gate=ensureGate(),status=gate.querySelector('#deviceGateStatus'),box=gate.querySelector('#deviceGateActions');gate.hidden=false;document.body.classList.add('device-gated');status.className=kind==='loading'?'device-gate-spinner':'device-gate-icon';status.textContent=kind==='loading'?'':'!';gate.querySelector('#deviceGateTitle').textContent=title;gate.querySelector('#deviceGateText').textContent=text||'';box.innerHTML='';(actions||[]).forEach(function(action){var b=document.createElement('button');b.type='button';b.className='btn'+(action.sub?' sub':'');b.textContent=action.label;b.onclick=action.fn;box.appendChild(b)})}
   function hideGate(){var gate=ensureGate();gate.hidden=true;document.body.classList.remove('device-gated')}
