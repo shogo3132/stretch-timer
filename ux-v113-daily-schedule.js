@@ -41,6 +41,7 @@
 .daily-now::before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:#ef5a5a}\
 .daily-pool{border:2px dashed #d9e0e4;border-radius:15px;padding:9px;transition:.18s ease;background:#fafbfc}\
 .daily-pool.drop-active{border-color:#27ae8b;background:#eaf7f3;transform:scale(1.01)}\
+.daily-pool.add-confirmed{border-color:#27ae8b;background:#e1f6ef;box-shadow:0 0 0 4px rgba(39,174,139,.14)}\
 .daily-pool-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;color:#727c85;font-size:11px;font-weight:800}\
 .daily-pool-hint{font-weight:600;color:#98a0a7}\
 .daily-pool-list{display:flex;align-items:center;gap:7px;overflow-x:auto;padding:1px 1px 3px;scrollbar-width:none}\
@@ -106,13 +107,15 @@
   function palette(entry){return COLORS[(entry&&entry.color)||0]}
   function applyPalette(el,entry){var c=palette(entry);el.style.setProperty('--event-bg',c.bg);el.style.setProperty('--event-line',c.line);el.style.setProperty('--event-text',c.text)}
   function saveAndRender(){if(typeof save==='function')save();renderSchedule()}
+  function logSchedule(status,details){if(!window.__stretchDiagnostics||!window.__stretchDiagnostics.log)return;details=details||{};details.status=status;window.__stretchDiagnostics.log('task-schedule',details)}
+  function confirmPool(message){var pool=document.getElementById('dailyPool');if(pool){pool.classList.remove('add-confirmed');void pool.offsetWidth;pool.classList.add('add-confirmed');setTimeout(function(){pool.classList.remove('add-confirmed')},900)}var old=document.getElementById('scheduleToast');if(old)old.remove();var toast=document.createElement('div');toast.id='scheduleToast';toast.textContent=message;toast.style.cssText='position:fixed;left:50%;bottom:88px;transform:translateX(-50%);z-index:10030;background:#187e66;color:#fff;padding:9px 13px;border-radius:13px;font-size:13px;font-weight:750;box-shadow:0 5px 18px rgba(20,70,58,.24);white-space:nowrap';document.body.appendChild(toast);setTimeout(function(){toast.remove()},1500)}
   function addTask(id,openEditorAfter){
-    var task=taskById(id);if(!task||task.completedAt)return;var data=ensureData(true),existing=entryByTask(id);
-    if(!existing){var order=data.nextOrder++;existing={id:uid2(),taskId:id,color:order%COLORS.length,order:order,start:null,end:null};data.entries.push(existing);saveAndRender()}
-    else renderSchedule();
+    var task=taskById(id);if(!task||task.completedAt){logSchedule('add-rejected',{taskId:id,reason:!task?'missing-task':'completed'});return}var data=ensureData(true),before=data.entries.length,existing=entryByTask(id);logSchedule('add-start',{taskId:id,before:before,existing:!!existing});
+    if(!existing){var order=data.nextOrder++;existing={id:uid2(),taskId:id,color:order%COLORS.length,order:order,start:null,end:null};data.entries.push(existing);saveAndRender();logSchedule('add-saved',{taskId:id,entryId:existing.id,before:before,after:ensureData(false).entries.length,nextOrder:data.nextOrder});confirmPool('今日使うタスクに追加しました')}
+    else{renderSchedule();logSchedule('add-existing',{taskId:id,entryId:existing.id,count:data.entries.length});confirmPool('すでに今日使うタスクに入っています')}
     if(openEditorAfter)openEditor(existing.id);
   }
-  function removeEntry(id){var data=ensureData(false);data.entries=data.entries.filter(function(x){return x.id!==id});closeEditor();saveAndRender()}
+  function removeEntry(id){var data=ensureData(false),before=data.entries.length,entry=data.entries.find(function(x){return x.id===id});data.entries=data.entries.filter(function(x){return x.id!==id});closeEditor();saveAndRender();logSchedule('remove-saved',{entryId:id,taskId:entry&&entry.taskId||'',before:before,after:data.entries.length})}
   function scheduleRange(entries){var starts=entries.filter(function(x){return x.start!=null}).map(function(x){return x.start});var min=starts.length?Math.min.apply(Math,starts):360;return {start:min<360?0:360,end:1440}}
   function eventLayout(entries){
     var sorted=entries.slice().sort(function(a,b){return a.start-b.start||a.end-b.end}),groups=[],group=[];var groupEnd=-1;
