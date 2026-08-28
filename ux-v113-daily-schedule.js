@@ -11,7 +11,7 @@
     {bg:'#eee8fb',line:'#8b72cf',text:'#59469a'},
     {bg:'#dff3f4',line:'#45aeb3',text:'#276f73'}
   ];
-  var dragTaskId='',dragTouchActive=false,dragHold=null,dragHeld=null,dragTarget=null,dragBefore=true,dragStartX=0,dragStartY=0,dragPointerY=0,dragScrollSpeed=0,dragScrollFrame=null,dragLastScrollAt=0,dragSuppressClickUntil=0,editorId='',actionTaskId='',clockTimer=null,observer=null;
+  var dragTaskId='',dragTouchActive=false,dragHold=null,dragHeld=null,dragTarget=null,dragBefore=true,dragStartX=0,dragStartY=0,dragPointerY=0,dragScrollSpeed=0,dragScrollFrame=null,dragLastScrollAt=0,dragSuppressClickUntil=0,dragDebugMoves=0,dragDebugStarted=0,editorId='',actionTaskId='',clockTimer=null,observer=null;
 
   var style=document.createElement('style');
   style.setAttribute('data-daily-schedule-v113','');
@@ -51,6 +51,7 @@
 .daily-chip-time{display:block;margin-top:2px;font-size:9px;font-weight:700;opacity:.76}\
 .task-row.schedule-dragging{opacity:.5;transform:scale(.98)}\
 .task-row.in-daily-schedule::before{content:"";position:absolute;left:4px;top:11px;bottom:11px;width:3px;border-radius:4px;background:var(--schedule-line);z-index:2}\
+.task-drag-debug{position:fixed;left:10px;right:10px;bottom:82px;z-index:12000;padding:9px 11px;border-radius:12px;background:rgba(24,30,36,.94);color:#fff;font:600 11px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;pointer-events:none;box-shadow:0 6px 22px rgba(0,0,0,.24)}\
 .schedule-time-overlay{position:fixed;inset:0;z-index:10100;display:grid;align-items:end;background:rgba(25,31,37,.38);padding:16px 12px max(16px,env(safe-area-inset-bottom))}\
 .schedule-time-panel{width:min(430px,100%);margin:0 auto;padding:18px;border-radius:22px;background:#f7f8fa;box-shadow:0 18px 45px rgba(20,27,34,.22)}\
 .schedule-time-title{font-size:16px;font-weight:850;color:#242a30;margin-bottom:4px}\
@@ -136,6 +137,11 @@
   }
   function clearTaskTargets(){document.querySelectorAll('#taskOpenList .task-drop-target').forEach(function(x){x.classList.remove('task-drop-target')});dragTarget=null}
   function pointInPool(y){var pool=document.getElementById('dailyPool');if(!pool)return false;var r=pool.getBoundingClientRect();return y>=r.top-8&&y<=r.bottom+8}
+  function showTaskDragDebug(status,e){
+    var panel=document.getElementById('taskDragDebug');if(!panel){panel=document.createElement('div');panel.id='taskDragDebug';panel.className='task-drag-debug';document.body.appendChild(panel)}
+    var pool=document.getElementById('dailyPool'),r=pool&&pool.getBoundingClientRect(),scroller=document.scrollingElement||document.documentElement,elapsed=dragDebugStarted?Date.now()-dragDebugStarted:0;
+    panel.textContent='診断 '+status+'  '+elapsed+'ms\nmove:'+dragDebugMoves+'  active:'+(dragTouchActive?'yes':'no')+'  cancelable:'+(e&&e.cancelable?'yes':'no')+'\ny:'+Math.round(dragPointerY)+'  speed:'+dragScrollSpeed+'  scroll:'+Math.round(scroller&&scroller.scrollTop||0)+'\npool:'+(r?Math.round(r.top)+'..'+Math.round(r.bottom):'なし')+'  hit:'+(pointInPool(dragPointerY)?'yes':'no')+'\ntouch-action:'+(dragHeld?getComputedStyle(dragHeld).touchAction:'-');
+  }
   function updateTaskDropTarget(y){
     var pool=document.getElementById('dailyPool');clearTaskTargets();if(pool)pool.classList.toggle('drop-active',pointInPool(y));if(pointInPool(y))return;
     var rows=Array.prototype.slice.call(document.querySelectorAll('#taskOpenList .task-row:not(.completed)')).filter(function(x){return x!==dragHeld}),best=null,bestDist=Infinity,before=true;
@@ -148,7 +154,7 @@
   }
   function updateTaskAutoScroll(y){
     var viewportHeight=window.visualViewport&&window.visualViewport.height||window.innerHeight,topEdge=Math.max(80,Math.min(120,viewportHeight/6)),bottomEdge=Math.max(110,Math.min(160,viewportHeight/6)),next=0,ratio=0;
-    if(y<topEdge){ratio=clamp((topEdge-y)/topEdge,0,1);next=-Math.round(90+ratio*550)}else if(y>viewportHeight-bottomEdge){ratio=clamp((y-(viewportHeight-bottomEdge))/bottomEdge,0,1);next=Math.round(90+ratio*550)}if(!dragScrollSpeed&&next)dragLastScrollAt=0;dragScrollSpeed=next;if(next&&dragScrollFrame===null)dragScrollFrame=requestAnimationFrame(taskAutoScrollStep);if(!next)stopTaskAutoScroll()
+    if(y<topEdge){ratio=clamp((topEdge-y)/topEdge,0,1);next=-Math.round(90+ratio*550)}else if(y>viewportHeight-bottomEdge){ratio=clamp((y-(viewportHeight-bottomEdge))/bottomEdge,0,1);next=Math.round(90+ratio*550)}if(!dragScrollSpeed&&next)dragLastScrollAt=0;dragScrollSpeed=next;if(next&&dragScrollFrame===null)dragScrollFrame=requestAnimationFrame(taskAutoScrollStep);if(!next)stopTaskAutoScroll();showTaskDragDebug(next?'自動スクロール判定':'移動中')
   }
   function reorderTaskDirect(id,targetId,before){
     if(!id||!targetId||id===targetId)return;var from=(state.tasks||[]).findIndex(function(x){return x.id===id}),to=(state.tasks||[]).findIndex(function(x){return x.id===targetId});if(from<0||to<0)return;var moved=state.tasks.splice(from,1)[0];to=state.tasks.findIndex(function(x){return x.id===targetId});state.tasks.splice(before?to:to+1,0,moved);if(typeof save==='function')save();var nav=document.querySelector('#modeNav [data-mode="tasks"]');if(nav)nav.click()
@@ -157,9 +163,9 @@
     clearTimeout(dragHold);dragHold=null;stopTaskAutoScroll();clearTaskTargets();var pool=document.getElementById('dailyPool');if(pool)pool.classList.remove('drop-active');document.querySelectorAll('#taskOpenList .task-row').forEach(function(x){x.classList.remove('schedule-dragging','task-dragging')});dragHeld=null;dragTarget=null;dragTouchActive=false;dragTaskId=''
   }
   function bindUnifiedTaskDrag(){
-    window.addEventListener('touchstart',function(e){if(e.touches.length!==1)return;var row=e.target&&e.target.closest?e.target.closest('#taskOpenList .task-row:not(.completed)'):null;if(!row||e.target.closest('button,input,textarea,select,a'))return;resetTaskGesture();dragHeld=row;dragTaskId=row.dataset.id;dragStartX=e.touches[0].clientX;dragStartY=e.touches[0].clientY;dragPointerY=dragStartY;dragHold=setTimeout(function(){if(!dragHeld)return;dragTouchActive=true;dragHeld.classList.remove('swipe-open','swipe-copy-open');dragHeld.classList.add('schedule-dragging','task-dragging');updateTaskDropTarget(dragPointerY);updateTaskAutoScroll(dragPointerY);if(navigator.vibrate)navigator.vibrate(25)},420)},{passive:true,capture:true});
-    window.addEventListener('touchmove',function(e){if(!dragHeld||e.touches.length!==1)return;var p=e.touches[0],dx=p.clientX-dragStartX,dy=p.clientY-dragStartY;dragPointerY=p.clientY;if(!dragTouchActive){if(Math.hypot(dx,dy)>16)resetTaskGesture();return}if(e.cancelable)e.preventDefault();e.stopImmediatePropagation();updateTaskDropTarget(dragPointerY);updateTaskAutoScroll(dragPointerY)},{passive:false,capture:true});
-    function finish(e){if(!dragHeld)return;clearTimeout(dragHold);dragHold=null;if(!dragTouchActive){resetTaskGesture();return}if(e&&e.stopImmediatePropagation)e.stopImmediatePropagation();if(e&&e.changedTouches&&e.changedTouches.length)dragPointerY=e.changedTouches[0].clientY;var id=dragTaskId,targetId=dragTarget&&dragTarget.dataset.id,before=dragBefore,inPool=pointInPool(dragPointerY);dragSuppressClickUntil=Date.now()+600;resetTaskGesture();if(inPool)addTask(id,false);else if(targetId)reorderTaskDirect(id,targetId,before)}
+    window.addEventListener('touchstart',function(e){if(e.touches.length!==1)return;var row=e.target&&e.target.closest?e.target.closest('#taskOpenList .task-row:not(.completed)'):null;if(!row||e.target.closest('button,input,textarea,select,a'))return;resetTaskGesture();dragHeld=row;dragTaskId=row.dataset.id;dragStartX=e.touches[0].clientX;dragStartY=e.touches[0].clientY;dragPointerY=dragStartY;dragDebugMoves=0;dragDebugStarted=Date.now();showTaskDragDebug('touchstart',e);dragHold=setTimeout(function(){if(!dragHeld)return;dragTouchActive=true;dragHeld.classList.remove('swipe-open','swipe-copy-open');dragHeld.classList.add('schedule-dragging','task-dragging');updateTaskDropTarget(dragPointerY);updateTaskAutoScroll(dragPointerY);showTaskDragDebug('長押し成立');if(navigator.vibrate)navigator.vibrate(25)},420)},{passive:true,capture:true});
+    window.addEventListener('touchmove',function(e){if(!dragHeld||e.touches.length!==1)return;dragDebugMoves++;var p=e.touches[0],dx=p.clientX-dragStartX,dy=p.clientY-dragStartY;dragPointerY=p.clientY;if(!dragTouchActive){showTaskDragDebug('成立前move',e);if(Math.hypot(dx,dy)>16)resetTaskGesture();return}if(e.cancelable)e.preventDefault();e.stopImmediatePropagation();updateTaskDropTarget(dragPointerY);updateTaskAutoScroll(dragPointerY);showTaskDragDebug('touchmove',e)},{passive:false,capture:true});
+    function finish(e){if(!dragHeld)return;clearTimeout(dragHold);dragHold=null;if(!dragTouchActive){showTaskDragDebug(e&&e.type==='touchcancel'?'成立前cancel':'成立前end',e);resetTaskGesture();return}if(e&&e.stopImmediatePropagation)e.stopImmediatePropagation();if(e&&e.changedTouches&&e.changedTouches.length)dragPointerY=e.changedTouches[0].clientY;var id=dragTaskId,targetId=dragTarget&&dragTarget.dataset.id,before=dragBefore,inPool=pointInPool(dragPointerY),status=e&&e.type==='touchcancel'?'touchcancel':inPool?'pool内でend':targetId?'並べ替え位置でend':'対象外でend';showTaskDragDebug(status,e);dragSuppressClickUntil=Date.now()+600;resetTaskGesture();if(inPool)addTask(id,false);else if(targetId)reorderTaskDirect(id,targetId,before)}
     window.addEventListener('touchend',finish,{passive:true,capture:true});window.addEventListener('touchcancel',finish,{passive:true,capture:true});document.addEventListener('click',function(e){if(Date.now()<dragSuppressClickUntil&&e.target.closest('#taskOpenList .task-row')){e.preventDefault();e.stopImmediatePropagation()}},true)
   }
   function wireEvent(el,entry,range){el.addEventListener('pointerdown',function(e){if(e.button!=null&&e.button!==0)return;e.preventDefault();var mode=e.target.dataset.resize||'move',startY=e.clientY,initialStart=entry.start,initialEnd=entry.end,moved=false;el.setPointerCapture&&el.setPointerCapture(e.pointerId);el.classList.add('moving');
