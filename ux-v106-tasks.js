@@ -55,8 +55,8 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
 .task-row{position:relative;display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:center;gap:8px;min-height:54px;padding:8px 9px 8px 8px;border-radius:16px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04);touch-action:pan-y;overflow:hidden;-webkit-touch-callout:none}\
 .task-row.task-dragging{opacity:.55}\
 .task-row.task-drop-target{outline:2px solid #27ae8b}\
-.task-drag-handle{width:24px;height:38px;border:0;border-radius:9px;background:transparent;color:#a2abb3;padding:0;display:grid;place-items:center;font-size:18px;line-height:1;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:grab}\
-.task-drag-handle:active{background:#edf1f2;color:#65717a;cursor:grabbing}\
+.task-drag-handle{width:34px;height:44px;border:0;border-radius:11px;background:#edf1f2;color:#65717a;padding:0;display:grid;place-items:center;font-size:18px;font-weight:900;letter-spacing:-3px;line-height:1;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:grab}\
+.task-drag-handle:active{background:#dce8e5;color:#218f75;cursor:grabbing;transform:scale(.96)}\
 .task-check{width:25px;height:25px;border:2px solid #aeb7bf;border-radius:8px;background:#fff;color:#fff;padding:0;display:grid;place-items:center;font-size:16px;font-weight:900;cursor:pointer}\
 .task-check.checked{border-color:#27ae8b;background:#27ae8b}\
 .task-main{min-width:0;display:grid;gap:3px}\
@@ -287,7 +287,7 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
   }
   function makeTaskRow(task,completed){
     var row=document.createElement('div');row.className='task-row'+(completed?' completed':'');row.dataset.id=task.id;row.draggable=!completed;
-    var handle=document.createElement('button');handle.type='button';handle.className='task-drag-handle';handle.setAttribute('aria-label','長押しして並べ替え、または今日使うタスクへ追加');handle.textContent='⠿';handle.hidden=completed;
+    var handle=document.createElement('button');handle.type='button';handle.className='task-drag-handle';handle.setAttribute('aria-label','このハンドルを長押しして移動');handle.title='長押しして移動';handle.textContent='⋮⋮';handle.hidden=completed;
     var check=document.createElement('button');check.type='button';check.className='task-check'+(completed?' checked':'');check.setAttribute('aria-label',completed?'未完了に戻す':'完了にする');check.textContent=completed?'✓':'';
     check.onclick=function(){if(task.completedAt){task.completedAt=0;task.completedDay=''}else{task.completedAt=Date.now();task.completedDay=currentDay()}save();renderTaskLists()};
     var main=document.createElement('div');main.className='task-main';main.setAttribute('role','button');main.tabIndex=0;var title=document.createElement('div');title.className='task-title-text';title.textContent=task.title;
