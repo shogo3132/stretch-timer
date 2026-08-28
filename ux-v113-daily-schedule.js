@@ -2,7 +2,7 @@
   if(window.__dailyScheduleV113)return;
   window.__dailyScheduleV113=true;
 
-  var SNAP=15,HOUR_PX=56,DEFAULT_START=9*60,DEFAULT_DURATION=60;
+  var SNAP=15,HOUR_PX=56,DEFAULT_START=9*60,DEFAULT_DURATION=60,TASK_HOLD_MS=280;
   var COLORS=[
     {bg:'#fde8e7',line:'#e16b64',text:'#8f3833'},
     {bg:'#e5f0fb',line:'#5b9bd5',text:'#315f88'},
@@ -50,6 +50,10 @@
 .daily-chip-title{display:block;max-width:165px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;font-weight:800}\
 .daily-chip-time{display:block;margin-top:2px;font-size:9px;font-weight:700;opacity:.76}\
 .task-row.schedule-dragging{opacity:.5;transform:scale(.98)}\
+.task-row.task-reorder-before,.task-row.task-reorder-after{overflow:visible!important}\
+.task-row.task-reorder-before::after,.task-row.task-reorder-after::after{content:"";position:absolute;left:9px;right:9px;height:3px;border-radius:3px;background:#27ae8b;z-index:80;pointer-events:none}\
+.task-row.task-reorder-before::after{top:-7px}\
+.task-row.task-reorder-after::after{bottom:-7px}\
 .task-row.in-daily-schedule::before{content:"";position:absolute;left:4px;top:11px;bottom:11px;width:3px;border-radius:4px;background:var(--schedule-line);z-index:2}\
 .task-drag-ghost{position:fixed;z-index:12000;min-height:48px;display:flex;align-items:center;padding:10px 13px;border:2px solid #27ae8b;border-radius:15px;background:rgba(255,255,255,.96);color:#253039;font-size:14px;font-weight:800;line-height:1.35;box-shadow:0 12px 30px rgba(25,35,43,.22);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\
 .schedule-time-overlay{position:fixed;inset:0;z-index:10100;display:grid;align-items:end;background:rgba(25,31,37,.38);padding:16px 12px max(16px,env(safe-area-inset-bottom))}\
@@ -135,7 +139,7 @@
   function wireTaskToPool(row){if(row.dataset.scheduleBound)return;row.dataset.scheduleBound='1';
     row.addEventListener('dragstart',function(e){dragTaskId=row.dataset.id;e.dataTransfer.setData('text/plain',dragTaskId)});row.addEventListener('dragend',function(){dragTaskId='';document.getElementById('dailyPool')&&document.getElementById('dailyPool').classList.remove('drop-active')});
   }
-  function clearTaskTargets(){document.querySelectorAll('#taskOpenList .task-drop-target').forEach(function(x){x.classList.remove('task-drop-target')});dragTarget=null}
+  function clearTaskTargets(){document.querySelectorAll('#taskOpenList .task-drop-target,#taskOpenList .task-reorder-before,#taskOpenList .task-reorder-after').forEach(function(x){x.classList.remove('task-drop-target','task-reorder-before','task-reorder-after')});dragTarget=null}
   function pointInPool(y){var pool=document.getElementById('dailyPool');if(!pool)return false;var r=pool.getBoundingClientRect();return y>=r.top-8&&y<=r.bottom+8}
   function logTaskDrag(status,e){
     if(!window.__stretchDiagnostics||!window.__stretchDiagnostics.log)return;var pool=document.getElementById('dailyPool'),r=pool&&pool.getBoundingClientRect(),scroller=document.scrollingElement||document.documentElement;
@@ -144,7 +148,7 @@
   function updateTaskDropTarget(y){
     var pool=document.getElementById('dailyPool');clearTaskTargets();if(pool)pool.classList.toggle('drop-active',pointInPool(y));if(pointInPool(y))return;
     var rows=Array.prototype.slice.call(document.querySelectorAll('#taskOpenList .task-row:not(.completed)')).filter(function(x){return x!==dragHeld}),best=null,bestDist=Infinity,before=true;
-    rows.forEach(function(row){var r=row.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight)return;var mid=r.top+r.height/2,dist=Math.abs(y-mid);if(dist<bestDist){bestDist=dist;best=row;before=y<mid}});if(best){dragTarget=best;dragBefore=before;best.classList.add('task-drop-target')}
+    rows.forEach(function(row){var r=row.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight)return;var mid=r.top+r.height/2,dist=Math.abs(y-mid);if(dist<bestDist){bestDist=dist;best=row;before=y<mid}});if(best){dragTarget=best;dragBefore=before;best.classList.add(before?'task-reorder-before':'task-reorder-after')}
   }
   function stopTaskAutoScroll(){dragScrollSpeed=0;dragLastScrollAt=0;if(dragScrollFrame!==null){cancelAnimationFrame(dragScrollFrame);dragScrollFrame=null}}
   function taskAutoScrollStep(now){
@@ -164,7 +168,8 @@
     clearTimeout(dragHold);dragHold=null;stopTaskAutoScroll();clearTaskTargets();if(dragGhost){dragGhost.remove();dragGhost=null}var pool=document.getElementById('dailyPool');if(pool)pool.classList.remove('drop-active');document.querySelectorAll('#taskOpenList .task-row').forEach(function(x){x.classList.remove('schedule-dragging','task-dragging')});dragHeld=null;dragTarget=null;dragTouchActive=false;dragTaskId='';dragPointerId=null
   }
   function bindUnifiedTaskDrag(){
-    window.addEventListener('pointerdown',function(e){var handle=e.target&&e.target.closest?e.target.closest('#taskOpenList .task-drag-handle'):null,row=handle&&handle.closest('.task-row:not(.completed)');if(!handle||!row||(e.button!=null&&e.button!==0))return;resetTaskGesture();e.preventDefault();dragHeld=row;dragTaskId=row.dataset.id;dragPointerId=e.pointerId;dragStartX=dragPointerX=e.clientX;dragStartY=dragPointerY=e.clientY;dragDebugMoves=0;dragDebugStarted=Date.now();handle.setPointerCapture&&handle.setPointerCapture(e.pointerId);logTaskDrag('pointerdown',e);dragHold=setTimeout(function(){if(!dragHeld)return;dragTouchActive=true;dragHeld.classList.remove('swipe-open','swipe-copy-open');dragHeld.classList.add('schedule-dragging','task-dragging');createTaskGhost();updateTaskDropTarget(dragPointerY);updateTaskAutoScroll(dragPointerY);logTaskDrag('hold-active');if(navigator.vibrate)navigator.vibrate(25)},420)},{capture:true});
+    window.addEventListener('contextmenu',function(e){if(e.target&&e.target.closest&&e.target.closest('#taskOpenList .task-drag-handle'))e.preventDefault()},{capture:true});
+    window.addEventListener('pointerdown',function(e){var handle=e.target&&e.target.closest?e.target.closest('#taskOpenList .task-drag-handle'):null,row=handle&&handle.closest('.task-row:not(.completed)');if(!handle||!row||(e.button!=null&&e.button!==0))return;resetTaskGesture();e.preventDefault();dragHeld=row;dragTaskId=row.dataset.id;dragPointerId=e.pointerId;dragStartX=dragPointerX=e.clientX;dragStartY=dragPointerY=e.clientY;dragDebugMoves=0;dragDebugStarted=Date.now();handle.setPointerCapture&&handle.setPointerCapture(e.pointerId);logTaskDrag('pointerdown',e);dragHold=setTimeout(function(){if(!dragHeld)return;dragTouchActive=true;dragHeld.classList.remove('swipe-open','swipe-copy-open');dragHeld.classList.add('schedule-dragging','task-dragging');createTaskGhost();updateTaskDropTarget(dragPointerY);updateTaskAutoScroll(dragPointerY);logTaskDrag('hold-active');if(navigator.vibrate)navigator.vibrate(25)},TASK_HOLD_MS)},{capture:true});
     window.addEventListener('pointermove',function(e){if(!dragHeld||e.pointerId!==dragPointerId)return;dragDebugMoves++;var dx=e.clientX-dragStartX,dy=e.clientY-dragStartY;dragPointerX=e.clientX;dragPointerY=e.clientY;if(!dragTouchActive){logTaskDrag('move-before-hold',e);if(Math.hypot(dx,dy)>16)resetTaskGesture();return}e.preventDefault();e.stopImmediatePropagation();moveTaskGhost();updateTaskDropTarget(dragPointerY);updateTaskAutoScroll(dragPointerY);logTaskDrag('pointermove',e)},{passive:false,capture:true});
     function finish(e){if(!dragHeld||e.pointerId!==dragPointerId)return;clearTimeout(dragHold);dragHold=null;var cancelled=e.type==='pointercancel';if(!dragTouchActive){logTaskDrag(cancelled?'cancel-before-hold':'end-before-hold',e);resetTaskGesture();return}e.preventDefault();e.stopImmediatePropagation();dragPointerX=e.clientX;dragPointerY=e.clientY;var id=dragTaskId,targetId=dragTarget&&dragTarget.dataset.id,before=dragBefore,inPool=!cancelled&&pointInPool(dragPointerY),status=cancelled?'pointercancel':inPool?'end-in-pool':targetId?'end-on-row':'end-outside';logTaskDrag(status,e);dragSuppressClickUntil=Date.now()+600;resetTaskGesture();if(cancelled)return;if(inPool)addTask(id,false);else if(targetId)reorderTaskDirect(id,targetId,before)}
     window.addEventListener('pointerup',finish,{passive:false,capture:true});window.addEventListener('pointercancel',finish,{passive:false,capture:true});document.addEventListener('click',function(e){if(Date.now()<dragSuppressClickUntil&&e.target.closest('#taskOpenList .task-row')){e.preventDefault();e.stopImmediatePropagation()}},true)

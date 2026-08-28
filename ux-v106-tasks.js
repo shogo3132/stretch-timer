@@ -55,7 +55,7 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
 .task-row{position:relative;display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:center;gap:8px;min-height:54px;padding:8px 9px 8px 8px;border-radius:16px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04);touch-action:pan-y;overflow:hidden}\
 .task-row.task-dragging{opacity:.55}\
 .task-row.task-drop-target{outline:2px solid #27ae8b}\
-.task-drag-handle{width:24px;height:38px;border:0;border-radius:9px;background:transparent;color:#a2abb3;padding:0;display:grid;place-items:center;font-size:18px;line-height:1;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}\
+.task-drag-handle{width:24px;height:38px;border:0;border-radius:9px;background:transparent;color:#a2abb3;padding:0;display:grid;place-items:center;font-size:18px;line-height:1;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:grab}\
 .task-drag-handle:active{background:#edf1f2;color:#65717a;cursor:grabbing}\
 .task-check{width:25px;height:25px;border:2px solid #aeb7bf;border-radius:8px;background:#fff;color:#fff;padding:0;display:grid;place-items:center;font-size:16px;font-weight:900;cursor:pointer}\
 .task-check.checked{border-color:#27ae8b;background:#27ae8b}\
