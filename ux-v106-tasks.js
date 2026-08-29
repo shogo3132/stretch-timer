@@ -345,11 +345,8 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
 
   if(window.StretchUI&&StretchUI.registerDataProvider)StretchUI.registerDataProvider({key:'tasks',write:function(payload){payload.tasks=state.tasks.map(cleanTask);payload.taskHistory=state.taskHistory.map(cleanHistory);payload.taskSettings={cutoffHour:state.taskSettings.cutoffHour,lastDay:state.taskSettings.lastDay}},read:function(remote){installTaskData(state,remote);rolloverIfNeeded();if(typeof save==='function')save(false)}});
 
-  var previousShow=typeof show==='function'?show:null;
-  if(previousShow)show=function(id){var result=previousShow.apply(this,arguments);updateNav(id);return result};
-
-  var previousRenderSettings=typeof renderSettings==='function'?renderSettings:null;
-  if(previousRenderSettings)renderSettings=function(){if(typeof currentScreen!=='undefined'&&currentScreen!=='settings')settingsReturn=currentScreen==='tasks'||currentScreen==='taskHistory'||currentScreen==='dailyTasks'?'tasks':'home';var result=previousRenderSettings.apply(this,arguments);renderTaskSettings();return result};
+  if(window.StretchUI&&StretchUI.registerScreenHook)StretchUI.registerScreenHook({key:'tasks-nav',after:updateNav});
+  if(window.StretchUI&&StretchUI.registerSettingsSection)StretchUI.registerSettingsSection({key:'tasks',before:function(){if(typeof currentScreen!=='undefined'&&currentScreen!=='settings')settingsReturn=currentScreen==='tasks'||currentScreen==='taskHistory'||currentScreen==='dailyTasks'?'tasks':'home'},render:renderTaskSettings});
 
   var previousGoBack=typeof goBack==='function'?goBack:null;
   if(previousGoBack)goBack=function(){

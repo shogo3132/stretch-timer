@@ -172,7 +172,7 @@
   function enhanceActionMenu(){setTimeout(function(){var pop=document.getElementById('taskActionPop'),taskId=actionTaskId;if(!pop||!taskId||pop.querySelector('[data-act="schedule"]'))return;var button=document.createElement('button');button.type='button';button.dataset.act='schedule';button.textContent=entryByTask(taskId)?'予定時間を設定':'今日の予定に追加';button.onclick=function(e){e.stopPropagation();pop.remove();addTask(taskId,true)};pop.insertBefore(button,pop.firstChild)},0)}
 
   ensureData(false);ensureUi();
-  var previousShow=typeof show==='function'?show:null;if(previousShow)show=function(id){var result=previousShow.apply(this,arguments);if(id==='tasks')setTimeout(renderSchedule,0);return result};
+  if(window.StretchUI&&StretchUI.registerScreenHook)StretchUI.registerScreenHook({key:'daily-schedule',after:function(id){if(id==='tasks')setTimeout(renderSchedule,0)}});
   if(window.StretchUI&&StretchUI.registerDataProvider)StretchUI.registerDataProvider({key:'task-schedule',write:function(payload){payload.taskSchedule=cleanSchedule(state.taskSchedule)},read:function(remote){state.taskSchedule=cleanSchedule(remote.taskSchedule);if(typeof save==='function')save(false);if(typeof currentScreen!=='undefined'&&currentScreen==='tasks')renderSchedule()}});
   bindUnifiedTaskDrag();
   document.addEventListener('click',function(e){var more=e.target.closest('#taskOpenList .task-more');if(more){var row=more.closest('.task-row');actionTaskId=row&&row.dataset.id||'';enhanceActionMenu()}},true);
