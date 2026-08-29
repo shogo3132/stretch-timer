@@ -27,6 +27,7 @@
     return s&&s.stretchTimerApp?Math.max(0,+s.stretchTimerDepth||0):0;
   }
   function isTopLevel(screen){return ['home','tasks','recipes','settings'].indexOf(screen)>=0}
+  function trace(type,details){try{if(window.__stretchDiagnostics&&typeof window.__stretchDiagnostics.log==='function')window.__stretchDiagnostics.log(type,details)}catch(e){}}
 
   function guardedState(screen){var next=makeState(screen,0);next.stretchTimerGuard=true;return next}
   function baseState(screen){var next=makeState(screen,0);next.stretchTimerGuard=false;return next}
@@ -43,6 +44,7 @@
     suppressPush=true;
     var screen=activeScreen();
     blockRootPop=isTopLevel(screen);
+    trace('history-pop',{screen:screen,blocked:blockRootPop,depth:currentDepth(),guard:!!(history.state&&history.state.stretchTimerGuard)});
     if(blockRootPop){
       try{history.pushState(guardedState(screen),'',appUrl)}catch(err){}
     }
@@ -67,6 +69,9 @@
   var previousGoBack=typeof goBack==='function'?goBack:null;
   if(previousGoBack){
     goBack=function(){
+      var screen=activeScreen(),top=isTopLevel(screen);
+      trace('history-back',{screen:screen,blocked:top||blockRootPop,fromPopstate:fromPopstate,depth:currentDepth()});
+      if(top)return;
       if(blockRootPop)return;
       if(!fromPopstate){
         var s=history.state;
