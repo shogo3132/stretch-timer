@@ -18,8 +18,6 @@ if(files.length!==new Set(files).size)failures.push('duplicate UX asset in Servi
 requireText('sw.js','ux-v130-integration.js','integration layer is not loaded');
 requireText('ux-v106-tasks.js','StretchUI.bindSwipe','tasks are not using unified swipe');
 requireText('ux-v110-recipes.js','StretchUI.bindSwipe','recipes are not using unified swipe');
-requireText('ux-v18.js','StretchUI.createAutoScroll','stretch reorder is not using unified auto-scroll');
-requireText('ux-v113-daily-schedule.js','StretchUI.createAutoScroll','task reorder is not using unified auto-scroll');
 requireText('ux-v130-integration.js','registerDataProvider','data provider registry is missing');
 requireText('ux-v130-integration.js','registerReorder','unified reorder controller is missing');
 requireText('ux-v130-integration.js','aria-current','navigation accessibility state is missing');
@@ -30,7 +28,9 @@ if(fs.readFileSync(path.join(root,'ux-v106-tasks.js'),'utf8').includes("handle.c
 requireText('ux-v18.js',"key:'routine-cards'",'routine cards are not registered with unified reorder');
 requireText('ux-v18.js',"key:'item-cards'",'item cards are not registered with unified reorder');
 requireText('ux-v113-daily-schedule.js',"key:'task-cards'",'task cards are not registered with unified reorder');
-requireText('ux-v46-desktop-dnd.js','StretchUI.registerReorder)return','legacy desktop drag is not disabled');
+if(sw.includes('ux-v46-desktop-dnd.js'))failures.push('legacy desktop drag is still loaded');
+if(fs.readFileSync(path.join(root,'ux-v18.js'),'utf8').includes("addEventListener('touchmove'"))failures.push('legacy stretch touch reorder is still present');
+if(fs.readFileSync(path.join(root,'ux-v113-daily-schedule.js'),'utf8').includes('createTaskGhost'))failures.push('legacy task reorder is still present');
 
 if(failures.length){console.error(failures.join('\n'));process.exit(1)}
 console.log(`reintegration verification passed: ${new Set(files).size} UX assets`);

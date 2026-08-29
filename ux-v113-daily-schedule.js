@@ -2,7 +2,7 @@
   if(window.__dailyScheduleV113)return;
   window.__dailyScheduleV113=true;
 
-  var SNAP=15,HOUR_PX=56,DEFAULT_START=9*60,DEFAULT_DURATION=60,TASK_HOLD_MS=200;
+  var SNAP=15,HOUR_PX=56,DEFAULT_START=9*60,DEFAULT_DURATION=60;
   var COLORS=[
     {bg:'#fde8e7',line:'#e16b64',text:'#8f3833'},
     {bg:'#e5f0fb',line:'#5b9bd5',text:'#315f88'},
@@ -11,7 +11,7 @@
     {bg:'#eee8fb',line:'#8b72cf',text:'#59469a'},
     {bg:'#dff3f4',line:'#45aeb3',text:'#276f73'}
   ];
-  var dragTaskId='',dragTouchActive=false,dragNativeTouch=false,dragTouchId=null,dragHold=null,dragHeld=null,dragTarget=null,dragBefore=true,dragStartX=0,dragStartY=0,dragPointerX=0,dragPointerY=0,dragPointerId=null,dragGhost=null,dragScrollSpeed=0,dragScrollFrame=null,dragLastScrollAt=0,sharedTaskAutoScroll=null,dragSuppressClickUntil=0,dragDebugMoves=0,dragDebugStarted=0,editorId='',actionTaskId='',clockTimer=null,observer=null;
+  var editorId='',actionTaskId='',clockTimer=null,observer=null;
 
   var style=document.createElement('style');
   style.setAttribute('data-daily-schedule-v113','');
@@ -121,7 +121,7 @@
   }
   function ensureUi(){
     var page=document.querySelector('#tasks .task-page');if(!page)return null;var root=document.getElementById('dailySchedule');
-    if(!root){root=document.createElement('section');root.id='dailySchedule';root.className='daily-schedule';root.innerHTML='<div class="card daily-schedule-card"><div class="daily-schedule-head"><div class="daily-schedule-title">今日のスケジュール</div><div id="dailyScheduleDate" class="daily-schedule-date"></div></div><div id="dailyTimelineScroll" class="daily-timeline-scroll"><div id="dailyTimeline" class="daily-timeline"><div id="dailyEvents" class="daily-events"></div><div id="dailyNow" class="daily-now" hidden></div></div></div><div id="dailyTimelineEmpty" class="daily-schedule-empty">下のタスク左端のハンドルを長押しして追加できます</div></div><div id="dailyPool" class="daily-pool"><div class="daily-pool-head"><span>今日使うタスク</span><span class="daily-pool-hint">左のハンドルを長押し</span></div><div id="dailyPoolList" class="daily-pool-list"></div></div>';page.insertBefore(root,page.firstChild);wirePool(root.querySelector('#dailyPool'))}
+    if(!root){root=document.createElement('section');root.id='dailySchedule';root.className='daily-schedule';root.innerHTML='<div class="card daily-schedule-card"><div class="daily-schedule-head"><div class="daily-schedule-title">今日のスケジュール</div><div id="dailyScheduleDate" class="daily-schedule-date"></div></div><div id="dailyTimelineScroll" class="daily-timeline-scroll"><div id="dailyTimeline" class="daily-timeline"><div id="dailyEvents" class="daily-events"></div><div id="dailyNow" class="daily-now" hidden></div></div></div><div id="dailyTimelineEmpty" class="daily-schedule-empty">下のタスクを長押しして追加できます</div></div><div id="dailyPool" class="daily-pool"><div class="daily-pool-head"><span>今日使うタスク</span><span class="daily-pool-hint">タスクを長押し</span></div><div id="dailyPoolList" class="daily-pool-list"></div></div>';page.insertBefore(root,page.firstChild)}
     return root;
   }
   function renderSchedule(){
@@ -149,61 +149,16 @@
     chip.addEventListener('pointermove',function(e){if(e.pointerType==='touch')return;move(e.clientX,e.clientY,e)});chip.addEventListener('pointerup',function(e){if(e.pointerType!=='touch')finish(e)});chip.addEventListener('pointercancel',clear);
     chip.addEventListener('click',function(e){if(suppress){e.preventDefault();e.stopImmediatePropagation();return}openEditor(entry.id)})
   }
-  function decorateRows(entries){var map={};entries.forEach(function(x){map[x.taskId]=x});document.querySelectorAll('#taskOpenList .task-row').forEach(function(row){var entry=map[row.dataset.id];row.classList.toggle('in-daily-schedule',!!entry);if(entry)row.style.setProperty('--schedule-line',palette(entry).line);else row.style.removeProperty('--schedule-line');wireTaskToPool(row)})}
+  function decorateRows(entries){var map={};entries.forEach(function(x){map[x.taskId]=x});document.querySelectorAll('#taskOpenList .task-row').forEach(function(row){var entry=map[row.dataset.id];row.classList.toggle('in-daily-schedule',!!entry);if(entry)row.style.setProperty('--schedule-line',palette(entry).line);else row.style.removeProperty('--schedule-line')})}
   function renderNow(range){var now=document.getElementById('dailyNow');if(!now)return;var d=new Date(),mins=d.getHours()*60+d.getMinutes();if(mins<range.start||mins>range.end){now.hidden=true;return}now.hidden=false;now.style.top=((mins-range.start)/60*HOUR_PX)+'px'}
-  function wirePool(pool){
-    pool.addEventListener('dragover',function(e){e.preventDefault();pool.classList.add('drop-active')});pool.addEventListener('dragleave',function(){pool.classList.remove('drop-active')});pool.addEventListener('drop',function(e){e.preventDefault();pool.classList.remove('drop-active');var id=e.dataTransfer.getData('text/plain');if(id)addTask(id,false)});
-  }
-  function wireTaskToPool(row){if(row.dataset.scheduleBound)return;row.dataset.scheduleBound='1';
-    row.addEventListener('dragstart',function(e){dragTaskId=row.dataset.id;e.dataTransfer.setData('text/plain',dragTaskId)});row.addEventListener('dragend',function(){dragTaskId='';document.getElementById('dailyPool')&&document.getElementById('dailyPool').classList.remove('drop-active')});
-  }
-  function clearTaskTargets(){document.querySelectorAll('#taskOpenList .task-drop-target,#taskOpenList .task-reorder-before,#taskOpenList .task-reorder-after').forEach(function(x){x.classList.remove('task-drop-target','task-reorder-before','task-reorder-after')});dragTarget=null}
   function pointInPool(y){var pool=document.getElementById('dailyPool');if(!pool)return false;var r=pool.getBoundingClientRect();return y>=r.top-8&&y<=r.bottom+8}
-  function logTaskDrag(status,e){
-    if(!window.__stretchDiagnostics||!window.__stretchDiagnostics.log)return;var pool=document.getElementById('dailyPool'),r=pool&&pool.getBoundingClientRect(),scroller=document.scrollingElement||document.documentElement;
-    window.__stretchDiagnostics.log('task-drag',{status:status,elapsed:dragDebugStarted?Date.now()-dragDebugStarted:0,moves:dragDebugMoves,active:dragTouchActive,cancelable:!!(e&&e.cancelable),eventType:e&&e.type||'',y:Math.round(dragPointerY),speed:dragScrollSpeed,scroll:Math.round(scroller&&scroller.scrollTop||0),pool:r?{top:Math.round(r.top),bottom:Math.round(r.bottom)}:null,hit:pointInPool(dragPointerY),touchAction:dragHeld?getComputedStyle(dragHeld).touchAction:''});
-  }
-  function updateTaskDropTarget(y){
-    var pool=document.getElementById('dailyPool');clearTaskTargets();if(pool)pool.classList.toggle('drop-active',pointInPool(y));if(pointInPool(y))return;
-    var rows=Array.prototype.slice.call(document.querySelectorAll('#taskOpenList .task-row:not(.completed)')).filter(function(x){return x!==dragHeld}),best=null,bestDist=Infinity,before=true;
-    rows.forEach(function(row){var r=row.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight)return;var mid=r.top+r.height/2,dist=Math.abs(y-mid);if(dist<bestDist){bestDist=dist;best=row;before=y<mid}});if(best){dragTarget=best;dragBefore=before;best.classList.add(before?'task-reorder-before':'task-reorder-after')}
-  }
-  function stopTaskAutoScroll(){if(sharedTaskAutoScroll)sharedTaskAutoScroll.stop();dragScrollSpeed=0;dragLastScrollAt=0;if(dragScrollFrame!==null){cancelAnimationFrame(dragScrollFrame);dragScrollFrame=null}}
-  function taskAutoScrollStep(now){
-    if(!dragTouchActive||!dragHeld||!dragScrollSpeed){dragScrollFrame=null;return}var scroller=document.scrollingElement||document.documentElement,beforeY=scroller.scrollTop,maxY=Math.max(0,scroller.scrollHeight-scroller.clientHeight);
-    if((dragScrollSpeed<0&&beforeY<=0)||(dragScrollSpeed>0&&beforeY>=maxY-.5)){stopTaskAutoScroll();return}if(!dragLastScrollAt)dragLastScrollAt=now;var elapsed=Math.max(0,Math.min(34,now-dragLastScrollAt));dragLastScrollAt=now;scroller.scrollTop=Math.max(0,Math.min(maxY,beforeY+dragScrollSpeed*elapsed/1000));updateTaskDropTarget(dragPointerY);dragScrollFrame=requestAnimationFrame(taskAutoScrollStep)
-  }
-  function updateTaskAutoScroll(y){
-    if(window.StretchUI&&StretchUI.createAutoScroll){if(!sharedTaskAutoScroll)sharedTaskAutoScroll=StretchUI.createAutoScroll(updateTaskDropTarget);dragScrollSpeed=sharedTaskAutoScroll.update(y);logTaskDrag(dragScrollSpeed?'auto-scroll':'move');return}
-    var viewportHeight=window.visualViewport&&window.visualViewport.height||window.innerHeight,topEdge=Math.max(80,Math.min(120,viewportHeight/6)),bottomEdge=Math.max(110,Math.min(160,viewportHeight/6)),next=0,ratio=0;
-    if(y<topEdge){ratio=clamp((topEdge-y)/topEdge,0,1);next=-Math.round(90+ratio*550)}else if(y>viewportHeight-bottomEdge){ratio=clamp((y-(viewportHeight-bottomEdge))/bottomEdge,0,1);next=Math.round(90+ratio*550)}if(!dragScrollSpeed&&next)dragLastScrollAt=0;dragScrollSpeed=next;if(next&&dragScrollFrame===null)dragScrollFrame=requestAnimationFrame(taskAutoScrollStep);if(!next)stopTaskAutoScroll();logTaskDrag(next?'auto-scroll':'move')
-  }
   function reorderTaskDirect(id,targetId,before){
     if(!id||!targetId||id===targetId)return;var from=(state.tasks||[]).findIndex(function(x){return x.id===id}),to=(state.tasks||[]).findIndex(function(x){return x.id===targetId});if(from<0||to<0)return;var moved=state.tasks.splice(from,1)[0];to=state.tasks.findIndex(function(x){return x.id===targetId});state.tasks.splice(before?to:to+1,0,moved);if(typeof save==='function')save();var nav=document.querySelector('#modeNav [data-mode="tasks"]');if(nav)nav.click()
-  }
-  function createTaskGhost(){if(!dragHeld)return;var title=dragHeld.querySelector('.task-title-text'),r=dragHeld.getBoundingClientRect();dragGhost=document.createElement('div');dragGhost.className='task-drag-ghost';dragGhost.textContent=title?title.textContent:'タスク';dragGhost.style.left=Math.max(8,r.left)+'px';dragGhost.style.width=Math.min(r.width,innerWidth-16)+'px';document.body.appendChild(dragGhost);moveTaskGhost()}
-  function moveTaskGhost(){if(!dragGhost)return;dragGhost.style.left=clamp(dragPointerX-dragGhost.offsetWidth/2,8,innerWidth-dragGhost.offsetWidth-8)+'px';dragGhost.style.top=clamp(dragPointerY-26,8,innerHeight-62)+'px'}
-  function resetTaskGesture(){
-    clearTimeout(dragHold);dragHold=null;stopTaskAutoScroll();clearTaskTargets();if(dragGhost){dragGhost.remove();dragGhost=null}var pool=document.getElementById('dailyPool');if(pool)pool.classList.remove('drop-active');document.querySelectorAll('#taskOpenList .task-row').forEach(function(x){x.classList.remove('schedule-dragging','task-dragging')});dragHeld=null;dragTarget=null;dragTouchActive=false;dragNativeTouch=false;dragTouchId=null;dragTaskId='';dragPointerId=null
   }
   function bindUnifiedTaskDrag(){
     if(window.StretchUI&&StretchUI.registerReorder){
       StretchUI.registerReorder({key:'task-cards',selector:'#taskOpenList .task-row:not(.completed)',ignore:'button,input,textarea,select,a',label:function(card){var title=card.querySelector('.task-title-text');return title?title.textContent:'タスク'},inDropZone:function(x,y){return pointInPool(y)},setDropActive:function(active){var pool=document.getElementById('dailyPool');if(pool)pool.classList.toggle('drop-active',active)},onDropZone:function(move){logSchedule('unified-drop-in-pool',{taskId:move.id});addTask(move.id,false)},onReorder:function(move){reorderTaskDirect(move.id,move.targetId,move.before)}});
-      return;
     }
-    window.addEventListener('contextmenu',function(e){if(e.target&&e.target.closest&&e.target.closest('#taskOpenList .task-row:not(.completed)'))e.preventDefault()},{capture:true});
-    function activateHold(){if(!dragHeld)return;dragTouchActive=true;if(window.StretchUI&&StretchUI.closeSwipes)StretchUI.closeSwipes();dragHeld.classList.remove('swipe-open','swipe-copy-open','unified-swipe-left','unified-swipe-right');dragHeld.classList.add('schedule-dragging','task-dragging');createTaskGhost();updateTaskDropTarget(dragPointerY);updateTaskAutoScroll(dragPointerY);logTaskDrag(dragNativeTouch?'touch-hold-active':'pointer-hold-active');if(navigator.vibrate)navigator.vibrate(25)}
-    function startGesture(row,x,y,mode,e){resetTaskGesture();dragHeld=row;dragTaskId=row.dataset.id;dragNativeTouch=mode==='touch';dragStartX=dragPointerX=x;dragStartY=dragPointerY=y;dragDebugMoves=0;dragDebugStarted=Date.now();logTaskDrag(mode==='touch'?'touchstart-direct':'pointerdown',e);dragHold=setTimeout(activateHold,TASK_HOLD_MS)}
-    window.addEventListener('touchstart',function(e){var row=e.target&&e.target.closest?e.target.closest('#taskOpenList .task-row:not(.completed)'):null;if(!row||e.target.closest('button,input,textarea,select,a')||e.touches.length!==1)return;var t=e.changedTouches&&e.changedTouches[0]||e.touches[0];dragTouchId=t.identifier;startGesture(row,t.clientX,t.clientY,'touch',e);dragTouchId=t.identifier},{passive:true,capture:true});
-    window.addEventListener('pointerdown',function(e){if(e.pointerType==='touch')return;var row=e.target&&e.target.closest?e.target.closest('#taskOpenList .task-row:not(.completed)'):null;if(!row||e.target.closest('button,input,textarea,select,a')||(e.button!=null&&e.button!==0))return;e.preventDefault();startGesture(row,e.clientX,e.clientY,'pointer',e);dragPointerId=e.pointerId;row.setPointerCapture&&row.setPointerCapture(e.pointerId)},{capture:true});
-    window.addEventListener('pointermove',function(e){if(!dragHeld||e.pointerId!==dragPointerId)return;dragDebugMoves++;var dx=e.clientX-dragStartX,dy=e.clientY-dragStartY;dragPointerX=e.clientX;dragPointerY=e.clientY;if(!dragTouchActive){logTaskDrag('move-before-hold',e);if(Math.hypot(dx,dy)>16)resetTaskGesture();return}e.preventDefault();e.stopImmediatePropagation();moveTaskGhost();updateTaskDropTarget(dragPointerY);updateTaskAutoScroll(dragPointerY);logTaskDrag('pointermove',e)},{passive:false,capture:true});
-    window.addEventListener('touchmove',function(e){if(!dragNativeTouch||!dragHeld||e.touches.length!==1)return;var t=e.touches[0],dx=t.clientX-dragStartX,dy=t.clientY-dragStartY;dragDebugMoves++;dragPointerX=t.clientX;dragPointerY=t.clientY;if(!dragTouchActive){logTaskDrag('touchmove-before-hold',e);if(Math.hypot(dx,dy)>16)resetTaskGesture();return}if(e.cancelable)e.preventDefault();e.stopImmediatePropagation();moveTaskGhost();updateTaskDropTarget(dragPointerY);updateTaskAutoScroll(dragPointerY);logTaskDrag('touchmove-direct',e)},{passive:false,capture:true});
-    function complete(cancelled,e,statusPrefix){if(!dragHeld)return;clearTimeout(dragHold);dragHold=null;if(e&&e.cancelable)e.preventDefault();if(e&&e.stopImmediatePropagation)e.stopImmediatePropagation();var id=dragTaskId,targetId=dragTarget&&dragTarget.dataset.id,before=dragBefore,inPool=!cancelled&&pointInPool(dragPointerY),status=cancelled?(statusPrefix||'touchcancel'):inPool?'end-in-pool':targetId?'end-on-row':'end-outside';logTaskDrag(status,e);dragSuppressClickUntil=Date.now()+600;resetTaskGesture();if(cancelled)return;if(inPool)addTask(id,false);else if(targetId)reorderTaskDirect(id,targetId,before)}
-    function finishPointer(e){if(!dragHeld||e.pointerId!==dragPointerId)return;if(e.type==='pointercancel'){if(!dragTouchActive){logTaskDrag('cancel-before-hold',e);resetTaskGesture();return}logTaskDrag('pointer-handoff',e);dragPointerId=null;return}if(!dragTouchActive){logTaskDrag('end-before-hold',e);resetTaskGesture();return}if(Number.isFinite(e.clientX)&&Number.isFinite(e.clientY)){dragPointerX=e.clientX;dragPointerY=e.clientY}complete(false,e,'pointerup')}
-    window.addEventListener('pointerup',finishPointer,{passive:false,capture:true});window.addEventListener('pointercancel',finishPointer,{passive:false,capture:true});
-    window.addEventListener('touchend',function(e){if(!dragHeld||!dragNativeTouch)return;var t=Array.prototype.find.call(e.changedTouches||[],function(x){return x.identifier===dragTouchId})||e.changedTouches&&e.changedTouches[0];if(t){dragPointerX=t.clientX;dragPointerY=t.clientY}if(!dragTouchActive){logTaskDrag('touchend-before-hold',e);resetTaskGesture();return}complete(false,e,'touchend-direct')},{passive:false,capture:true});
-    window.addEventListener('touchcancel',function(e){if(!dragHeld||!dragNativeTouch)return;complete(true,e,'touchcancel-direct')},{passive:false,capture:true});
-    document.addEventListener('click',function(e){if(Date.now()<dragSuppressClickUntil&&e.target.closest('#taskOpenList .task-row')){e.preventDefault();e.stopImmediatePropagation()}},true)
   }
   function wireEvent(el,entry,range){el.addEventListener('pointerdown',function(e){if(e.button!=null&&e.button!==0)return;e.preventDefault();var mode=e.target.dataset.resize||'move',startY=e.clientY,initialStart=entry.start,initialEnd=entry.end,moved=false;el.setPointerCapture&&el.setPointerCapture(e.pointerId);el.classList.add('moving');
       function move(ev){var delta=snap((ev.clientY-startY)/HOUR_PX*60),nextStart=initialStart,nextEnd=initialEnd;if(Math.abs(ev.clientY-startY)>4)moved=true;if(mode==='top')nextStart=clamp(initialStart+delta,0,initialEnd-SNAP);else if(mode==='bottom')nextEnd=clamp(initialEnd+delta,initialStart+SNAP,1440);else{var duration=initialEnd-initialStart;nextStart=clamp(initialStart+delta,0,1440-duration);nextEnd=nextStart+duration}entry.start=nextStart;entry.end=nextEnd;el.style.top=((entry.start-range.start)/60*HOUR_PX)+'px';el.style.height=Math.max(22,(entry.end-entry.start)/60*HOUR_PX-2)+'px';el.querySelector('.daily-event-time').textContent=timeText(entry.start)+'〜'+timeText(entry.end)}
