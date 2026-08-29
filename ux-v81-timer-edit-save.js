@@ -66,7 +66,7 @@ body.paused-routine-away .screen.active{padding-bottom:170px!important}\
     discardInvalidSession();
     var dock=ensureDock();
     var away=!!session&&typeof currentScreen!=='undefined'&&currentScreen!=='timer';
-    dock.hidden=!away;document.body.classList.toggle('paused-routine-away',away);
+    dock.hidden=!away;document.body.classList.toggle('paused-routine-away',away);if(window.StretchUI&&StretchUI.updateFixedStack)requestAnimationFrame(StretchUI.updateFixedStack);
     if(!away)return;
     var m=menuById(session.menuId),x=m&&Array.isArray(m.items)?m.items.find(function(item){return item.id===session.itemId}):null;
     var text='「'+(m&&m.name||'ルーティン')+'」を一時停止中';

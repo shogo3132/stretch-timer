@@ -1,4 +1,5 @@
 (function(){
+  if(window.StretchUI&&StretchUI.registerReorder)return;
   if(window.__desktopCardDndV46)return;
   window.__desktopCardDndV46=true;
 

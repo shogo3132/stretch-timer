@@ -53,10 +53,6 @@
 .daily-chip-title{display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;font-weight:800}\
 .daily-chip-time{display:block;margin-top:2px;font-size:9px;font-weight:700;opacity:.76}\
 .task-row.schedule-dragging{opacity:.5;transform:scale(.98)}\
-.task-row.task-reorder-before,.task-row.task-reorder-after{overflow:visible!important}\
-.task-row.task-reorder-before::after,.task-row.task-reorder-after::after{content:"";position:absolute;left:9px;right:9px;height:3px;border-radius:3px;background:#27ae8b;z-index:80;pointer-events:none}\
-.task-row.task-reorder-before::after{top:-7px}\
-.task-row.task-reorder-after::after{bottom:-7px}\
 .task-row.in-daily-schedule::before{content:"";position:absolute;left:4px;top:11px;bottom:11px;width:3px;border-radius:4px;background:var(--schedule-line);z-index:2}\
 .task-drag-ghost{position:fixed;z-index:12000;min-height:48px;display:flex;align-items:center;padding:10px 13px;border:2px solid #27ae8b;border-radius:15px;background:rgba(255,255,255,.96);color:#253039;font-size:14px;font-weight:800;line-height:1.35;box-shadow:0 12px 30px rgba(25,35,43,.22);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\
 .schedule-time-overlay{position:fixed;inset:0;z-index:10100;display:grid;align-items:end;background:rgba(25,31,37,.38);padding:16px 12px max(16px,env(safe-area-inset-bottom))}\
@@ -191,6 +187,10 @@
     clearTimeout(dragHold);dragHold=null;stopTaskAutoScroll();clearTaskTargets();if(dragGhost){dragGhost.remove();dragGhost=null}var pool=document.getElementById('dailyPool');if(pool)pool.classList.remove('drop-active');document.querySelectorAll('#taskOpenList .task-row').forEach(function(x){x.classList.remove('schedule-dragging','task-dragging')});dragHeld=null;dragTarget=null;dragTouchActive=false;dragNativeTouch=false;dragTouchId=null;dragTaskId='';dragPointerId=null
   }
   function bindUnifiedTaskDrag(){
+    if(window.StretchUI&&StretchUI.registerReorder){
+      StretchUI.registerReorder({key:'task-cards',selector:'#taskOpenList .task-row:not(.completed)',ignore:'button,input,textarea,select,a',label:function(card){var title=card.querySelector('.task-title-text');return title?title.textContent:'タスク'},inDropZone:function(x,y){return pointInPool(y)},setDropActive:function(active){var pool=document.getElementById('dailyPool');if(pool)pool.classList.toggle('drop-active',active)},onDropZone:function(move){logSchedule('unified-drop-in-pool',{taskId:move.id});addTask(move.id,false)},onReorder:function(move){reorderTaskDirect(move.id,move.targetId,move.before)}});
+      return;
+    }
     window.addEventListener('contextmenu',function(e){if(e.target&&e.target.closest&&e.target.closest('#taskOpenList .task-row:not(.completed)'))e.preventDefault()},{capture:true});
     function activateHold(){if(!dragHeld)return;dragTouchActive=true;if(window.StretchUI&&StretchUI.closeSwipes)StretchUI.closeSwipes();dragHeld.classList.remove('swipe-open','swipe-copy-open','unified-swipe-left','unified-swipe-right');dragHeld.classList.add('schedule-dragging','task-dragging');createTaskGhost();updateTaskDropTarget(dragPointerY);updateTaskAutoScroll(dragPointerY);logTaskDrag(dragNativeTouch?'touch-hold-active':'pointer-hold-active');if(navigator.vibrate)navigator.vibrate(25)}
     function startGesture(row,x,y,mode,e){resetTaskGesture();dragHeld=row;dragTaskId=row.dataset.id;dragNativeTouch=mode==='touch';dragStartX=dragPointerX=x;dragStartY=dragPointerY=y;dragDebugMoves=0;dragDebugStarted=Date.now();logTaskDrag(mode==='touch'?'touchstart-direct':'pointerdown',e);dragHold=setTimeout(activateHold,TASK_HOLD_MS)}

@@ -6,13 +6,6 @@
   style.setAttribute('data-card-motion-reorder-v31','');
   style.textContent='\
 .menu-card,.item{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important;-webkit-tap-highlight-color:transparent!important}\
-.menu-card.reorder-before,.item.reorder-before,.menu-card.reorder-after,.item.reorder-after{overflow:visible!important}\
-.menu-card.reorder-before::before,.item.reorder-before::before,.menu-card.reorder-after::before,.item.reorder-after::before{content:"";position:absolute;left:8px;right:8px;height:3px;border-radius:3px;background:#27ae8b;z-index:80;pointer-events:none}\
-.menu-card.reorder-before::after,.item.reorder-before::after,.menu-card.reorder-after::after,.item.reorder-after::after{content:"";position:absolute;left:3px;width:9px;height:9px;border-radius:50%;background:#27ae8b;z-index:81;pointer-events:none}\
-.menu-card.reorder-before::before,.item.reorder-before::before{top:-8px}\
-.menu-card.reorder-before::after,.item.reorder-before::after{top:-11px}\
-.menu-card.reorder-after::before,.item.reorder-after::before{bottom:-8px}\
-.menu-card.reorder-after::after,.item.reorder-after::after{bottom:-11px}\
 .menu-card.reorder-held,.item.reorder-held{opacity:.94!important;transform:translateY(-3px) scale(1.015)!important;box-shadow:0 10px 24px rgba(20,28,36,.16),0 2px 7px rgba(20,28,36,.10)!important;outline:2px solid rgba(39,174,139,.16);transition:opacity .12s ease,transform .12s ease,box-shadow .12s ease,outline-color .12s ease;z-index:70}\
 @keyframes reorderSettle{0%{opacity:.9;transform:translateY(4px) scale(1.008);box-shadow:0 7px 18px rgba(20,28,36,.12)}100%{opacity:1;transform:translateY(0) scale(1);box-shadow:0 1px 2px rgba(0,0,0,.04)}}\
 .reorder-settle{animation:reorderSettle .20s ease-out both}\
@@ -73,6 +66,11 @@
   }
   function resetGesture(){clearTimeout(holdTimer);holdTimer=null;stopAutoScroll();clearTargets();if(held)held.classList.remove('reorder-held');held=null;target=null;dragging=false;type='';selector=''}
 
+  var hasUnifiedReorder=!!(window.StretchUI&&StretchUI.registerReorder);
+  if(hasUnifiedReorder){
+    StretchUI.registerReorder({key:'routine-cards',selector:'.menu-card',ignore:'button,input,textarea,select,a',label:function(card){var title=card.querySelector('.menu-title');return title?title.textContent:'ルーティン'},onReorder:function(move){reorderDirect('menu',move.id,move.targetId,move.before);settleCard('.menu-card',move.id)}});
+    StretchUI.registerReorder({key:'item-cards',selector:'.item',ignore:'button,input,textarea,select,a',label:function(card){var title=card.querySelector('.item-title');return title?title.textContent:'種目'},onReorder:function(move){reorderDirect('item',move.id,move.targetId,move.before);settleCard('.item',move.id)}});
+  }else{
   document.addEventListener('dragstart',function(e){var card=e.target&&e.target.closest&&e.target.closest('.menu-card,.item');if(card&&!card.classList.contains('desktop-dnd-ready'))e.preventDefault()},true);
   document.addEventListener('selectstart',function(e){if(e.target&&e.target.closest&&e.target.closest('.menu-card,.item'))e.preventDefault()},true);
 
@@ -101,6 +99,7 @@
   }
   document.addEventListener('touchend',finishGesture,{passive:true,capture:true});
   document.addEventListener('touchcancel',finishGesture,{passive:true,capture:true});
+  }
 
   document.addEventListener('click',function(e){var t=e.target&&e.target.closest?e.target.closest('button'):null;if(!t)return;if(t.id==='addMenuHome'){e.preventDefault();e.stopImmediatePropagation();addRoutine();return}if(t.id==='addItemBtn'){e.preventDefault();e.stopImmediatePropagation();addItem();return}if(t.classList.contains('swipe-delete')){var card=t.closest('.menu-card,.item');if(!card)return;e.preventDefault();e.stopImmediatePropagation();var id=card.dataset.id,isMenu=card.classList.contains('menu-card');if(isMenu&&!confirmRoutineDelete(id)){card.classList.remove('swipe-open');return}animateDelete(card,function(){if(isMenu)deleteRoutineById(id,true);else deleteItemById(id)});return}if(t.id==='deleteMenuBtn'){e.preventDefault();e.stopImmediatePropagation();deleteCurrentRoutine();return}if(t.id==='deleteItemBtn'){e.preventDefault();e.stopImmediatePropagation();deleteCurrentItem();return}},true);
 })();

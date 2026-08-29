@@ -21,11 +21,16 @@ requireText('ux-v110-recipes.js','StretchUI.bindSwipe','recipes are not using un
 requireText('ux-v18.js','StretchUI.createAutoScroll','stretch reorder is not using unified auto-scroll');
 requireText('ux-v113-daily-schedule.js','StretchUI.createAutoScroll','task reorder is not using unified auto-scroll');
 requireText('ux-v130-integration.js','registerDataProvider','data provider registry is missing');
+requireText('ux-v130-integration.js','registerReorder','unified reorder controller is missing');
 requireText('ux-v130-integration.js','aria-current','navigation accessibility state is missing');
 requireText('ux-v130-integration.js','.reorder-before>.unified-swipe-action','reorder targets do not suppress hidden swipe actions');
 requireText('ux-v130-integration.js','.task-title-text{-webkit-user-select:none','task long-press still allows text selection');
 if(sw.indexOf('<script src="./ux-v130-integration.js')>sw.indexOf('<script src="./ux-v22.js'))failures.push('integration layer must load before card modules');
 if(fs.readFileSync(path.join(root,'ux-v106-tasks.js'),'utf8').includes("handle.className='task-drag-handle'"))failures.push('legacy task drag handle is still rendered');
+requireText('ux-v18.js',"key:'routine-cards'",'routine cards are not registered with unified reorder');
+requireText('ux-v18.js',"key:'item-cards'",'item cards are not registered with unified reorder');
+requireText('ux-v113-daily-schedule.js',"key:'task-cards'",'task cards are not registered with unified reorder');
+requireText('ux-v46-desktop-dnd.js','StretchUI.registerReorder)return','legacy desktop drag is not disabled');
 
 if(failures.length){console.error(failures.join('\n'));process.exit(1)}
 console.log(`reintegration verification passed: ${new Set(files).size} UX assets`);

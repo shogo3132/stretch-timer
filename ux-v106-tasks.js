@@ -241,6 +241,7 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
     function close(){overlay.remove()};overlay.onclick=function(e){if(e.target===overlay)close()};panel.querySelector('.task-time-none').onclick=function(){onSave('');close()};panel.querySelector('.task-time-save').onclick=function(){onSave(String(h.value()).padStart(2,'0')+':'+String(m.value()).padStart(2,'0'));close()};
   }
   function updateNav(screen){
+    if(window.StretchUI&&StretchUI.syncNav)return StretchUI.syncNav(screen);
     var nav=document.getElementById('modeNav');if(!nav)return;
     var visible=screen==='home'||screen==='tasks';nav.hidden=!visible;document.body.classList.toggle('mode-nav-visible',visible);
     if(screen==='tasks'){var back=document.getElementById('backBtn');if(back)back.style.display='none'}
