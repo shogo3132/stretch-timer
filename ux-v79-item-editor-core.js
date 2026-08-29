@@ -327,16 +327,15 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
   renderItems=function(){
     var m=currentMenuSafe(),box=document.getElementById('itemList');if(!m||!box)return;box.innerHTML='';closeActionMenu();
     if(!m.items.length){box.innerHTML='<div class="empty">種目がありません。</div>';return}
-    var fine=window.matchMedia&&window.matchMedia('(hover:hover) and (pointer:fine)').matches;
     m.items.forEach(function(x,i){
       x.seconds=clampWork(x.seconds);x.restSeconds=clampRest(x.restSeconds);
-      var el=document.createElement('div');el.className='card item'+(fine?' desktop-dnd-ready':'');el.draggable=true;el.dataset.id=x.id;
+      var el=document.createElement('div');el.className='card item';el.dataset.id=x.id;
       var img=document.createElement('img');img.className='thumb';img.src=x.photo||(typeof svgPlaceholder==='function'?svgPlaceholder():'');
       var info=document.createElement('div'),title=document.createElement('div'),meta=document.createElement('div');title.className='item-title';title.textContent=(i+1)+'. '+x.name;meta.className='muted';meta.textContent=i===m.items.length-1?x.seconds+'秒':x.seconds+'秒 ・ 休憩'+x.restSeconds+'秒';info.append(title,meta);
       var times=document.createElement('div');times.className='desktop-item-times';times.appendChild(makeDesktopField(x,'work'));if(i<m.items.length-1)times.appendChild(makeDesktopField(x,'rest'));
       var actions=document.createElement('div');actions.className='item-actions';var more=document.createElement('button');more.type='button';more.className='item-action-btn item-more';more.textContent='…';more.setAttribute('aria-label','種目の操作');more.title='種目の操作';var open=document.createElement('button');open.type='button';open.className='item-action-btn item-open';open.setAttribute('aria-label','種目設定を開く');open.title='種目設定を開く';open.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
       more.onclick=function(e){e.preventDefault();e.stopPropagation();openActionMenu(more,x.id)};open.onclick=function(e){e.preventDefault();e.stopPropagation();closeActionMenu();openItemCore(x.id)};actions.append(more,open);
-      el.append(img,info,times,actions);if(typeof wireReorder==='function')wireReorder(el,x.id,'item');box.appendChild(el);
+      el.append(img,info,times,actions);box.appendChild(el);
     });
   };
 

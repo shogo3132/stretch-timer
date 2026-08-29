@@ -21,6 +21,7 @@ requireText('ux-v110-recipes.js','StretchUI.bindSwipe','recipes are not using un
 requireText('ux-v130-integration.js','registerDataProvider','data provider registry is missing');
 requireText('ux-v130-integration.js','registerScreenHook','screen lifecycle registry is missing');
 requireText('ux-v130-integration.js','registerSettingsSection','settings section registry is missing');
+requireText('ux-v130-integration.js','registerBackHandler','back route registry is missing');
 for(const [file,key] of [['ux-v79-item-editor-core.js','menus'],['ux-v88-focus-variants.js','focus'],['ux-v106-tasks.js','tasks'],['ux-v110-recipes.js','recipes'],['ux-v113-daily-schedule.js','task-schedule'],['ux-v109-item-media.js','item-media']]){
   requireText(file,`key:'${key}'`,`${key} data is not registered with the common sync registry`);
 }
@@ -46,6 +47,9 @@ requireText('ux-v113-daily-schedule.js',"key:'task-cards'",'task cards are not r
 if(sw.includes('ux-v46-desktop-dnd.js'))failures.push('legacy desktop drag is still loaded');
 if(fs.readFileSync(path.join(root,'ux-v18.js'),'utf8').includes("addEventListener('touchmove'"))failures.push('legacy stretch touch reorder is still present');
 if(fs.readFileSync(path.join(root,'ux-v113-daily-schedule.js'),'utf8').includes('createTaskGhost'))failures.push('legacy task reorder is still present');
+const indexSource=fs.readFileSync(path.join(root,'index.html'),'utf8');
+if(indexSource.includes('function wireReorder('))failures.push('legacy base reorder controller is still present');
+if(indexSource.includes("show('home','ストレッチ',{label:'⚙'"))failures.push('duplicate header settings action is still present');
 
 if(failures.length){console.error(failures.join('\n'));process.exit(1)}
 console.log(`reintegration verification passed: ${new Set(files).size} UX assets`);

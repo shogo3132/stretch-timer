@@ -348,22 +348,20 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
   if(window.StretchUI&&StretchUI.registerScreenHook)StretchUI.registerScreenHook({key:'tasks-nav',after:updateNav});
   if(window.StretchUI&&StretchUI.registerSettingsSection)StretchUI.registerSettingsSection({key:'tasks',before:function(){if(typeof currentScreen!=='undefined'&&currentScreen!=='settings')settingsReturn=currentScreen==='tasks'||currentScreen==='taskHistory'||currentScreen==='dailyTasks'?'tasks':'home'},render:renderTaskSettings});
 
-  var previousGoBack=typeof goBack==='function'?goBack:null;
-  if(previousGoBack)goBack=function(){
+  if(window.StretchUI&&StretchUI.registerBackHandler)StretchUI.registerBackHandler({key:'tasks',priority:300,handle:function(){
     var custom=currentScreen==='tasks'||currentScreen==='taskDetail'||currentScreen==='taskHistory'||currentScreen==='dailyTasks'||(currentScreen==='settings'&&settingsReturn==='tasks');
     if(custom){
       var target=history.state&&history.state.stretchTimerScreen;
-      if(target&&target!==currentScreen){if(target==='tasks')return renderTasks();if(target==='settings')return renderSettings();if(target==='home')return renderHome()}
+      if(target&&target!==currentScreen){if(target==='tasks'){renderTasks();return true}if(target==='settings'){renderSettings();return true}if(target==='home'){renderHome();return true}}
       var depth=history.state&&history.state.stretchTimerApp?Math.max(0,+history.state.stretchTimerDepth||0):0;
-      if(depth>0&&typeof history.back==='function'){history.back();return}
-      if(currentScreen==='taskDetail')return renderTasks();
-      if(currentScreen==='taskHistory'||currentScreen==='dailyTasks')return renderSettings();
-      if(currentScreen==='settings')return renderTasks();
-      return renderHome();
+      if(depth>0&&typeof history.back==='function'){history.back();return true}
+      if(currentScreen==='taskDetail'){renderTasks();return true}
+      if(currentScreen==='taskHistory'||currentScreen==='dailyTasks'){renderSettings();return true}
+      if(currentScreen==='settings'){renderTasks();return true}
+      renderHome();return true;
     }
-    return previousGoBack.apply(this,arguments)
-  };
-  var back=document.getElementById('backBtn');if(back)back.onclick=function(){goBack()};
+    return false
+  }});
 
   document.addEventListener('visibilitychange',function(){if(!document.hidden&&rolloverIfNeeded()&&currentScreen==='tasks')renderTaskLists()});
   rolloverTimer=setInterval(function(){rolloverIfNeeded();if(currentScreen==='tasks')renderTaskLists()},60000);

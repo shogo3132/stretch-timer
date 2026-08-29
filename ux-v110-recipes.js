@@ -53,6 +53,6 @@
   ensureData();ensureScreens();
   if(window.StretchUI&&StretchUI.registerDataProvider)StretchUI.registerDataProvider({key:'recipes',write:function(payload){payload.recipes=state.recipes.map(function(x){var c=clean(x);return {id:c.id,title:c.title,imagePath:c.imagePath,ingredients:c.ingredients,steps:c.steps,notes:c.notes,updatedAt:c.updatedAt}})},read:function(remote){state.recipes=Array.isArray(remote.recipes)?remote.recipes.map(clean):[];save(false);if(currentScreen==='recipes')renderRecipes()}});
   if(window.StretchUI&&StretchUI.registerScreenHook)StretchUI.registerScreenHook({key:'recipes-nav',after:syncNav});
-  if(typeof goBack==='function'){var oldBack=goBack;goBack=function(){if(currentScreen==='recipeDetail')return renderRecipes();if(currentScreen==='recipes')return renderHome();return oldBack.apply(this,arguments)};var back=document.getElementById('backBtn');if(back)back.onclick=function(){goBack()}}
+  if(window.StretchUI&&StretchUI.registerBackHandler)StretchUI.registerBackHandler({key:'recipes',priority:400,handle:function(){if(currentScreen==='recipeDetail'){renderRecipes();return true}if(currentScreen==='recipes'){renderHome();return true}return false}});
   syncNav(currentScreen);window.__stretchTimerRecipes={render:renderRecipes};
 })();
