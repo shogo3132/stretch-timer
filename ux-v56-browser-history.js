@@ -5,6 +5,7 @@
   var fromPopstate=false;
   var suppressPush=false;
   var blockRootPop=false;
+  var appUrl=location.href;
 
   function activeScreen(){
     var el=document.querySelector('.screen.active');
@@ -37,13 +38,13 @@
     }
   }catch(e){}
 
-  window.addEventListener('popstate',function(e){
+  window.addEventListener('popstate',function(){
     fromPopstate=true;
     suppressPush=true;
-    var incoming=e.state;
-    blockRootPop=!!(incoming&&incoming.stretchTimerApp&&currentDepth()===0&&!incoming.stretchTimerGuard&&isTopLevel(activeScreen()));
+    var screen=activeScreen();
+    blockRootPop=isTopLevel(screen);
     if(blockRootPop){
-      try{history.pushState(guardedState(activeScreen()),'',location.href)}catch(err){}
+      try{history.pushState(guardedState(screen),'',appUrl)}catch(err){}
     }
     setTimeout(function(){fromPopstate=false;suppressPush=false;blockRootPop=false},0);
   },true);
