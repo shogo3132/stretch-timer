@@ -11,7 +11,7 @@
   }
   function stabilize(id){
     var active=id||(document.querySelector('.screen.active')&&document.querySelector('.screen.active').id)||'';
-    var headerTools=active==='home'||active==='tasks';
+    var headerTools=['home','tasks','recipes','settings'].indexOf(active)>=0;
     var version=document.getElementById('appVersion');if(version)version.style.display=headerTools?'inline':'none';
     var refresh=document.getElementById('refreshBtn');if(refresh)refresh.style.display=headerTools?'inline-block':'none';
     var total=document.getElementById('detailHeaderTotal');

@@ -315,7 +315,7 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
   }
   function openTaskSettings(){settingsReturn='tasks';renderSettings()}
   function renderTasks(){
-    ensureScreens();rolloverIfNeeded();show('tasks','タスク',{label:'⚙',fn:openTaskSettings});renderTaskLists();
+    ensureScreens();rolloverIfNeeded();show('tasks','タスク');renderTaskLists();
   }
   function historyEntries(){
     var all=state.taskHistory.slice();state.tasks.filter(function(x){return x.completedAt}).forEach(function(task){all.push({id:'current-'+task.id,taskId:task.id,title:task.title,completedAt:task.completedAt,day:task.completedDay||dayKey(task.completedAt,state.taskSettings.cutoffHour),repeatDaily:task.repeatDaily})});return all.sort(function(a,b){return b.completedAt-a.completedAt});

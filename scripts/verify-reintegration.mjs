@@ -22,6 +22,7 @@ requireText('ux-v130-integration.js','registerDataProvider','data provider regis
 requireText('ux-v130-integration.js','registerScreenHook','screen lifecycle registry is missing');
 requireText('ux-v130-integration.js','registerSettingsSection','settings section registry is missing');
 requireText('ux-v130-integration.js','registerBackHandler','back route registry is missing');
+requireText('ux-v130-integration.js',"['home','tasks','recipes','settings']",'top-level header screen registry is missing');
 for(const [file,key] of [['ux-v79-item-editor-core.js','menus'],['ux-v88-focus-variants.js','focus'],['ux-v106-tasks.js','tasks'],['ux-v110-recipes.js','recipes'],['ux-v113-daily-schedule.js','task-schedule'],['ux-v109-item-media.js','item-media']]){
   requireText(file,`key:'${key}'`,`${key} data is not registered with the common sync registry`);
 }
@@ -51,6 +52,8 @@ if(fs.readFileSync(path.join(root,'ux-v113-daily-schedule.js'),'utf8').includes(
 const indexSource=fs.readFileSync(path.join(root,'index.html'),'utf8');
 if(indexSource.includes('function wireReorder('))failures.push('legacy base reorder controller is still present');
 if(indexSource.includes("show('home','ストレッチ',{label:'⚙'"))failures.push('duplicate header settings action is still present');
+if(fs.readFileSync(path.join(root,'ux-v106-tasks.js'),'utf8').includes("show('tasks','タスク',{label:'⚙'"))failures.push('duplicate task header settings action is still present');
+if(fs.readFileSync(path.join(root,'ux-v110-recipes.js'),'utf8').includes("show('recipes','レシピ',{label:'＋'"))failures.push('recipe add action is still in the shared header');
 
 if(failures.length){console.error(failures.join('\n'));process.exit(1)}
 console.log(`reintegration verification passed: ${new Set(files).size} UX assets`);
