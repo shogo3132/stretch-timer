@@ -13,6 +13,8 @@
     var left=options.left&&row.querySelector(options.left),right=options.right&&row.querySelector(options.right);
     if(left)left.classList.add('unified-swipe-action','unified-swipe-action-left');
     if(right)right.classList.add('unified-swipe-action','unified-swipe-action-right');
+    function bindActionTap(button,openClass){if(!button)return;button.addEventListener('touchend',function(e){if(!row.classList.contains(openClass))return;e.preventDefault();e.stopImmediatePropagation();button.click()},{passive:false})}
+    bindActionTap(left,'unified-swipe-left');bindActionTap(right,'unified-swipe-right');
     var x=0,y=0,moved=false,ignore=false;
     row.addEventListener('touchstart',function(e){ignore=!!(e.target&&e.target.closest(options.ignore||'button,input,textarea,select,a,.task-drag-handle'));if(ignore||e.touches.length!==1)return;x=e.touches[0].clientX;y=e.touches[0].clientY;moved=false},{passive:true});
     row.addEventListener('touchmove',function(e){if(ignore||e.touches.length!==1)return;var dx=e.touches[0].clientX-x,dy=e.touches[0].clientY-y;if(Math.abs(dx)>22&&Math.abs(dx)>Math.abs(dy)*1.25)moved=true},{passive:true});

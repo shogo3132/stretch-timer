@@ -37,6 +37,7 @@ for(const file of ['ux-v106-tasks.js','ux-v110-recipes.js','ux-v113-daily-schedu
   if(/show\s*=\s*function/.test(source))failures.push(`legacy show wrapper: ${file}`);
 }
 requireText('ux-v130-integration.js','registerReorder','unified reorder controller is missing');
+requireText('ux-v130-integration.js','function bindActionTap','swipe actions still rely on a delayed synthetic click');
 requireText('ux-v130-integration.js','function reorderCollection','shared collection reorder is missing');
 requireText('ux-v130-integration.js','function setupSectionHeader','shared section header is missing');
 requireText('ux-v130-integration.js','aria-current','navigation accessibility state is missing');
