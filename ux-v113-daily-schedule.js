@@ -57,7 +57,7 @@
 .task-row.in-daily-schedule::before{content:"";position:absolute;left:4px;top:11px;bottom:11px;width:3px;border-radius:4px;background:var(--schedule-line);z-index:2}\
 .task-drag-ghost{position:fixed;z-index:12000;min-height:48px;display:flex;align-items:center;padding:10px 13px;border:2px solid #27ae8b;border-radius:15px;background:rgba(255,255,255,.96);color:#253039;font-size:14px;font-weight:800;line-height:1.35;box-shadow:0 12px 30px rgba(25,35,43,.22);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\
 .schedule-time-overlay{position:fixed;inset:0;z-index:10100;display:grid;align-items:end;background:rgba(25,31,37,.38);padding:16px 12px max(16px,env(safe-area-inset-bottom))}\
-.schedule-time-panel{width:min(430px,100%);margin:0 auto;padding:18px;border-radius:22px;background:#f7f8fa;box-shadow:0 18px 45px rgba(20,27,34,.22)}\
+.schedule-time-panel{box-sizing:border-box;width:100%;max-width:430px;margin:0 auto;padding:18px;border-radius:22px;background:#f7f8fa;box-shadow:0 18px 45px rgba(20,27,34,.22);overflow:hidden}\
 .schedule-time-title{font-size:16px;font-weight:850;color:#242a30;margin-bottom:4px}\
 .schedule-time-sub{font-size:12px;color:#7a848e;margin-bottom:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\
 .schedule-time-fields{display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:9px}\
