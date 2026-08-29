@@ -171,10 +171,18 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
     var duplicate=state.taskHistory.some(function(x){return x.taskId===task.id&&x.completedAt===completedAt});
     if(!duplicate)state.taskHistory.push({id:uid(),taskId:task.id,title:task.title,completedAt:completedAt||Date.now(),day:day,repeatDaily:!!task.repeatDaily});
   }
+  function applyScheduleRollover(previous,today){
+    var schedule=state.taskSchedule,days=schedule&&schedule.days;if(!days||!days[previous])return;var previousEntries=Array.isArray(days[previous].entries)?days[previous].entries:[],todayData=days[today];
+    if(!todayData){todayData={day:today,nextOrder:0,viewStart:480,viewEnd:1080,entries:[]};days[today]=todayData}if(!Array.isArray(todayData.entries))todayData.entries=[];
+    previousEntries.forEach(function(entry){var task=state.tasks.find(function(x){return x.id===entry.taskId});if(!task)return;if(entry.completedAt){task.completedAt=+entry.completedAt||Date.now();task.completedDay=previous}if(!task.repeatDaily)return;
+      var exists=todayData.entries.some(function(x){return x.taskId===task.id});if(!exists){var order=Math.max(0,+todayData.nextOrder||0);todayData.nextOrder=order+1;todayData.entries.push({id:uid(),taskId:task.id,title:task.title,color:Math.max(0,+entry.color||0),order:order,start:entry.start,end:entry.end,completedAt:0})}
+    });
+  }
   function rolloverIfNeeded(){
     ensureTaskData();
     var today=currentDay(),previous=state.taskSettings.lastDay||today;
     if(previous===today)return false;
+    applyScheduleRollover(previous,today);
     var next=[];
     state.tasks.forEach(function(task){
       if(task.completedAt){
@@ -310,7 +318,7 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
     row.addEventListener('drop',function(e){e.preventDefault();row.classList.remove('task-drop-target');moveTask(e.dataTransfer.getData('text/plain'),id)});
   }
   function renderTaskLists(){
-    rolloverIfNeeded();var open=state.tasks.filter(function(x){return !x.completedAt}),done=state.tasks.filter(function(x){return !!x.completedAt});
+    rolloverIfNeeded();var allocated={},today=currentDay(),tomorrow=(function(){var p=today.split('-'),d=new Date(+p[0],+p[1]-1,+p[2],12);d.setDate(d.getDate()+1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();var days=state.taskSchedule&&state.taskSchedule.days||{};[today,tomorrow].forEach(function(day){var entries=days[day]&&days[day].entries||[];entries.forEach(function(entry){allocated[entry.taskId]=true})});var open=state.tasks.filter(function(x){return !x.completedAt&&!allocated[x.id]}),done=state.tasks.filter(function(x){return !!x.completedAt});
     var openList=document.getElementById('taskOpenList'),doneList=document.getElementById('taskDoneList');if(!openList||!doneList)return;openList.innerHTML='';doneList.innerHTML='';
     if(!open.length){var empty=document.createElement('div');empty.className='task-empty';empty.textContent='未完了のタスクはありません';openList.appendChild(empty)}else open.forEach(function(task){openList.appendChild(makeTaskRow(task,false))});
     done.forEach(function(task){doneList.appendChild(makeTaskRow(task,true))});
@@ -370,5 +378,5 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
   rolloverTimer=setInterval(function(){rolloverIfNeeded();if(currentScreen==='tasks')renderTaskLists()},60000);
   updateNav(currentScreen);
 
-  window.__stretchTimerTasksV106={render:renderTasks,rollover:rolloverIfNeeded,dayKey:dayKey,history:renderTaskHistory,openDetail:openTaskDetail};
+  window.__stretchTimerTasksV106={render:renderTasks,renderLists:renderTaskLists,rollover:rolloverIfNeeded,dayKey:dayKey,history:renderTaskHistory,openDetail:openTaskDetail};
 })();

@@ -78,6 +78,10 @@ requireText('ux-v106-tasks.js','<span>全タスク</span>','task list heading is
 requireText('ux-v106-tasks.js','state.tasks.unshift','new tasks are not inserted at the top');
 requireText('ux-v113-daily-schedule.js','全タスクをカレンダーへ長押しして追加できます','daily calendar is not the direct task drop target');
 requireText('ux-v113-daily-schedule.js','function assignMissingTimes','daily tasks are not automatically placed on the schedule');
+requireText('ux-v113-daily-schedule.js','daily-event-check','calendar tasks do not provide a completion control');
+requireText('ux-v113-daily-schedule.js','function syncDailyNext','daily calendar recurrence is not preserved');
+requireText('ux-v106-tasks.js','function applyScheduleRollover','scheduled completion is not finalized during day rollover');
+requireText('ux-v106-tasks.js','!x.completedAt&&!allocated[x.id]','calendar-assigned tasks are not removed from the full task list');
 if(fs.readFileSync(path.join(root,'ux-v18.js'),'utf8').includes("addEventListener('touchmove'"))failures.push('legacy stretch touch reorder is still present');
 if(fs.readFileSync(path.join(root,'ux-v113-daily-schedule.js'),'utf8').includes('createTaskGhost'))failures.push('legacy task reorder is still present');
 const indexSource=fs.readFileSync(path.join(root,'index.html'),'utf8');
