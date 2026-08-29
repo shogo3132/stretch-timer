@@ -173,8 +173,7 @@
 
   ensureData(false);ensureUi();
   var previousShow=typeof show==='function'?show:null;if(previousShow)show=function(id){var result=previousShow.apply(this,arguments);if(id==='tasks')setTimeout(renderSchedule,0);return result};
-  var previousSyncPayload=typeof syncPayload==='function'?syncPayload:null;if(previousSyncPayload)syncPayload=function(){var payload=JSON.parse(previousSyncPayload());payload.taskSchedule=cleanSchedule(state.taskSchedule);return JSON.stringify(payload)};
-  var previousApplyRemote=typeof applyRemote==='function'?applyRemote:null;if(previousApplyRemote)applyRemote=function(raw,remoteTime){var remote={};try{remote=JSON.parse(raw)||{}}catch(e){}var result=previousApplyRemote.apply(this,arguments);state.taskSchedule=cleanSchedule(remote.taskSchedule);if(typeof save==='function')save(false);if(typeof currentScreen!=='undefined'&&currentScreen==='tasks')renderSchedule();return result};
+  if(window.StretchUI&&StretchUI.registerDataProvider)StretchUI.registerDataProvider({key:'task-schedule',write:function(payload){payload.taskSchedule=cleanSchedule(state.taskSchedule)},read:function(remote){state.taskSchedule=cleanSchedule(remote.taskSchedule);if(typeof save==='function')save(false);if(typeof currentScreen!=='undefined'&&currentScreen==='tasks')renderSchedule()}});
   bindUnifiedTaskDrag();
   document.addEventListener('click',function(e){var more=e.target.closest('#taskOpenList .task-more');if(more){var row=more.closest('.task-row');actionTaskId=row&&row.dataset.id||'';enhanceActionMenu()}},true);
   var openList=document.getElementById('taskOpenList'),doneList=document.getElementById('taskDoneList');if(window.MutationObserver&&openList){observer=new MutationObserver(function(){if(typeof currentScreen!=='undefined'&&currentScreen==='tasks')renderSchedule()});observer.observe(openList,{childList:true});if(doneList)observer.observe(doneList,{childList:true})}

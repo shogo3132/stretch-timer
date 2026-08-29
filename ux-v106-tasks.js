@@ -343,11 +343,7 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
 
   ensureTaskData();ensureScreens();rolloverIfNeeded();
 
-  var previousSyncPayload=typeof syncPayload==='function'?syncPayload:null;
-  if(previousSyncPayload)syncPayload=function(){var payload=JSON.parse(previousSyncPayload());payload.tasks=state.tasks.map(cleanTask);payload.taskHistory=state.taskHistory.map(cleanHistory);payload.taskSettings={cutoffHour:state.taskSettings.cutoffHour,lastDay:state.taskSettings.lastDay};return JSON.stringify(payload)};
-
-  var previousApplyRemote=typeof applyRemote==='function'?applyRemote:null;
-  if(previousApplyRemote)applyRemote=function(raw,remoteTime){var remote={};try{remote=JSON.parse(raw)||{}}catch(e){}var result=previousApplyRemote.apply(this,arguments);installTaskData(state,remote);rolloverIfNeeded();if(typeof save==='function')save(false);return result};
+  if(window.StretchUI&&StretchUI.registerDataProvider)StretchUI.registerDataProvider({key:'tasks',write:function(payload){payload.tasks=state.tasks.map(cleanTask);payload.taskHistory=state.taskHistory.map(cleanHistory);payload.taskSettings={cutoffHour:state.taskSettings.cutoffHour,lastDay:state.taskSettings.lastDay}},read:function(remote){installTaskData(state,remote);rolloverIfNeeded();if(typeof save==='function')save(false)}});
 
   var previousShow=typeof show==='function'?show:null;
   if(previousShow)show=function(id){var result=previousShow.apply(this,arguments);updateNav(id);return result};

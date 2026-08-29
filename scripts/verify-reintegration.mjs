@@ -19,6 +19,15 @@ requireText('sw.js','ux-v130-integration.js','integration layer is not loaded');
 requireText('ux-v106-tasks.js','StretchUI.bindSwipe','tasks are not using unified swipe');
 requireText('ux-v110-recipes.js','StretchUI.bindSwipe','recipes are not using unified swipe');
 requireText('ux-v130-integration.js','registerDataProvider','data provider registry is missing');
+for(const [file,key] of [['ux-v79-item-editor-core.js','menus'],['ux-v88-focus-variants.js','focus'],['ux-v106-tasks.js','tasks'],['ux-v110-recipes.js','recipes'],['ux-v113-daily-schedule.js','task-schedule'],['ux-v109-item-media.js','item-media']]){
+  requireText(file,`key:'${key}'`,`${key} data is not registered with the common sync registry`);
+}
+for(const file of files){
+  if(file==='ux-v130-integration.js')continue;
+  const source=fs.readFileSync(path.join(root,file),'utf8');
+  if(/syncPayload\s*=\s*function/.test(source))failures.push(`legacy sync payload wrapper: ${file}`);
+  if(/applyRemote\s*=\s*function/.test(source))failures.push(`legacy remote apply wrapper: ${file}`);
+}
 requireText('ux-v130-integration.js','registerReorder','unified reorder controller is missing');
 requireText('ux-v130-integration.js','aria-current','navigation accessibility state is missing');
 requireText('ux-v130-integration.js','.reorder-before>.unified-swipe-action','reorder targets do not suppress hidden swipe actions');

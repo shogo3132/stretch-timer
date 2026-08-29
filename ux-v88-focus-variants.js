@@ -214,10 +214,7 @@
 
   var previousNormalize=typeof normalize==='function'?normalize:null;
   if(previousNormalize)normalize=function(s){var out=previousNormalize(s);out.focus=cleanFocus(hasFocus(s)?s.focus:{lines:SAMPLE_LINES});return out};
-  var previousSyncPayload=typeof syncPayload==='function'?syncPayload:null;
-  if(previousSyncPayload)syncPayload=function(){var payload=JSON.parse(previousSyncPayload());payload.focus=cleanFocus(state&&state.focus);return JSON.stringify(payload)};
-  var previousApplyRemote=typeof applyRemote==='function'?applyRemote:null;
-  if(previousApplyRemote)applyRemote=function(raw,remoteTime){var remote={};try{remote=JSON.parse(raw)||{}}catch(e){}var result=previousApplyRemote.apply(this,arguments);state.focus=cleanFocus(hasFocus(remote)?remote.focus:{lines:SAMPLE_LINES});if(typeof save==='function')save(false);renderFocus();return result};
+  if(window.StretchUI&&StretchUI.registerDataProvider)StretchUI.registerDataProvider({key:'focus',write:function(payload){payload.focus=cleanFocus(state&&state.focus)},read:function(remote){state.focus=cleanFocus(hasFocus(remote)?remote.focus:{lines:SAMPLE_LINES});if(typeof save==='function')save(false);renderFocus()}});
   var previousRenderHome=typeof renderHome==='function'?renderHome:null;
   if(previousRenderHome)renderHome=function(){var result=previousRenderHome.apply(this,arguments);renderFocus();return result};
   var previousDropboxUpload=typeof dropboxUpload==='function'?dropboxUpload:null;
