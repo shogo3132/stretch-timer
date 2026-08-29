@@ -37,6 +37,8 @@ for(const file of ['ux-v106-tasks.js','ux-v110-recipes.js','ux-v113-daily-schedu
   if(/show\s*=\s*function/.test(source))failures.push(`legacy show wrapper: ${file}`);
 }
 requireText('ux-v130-integration.js','registerReorder','unified reorder controller is missing');
+requireText('ux-v130-integration.js','function reorderCollection','shared collection reorder is missing');
+requireText('ux-v130-integration.js','function setupSectionHeader','shared section header is missing');
 requireText('ux-v130-integration.js','aria-current','navigation accessibility state is missing');
 requireText('ux-v130-integration.js','.reorder-before>.unified-swipe-action','reorder targets do not suppress hidden swipe actions');
 requireText('ux-v130-integration.js','.task-title-text{-webkit-user-select:none','task long-press still allows text selection');
@@ -46,6 +48,10 @@ requireText('ux-v18.js',"key:'routine-cards'",'routine cards are not registered 
 requireText('ux-v18.js',"key:'item-cards'",'item cards are not registered with unified reorder');
 requireText('ux-v113-daily-schedule.js',"key:'task-cards'",'task cards are not registered with unified reorder');
 requireText('ux-v110-recipes.js',"key:'recipe-cards'",'recipe cards are not registered with unified reorder');
+for(const file of ['ux-v18.js','ux-v110-recipes.js','ux-v113-daily-schedule.js'])requireText(file,'StretchUI.reorderCollection',`${file} is not using shared collection reorder`);
+requireText('ux-v110-recipes.js','state.recipes.forEach(function(x,i){x.order=i})','recipe reorder can be undone by stale order values');
+requireText('ux-v110-recipes.js','StretchUI.setupSectionHeader','recipe section header is not shared');
+requireText('ux-v56-browser-history.js','if(isTopLevel(id))history.replaceState','top-level navigation still creates a parent-child history');
 if(sw.includes('ux-v46-desktop-dnd.js'))failures.push('legacy desktop drag is still loaded');
 if(fs.readFileSync(path.join(root,'ux-v18.js'),'utf8').includes("addEventListener('touchmove'"))failures.push('legacy stretch touch reorder is still present');
 if(fs.readFileSync(path.join(root,'ux-v113-daily-schedule.js'),'utf8').includes('createTaskGhost'))failures.push('legacy task reorder is still present');

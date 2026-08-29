@@ -24,6 +24,7 @@
     var s=history.state;
     return s&&s.stretchTimerApp?Math.max(0,+s.stretchTimerDepth||0):0;
   }
+  function isTopLevel(screen){return ['home','tasks','recipes','settings'].indexOf(screen)>=0}
 
   try{
     if(!(history.state&&history.state.stretchTimerApp)){
@@ -44,7 +45,8 @@
       var r=previousShow.apply(this,arguments);
       if(!suppressPush&&id&&id!==before){
         try{
-          history.pushState(makeState(id,currentDepth()+1),'',location.href);
+          if(isTopLevel(id))history.replaceState(makeState(id,0),'',location.href);
+          else history.pushState(makeState(id,currentDepth()+1),'',location.href);
         }catch(e){}
       }
       return r;
