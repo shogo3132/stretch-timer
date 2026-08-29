@@ -86,11 +86,7 @@ body.timer-exit-dialog-open{overflow:hidden}\
     return true;
   }
 
-  var previousGoBack=typeof goBack==='function'?goBack:null;
-  goBack=function(){
-    if(typeof currentScreen!=='undefined'&&currentScreen==='timer'&&timerState)return requestExit();
-    if(previousGoBack)return previousGoBack.apply(this,arguments);
-  };
+  if(window.StretchUI&&StretchUI.registerBackHandler)StretchUI.registerBackHandler({key:'timer-exit-confirm',priority:1000,handle:function(){if(typeof currentScreen!=='undefined'&&currentScreen==='timer'&&timerState)return requestExit();return false}});
 
   var back=document.getElementById('backBtn');
   if(back)back.onclick=function(){goBack()};

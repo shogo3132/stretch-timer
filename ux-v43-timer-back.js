@@ -11,11 +11,7 @@
     return false;
   }
 
-  var previousGoBack=typeof goBack==='function'?goBack:null;
-  goBack=function(){
-    if(timerBackToHome())return;
-    if(previousGoBack)return previousGoBack.apply(this,arguments);
-  };
+  if(window.StretchUI&&StretchUI.registerBackHandler)StretchUI.registerBackHandler({key:'timer-fallback',priority:800,handle:timerBackToHome});
 
   var back=document.getElementById('backBtn');
   if(back)back.onclick=function(){goBack()};

@@ -352,21 +352,8 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
   var previousRenderTimer=typeof renderTimer==='function'?renderTimer:null;
   if(previousRenderTimer)renderTimer=function(){var r=previousRenderTimer.apply(this,arguments);if(timerState&&timerState.phase==='item'&&timerState.paused){var box=document.getElementById('timerContent');if(box&&!box.querySelector('.timer-edit-current')){var btn=document.createElement('button');btn.type='button';btn.className='timer-edit-current';btn.textContent='編集';btn.onclick=openCurrentEdit;var meta=box.querySelector('.compact-meta');if(meta)meta.insertAdjacentElement('afterend',btn);else box.appendChild(btn)}}return r};
 
-  var previousShow=typeof show==='function'?show:null;
-  if(previousShow)show=function(id){
-    var leaving=typeof currentScreen!=='undefined'&&currentScreen==='itemEdit'&&id!=='itemEdit'&&draft&&!committed&&!navigating;
-    if(leaving&&!approveLeaving())return;
-    closeActionMenu();return previousShow.apply(this,arguments);
-  };
-  var previousGoBack=typeof goBack==='function'?goBack:null;
-  goBack=function(){
-    if(typeof currentScreen!=='undefined'&&currentScreen==='itemEdit'){
-      if(draft&&!approveLeaving())return;
-      if(editContext&&returnToPausedTimer())return;
-      if(typeof openMenu==='function'){openMenu(currentMenuId);return}
-    }
-    if(previousGoBack)return previousGoBack.apply(this,arguments);
-  };
+  if(window.StretchUI&&StretchUI.registerScreenHook)StretchUI.registerScreenHook({key:'item-editor-leave',before:function(id){var leaving=typeof currentScreen!=='undefined'&&currentScreen==='itemEdit'&&id!=='itemEdit'&&draft&&!committed&&!navigating;if(leaving&&!approveLeaving())return false;closeActionMenu()}});
+  if(window.StretchUI&&StretchUI.registerBackHandler)StretchUI.registerBackHandler({key:'item-editor',priority:900,handle:function(){if(typeof currentScreen==='undefined'||currentScreen!=='itemEdit')return false;if(draft&&!approveLeaving())return true;if(editContext&&returnToPausedTimer())return true;if(typeof openMenu==='function'){openMenu(currentMenuId);return true}return false}});
   var back=document.getElementById('backBtn');if(back)back.addEventListener('click',function(e){
     if(typeof currentScreen==='undefined'||currentScreen!=='itemEdit'||!draft||navigating)return;
     e.preventDefault();e.stopImmediatePropagation();if(!approveLeaving())return;navigating=true;

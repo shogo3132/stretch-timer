@@ -53,14 +53,7 @@
     };
   }
 
-  var previousGoBack=typeof goBack==='function'?goBack:null;
-  goBack=function(){
-    var fromItem=typeof currentScreen!=='undefined'&&currentScreen==='itemEdit';
-    var menuId=typeof currentMenuId!=='undefined'?currentMenuId:null;
-    var r=previousGoBack?previousGoBack.apply(this,arguments):undefined;
-    if(fromItem&&menuId)restoreMenuScroll(menuId);
-    return r;
-  };
+  if(window.StretchUI&&StretchUI.registerBackEffect)StretchUI.registerBackEffect({key:'menu-scroll-restore',before:function(){return {fromItem:typeof currentScreen!=='undefined'&&currentScreen==='itemEdit',menuId:typeof currentMenuId!=='undefined'?currentMenuId:null}},after:function(context){if(context&&context.fromItem&&context.menuId)restoreMenuScroll(context.menuId)}});
 
   var back=document.getElementById('backBtn');
   if(back)back.onclick=function(){goBack()};

@@ -65,6 +65,15 @@ for(const file of ['ux-v22.js','ux-v34-timer.js','ux-v35-history.js','ux-v38-pol
   if(/show\s*=\s*function/.test(source))failures.push(`legacy screen wrapper: ${file}`);
   if(!source.includes('registerScreenHook'))failures.push(`screen hook registration missing: ${file}`);
 }
+for(const file of ['ux-v43-timer-back.js','ux-v79-item-editor-core.js','ux-v107-timer-exit.js']){
+  const source=fs.readFileSync(path.join(root,file),'utf8');
+  if(/goBack\s*=\s*function/.test(source))failures.push(`legacy back wrapper: ${file}`);
+  if(!source.includes('registerBackHandler'))failures.push(`back route registration missing: ${file}`);
+}
+requireText('ux-v130-integration.js','screenHooks[i].before','screen lifecycle cannot guard a transition before rendering');
+requireText('ux-v130-integration.js','registerBackEffect','back side effects are not centrally registered');
+if(/goBack\s*=\s*function/.test(fs.readFileSync(path.join(root,'ux-v52-scroll-restore.js'),'utf8')))failures.push('legacy scroll restore back wrapper is still loaded');
+requireText('ux-v52-scroll-restore.js','registerBackEffect','scroll restoration is not registered with the shared back lifecycle');
 if(fs.readFileSync(path.join(root,'ux-v18.js'),'utf8').includes("addEventListener('touchmove'"))failures.push('legacy stretch touch reorder is still present');
 if(fs.readFileSync(path.join(root,'ux-v113-daily-schedule.js'),'utf8').includes('createTaskGhost'))failures.push('legacy task reorder is still present');
 const indexSource=fs.readFileSync(path.join(root,'index.html'),'utf8');
