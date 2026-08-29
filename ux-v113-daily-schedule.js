@@ -11,7 +11,7 @@
     {bg:'#eee8fb',line:'#8b72cf',text:'#59469a'},
     {bg:'#dff3f4',line:'#45aeb3',text:'#276f73'}
   ];
-  var dragTaskId='',dragTouchActive=false,dragNativeTouch=false,dragTouchId=null,dragHold=null,dragHeld=null,dragTarget=null,dragBefore=true,dragStartX=0,dragStartY=0,dragPointerX=0,dragPointerY=0,dragPointerId=null,dragGhost=null,dragScrollSpeed=0,dragScrollFrame=null,dragLastScrollAt=0,dragSuppressClickUntil=0,dragDebugMoves=0,dragDebugStarted=0,editorId='',actionTaskId='',clockTimer=null,observer=null;
+  var dragTaskId='',dragTouchActive=false,dragNativeTouch=false,dragTouchId=null,dragHold=null,dragHeld=null,dragTarget=null,dragBefore=true,dragStartX=0,dragStartY=0,dragPointerX=0,dragPointerY=0,dragPointerId=null,dragGhost=null,dragScrollSpeed=0,dragScrollFrame=null,dragLastScrollAt=0,sharedTaskAutoScroll=null,dragSuppressClickUntil=0,dragDebugMoves=0,dragDebugStarted=0,editorId='',actionTaskId='',clockTimer=null,observer=null;
 
   var style=document.createElement('style');
   style.setAttribute('data-daily-schedule-v113','');
@@ -172,12 +172,13 @@
     var rows=Array.prototype.slice.call(document.querySelectorAll('#taskOpenList .task-row:not(.completed)')).filter(function(x){return x!==dragHeld}),best=null,bestDist=Infinity,before=true;
     rows.forEach(function(row){var r=row.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight)return;var mid=r.top+r.height/2,dist=Math.abs(y-mid);if(dist<bestDist){bestDist=dist;best=row;before=y<mid}});if(best){dragTarget=best;dragBefore=before;best.classList.add(before?'task-reorder-before':'task-reorder-after')}
   }
-  function stopTaskAutoScroll(){dragScrollSpeed=0;dragLastScrollAt=0;if(dragScrollFrame!==null){cancelAnimationFrame(dragScrollFrame);dragScrollFrame=null}}
+  function stopTaskAutoScroll(){if(sharedTaskAutoScroll)sharedTaskAutoScroll.stop();dragScrollSpeed=0;dragLastScrollAt=0;if(dragScrollFrame!==null){cancelAnimationFrame(dragScrollFrame);dragScrollFrame=null}}
   function taskAutoScrollStep(now){
     if(!dragTouchActive||!dragHeld||!dragScrollSpeed){dragScrollFrame=null;return}var scroller=document.scrollingElement||document.documentElement,beforeY=scroller.scrollTop,maxY=Math.max(0,scroller.scrollHeight-scroller.clientHeight);
     if((dragScrollSpeed<0&&beforeY<=0)||(dragScrollSpeed>0&&beforeY>=maxY-.5)){stopTaskAutoScroll();return}if(!dragLastScrollAt)dragLastScrollAt=now;var elapsed=Math.max(0,Math.min(34,now-dragLastScrollAt));dragLastScrollAt=now;scroller.scrollTop=Math.max(0,Math.min(maxY,beforeY+dragScrollSpeed*elapsed/1000));updateTaskDropTarget(dragPointerY);dragScrollFrame=requestAnimationFrame(taskAutoScrollStep)
   }
   function updateTaskAutoScroll(y){
+    if(window.StretchUI&&StretchUI.createAutoScroll){if(!sharedTaskAutoScroll)sharedTaskAutoScroll=StretchUI.createAutoScroll(updateTaskDropTarget);dragScrollSpeed=sharedTaskAutoScroll.update(y);logTaskDrag(dragScrollSpeed?'auto-scroll':'move');return}
     var viewportHeight=window.visualViewport&&window.visualViewport.height||window.innerHeight,topEdge=Math.max(80,Math.min(120,viewportHeight/6)),bottomEdge=Math.max(110,Math.min(160,viewportHeight/6)),next=0,ratio=0;
     if(y<topEdge){ratio=clamp((topEdge-y)/topEdge,0,1);next=-Math.round(90+ratio*550)}else if(y>viewportHeight-bottomEdge){ratio=clamp((y-(viewportHeight-bottomEdge))/bottomEdge,0,1);next=Math.round(90+ratio*550)}if(!dragScrollSpeed&&next)dragLastScrollAt=0;dragScrollSpeed=next;if(next&&dragScrollFrame===null)dragScrollFrame=requestAnimationFrame(taskAutoScrollStep);if(!next)stopTaskAutoScroll();logTaskDrag(next?'auto-scroll':'move')
   }

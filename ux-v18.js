@@ -40,8 +40,8 @@
   function reorderDirect(type,id,targetId,before){var m=currentMenu();var arr=type==='menu'?(typeof state!=='undefined'&&state?state.menus:null):(m&&m.items);if(!arr)return;var from=arr.findIndex(function(x){return x.id===id}),to=arr.findIndex(function(x){return x.id===targetId});if(from<0||to<0||from===to)return;var moved=arr.splice(from,1)[0];to=arr.findIndex(function(x){return x.id===targetId});arr.splice(before?to:to+1,0,moved);if(typeof save==='function')save();if(type==='menu'){if(typeof renderHome==='function')renderHome()}else{if(typeof renderItems==='function')renderItems();if(typeof updateDuration==='function')updateDuration()}}
 
   var held=null,holdTimer=null,dragging=false,target=null,before=true,startX=0,startY=0,type='',selector='';
-  var pointerX=0,pointerY=0,scrollSpeed=0,scrollFrame=null,lastScrollAt=0;
-  function stopAutoScroll(){scrollSpeed=0;lastScrollAt=0;if(scrollFrame!==null){cancelAnimationFrame(scrollFrame);scrollFrame=null}}
+  var pointerX=0,pointerY=0,scrollSpeed=0,scrollFrame=null,lastScrollAt=0,sharedAutoScroll=null;
+  function stopAutoScroll(){if(sharedAutoScroll)sharedAutoScroll.stop();scrollSpeed=0;lastScrollAt=0;if(scrollFrame!==null){cancelAnimationFrame(scrollFrame);scrollFrame=null}}
   function updateTargetAt(y){
     clearTargets();target=null;
     var cards=Array.prototype.slice.call(document.querySelectorAll(selector)).filter(function(x){return x!==held});if(!cards.length)return;
@@ -60,6 +60,7 @@
     scrollFrame=requestAnimationFrame(autoScrollStep);
   }
   function updateAutoScroll(y){
+    if(window.StretchUI&&StretchUI.createAutoScroll){if(!sharedAutoScroll)sharedAutoScroll=StretchUI.createAutoScroll(updateTargetAt);scrollSpeed=sharedAutoScroll.update(y);return}
     var viewportHeight=window.visualViewport&&window.visualViewport.height||window.innerHeight;
     var topEdge=Math.max(80,Math.min(120,viewportHeight/6));
     var bottomEdge=Math.max(110,Math.min(160,viewportHeight/6)),next=0,ratio=0;
