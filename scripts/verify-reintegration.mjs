@@ -22,6 +22,8 @@ requireText('ux-v18.js','StretchUI.createAutoScroll','stretch reorder is not usi
 requireText('ux-v113-daily-schedule.js','StretchUI.createAutoScroll','task reorder is not using unified auto-scroll');
 requireText('ux-v130-integration.js','registerDataProvider','data provider registry is missing');
 requireText('ux-v130-integration.js','aria-current','navigation accessibility state is missing');
+if(sw.indexOf('<script src="./ux-v130-integration.js')>sw.indexOf('<script src="./ux-v22.js'))failures.push('integration layer must load before card modules');
+if(fs.readFileSync(path.join(root,'ux-v106-tasks.js'),'utf8').includes("handle.className='task-drag-handle'"))failures.push('legacy task drag handle is still rendered');
 
 if(failures.length){console.error(failures.join('\n'));process.exit(1)}
 console.log(`reintegration verification passed: ${new Set(files).size} UX assets`);
