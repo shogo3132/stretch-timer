@@ -231,13 +231,14 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
     var wrap=document.createElement('div');wrap.className='item-time-input-wrap';var input=document.createElement('input');input.className='item-time-input';input.type='number';input.inputMode='numeric';input.min='0';input.max=String(max);input.step='1';input.value=String(value).padStart(2,'0');input.setAttribute('aria-label',unit==='時'?'締め切りの時':'締め切りの分');var label=document.createElement('span');label.className='item-time-input-unit';label.textContent=unit;wrap.append(input,label);
     input.onfocus=function(){try{input.select()}catch(e){}};return {element:wrap,input:input,value:function(){return Math.max(0,Math.min(max,Math.floor(+input.value||0)))}};
   }
+  if(window.StretchUI&&!window.StretchUI.buildTimeNumberInput)window.StretchUI.buildTimeNumberInput=buildTaskTimeInput;
   function openTimePicker(){
     if(!addDueDay)return;openTimeEditor(addDueTime,function(value){addDueTime=value;updateDueChip()});
   }
   function openTimeEditor(initial,onSave){
     var existing=document.querySelector('.task-time-overlay');if(existing)existing.remove();var parts=validTime(initial).split(':'),hour=parts.length===2?+parts[0]:0,minute=parts.length===2?+parts[1]:0;
     var overlay=document.createElement('div');overlay.className='task-time-overlay';var panel=document.createElement('div');panel.className='task-time-panel';panel.innerHTML='<div class="task-time-title">締め切り時刻</div><div class="task-time-fields"></div><div class="task-time-actions"><button type="button" class="btn sub task-time-none">時間指定なし</button><button type="button" class="btn task-time-save">決定</button></div>';overlay.appendChild(panel);document.body.appendChild(overlay);
-    var h=buildTaskTimeInput(hour,23,'時'),m=buildTaskTimeInput(minute,59,'分'),fields=panel.querySelector('.task-time-fields');fields.append(h.element,m.element);setTimeout(function(){try{h.input.focus();h.input.select()}catch(e){}},0);
+    var builder=window.StretchUI&&window.StretchUI.buildTimeNumberInput||buildTaskTimeInput,h=builder(hour,23,'時'),m=builder(minute,59,'分'),fields=panel.querySelector('.task-time-fields');fields.append(h.element,m.element);setTimeout(function(){try{h.input.focus();h.input.select()}catch(e){}},0);
     function close(){overlay.remove()};overlay.onclick=function(e){if(e.target===overlay)close()};panel.querySelector('.task-time-none').onclick=function(){onSave('');close()};panel.querySelector('.task-time-save').onclick=function(){onSave(String(h.value()).padStart(2,'0')+':'+String(m.value()).padStart(2,'0'));close()};
   }
   function updateNav(screen){
