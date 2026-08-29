@@ -44,7 +44,8 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
 .task-due-clear{width:27px;height:27px;border:0;border-radius:999px;background:transparent;color:#89939c;font-size:17px;line-height:1;cursor:pointer}\
 .task-due-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}\
 .task-time-overlay{position:fixed;inset:0;z-index:10050;display:grid;align-items:end;background:rgba(25,31,37,.34);padding:16px 12px max(16px,env(safe-area-inset-bottom))}\
-.task-time-panel{width:min(430px,100%);margin:0 auto;padding:18px;border-radius:22px;background:#f7f8fa;box-shadow:0 18px 45px rgba(20,27,34,.2)}\
+.task-time-panel{box-sizing:border-box;width:100%;max-width:430px;margin:0 auto;padding:18px;border-radius:22px;background:#f7f8fa;box-shadow:0 18px 45px rgba(20,27,34,.2)}\
+.task-time-panel .item-time-input{-moz-appearance:textfield}.task-time-panel .item-time-input::-webkit-inner-spin-button,.task-time-panel .item-time-input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}\
 .task-time-title{font-size:16px;font-weight:800;color:#242a30;margin-bottom:14px}\
 .task-time-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}\
 .task-time-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px}\
@@ -229,7 +230,8 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
   function updateAddOptions(){updateDailyChip();updateDueChip()}
   function buildTaskTimeInput(value,max,unit){
     var wrap=document.createElement('div');wrap.className='item-time-input-wrap';var input=document.createElement('input');input.className='item-time-input';input.type='number';input.inputMode='numeric';input.min='0';input.max=String(max);input.step='1';input.value=String(value).padStart(2,'0');input.setAttribute('aria-label',unit==='時'?'締め切りの時':'締め切りの分');var label=document.createElement('span');label.className='item-time-input-unit';label.textContent=unit;wrap.append(input,label);
-    input.onfocus=function(){try{input.select()}catch(e){}};return {element:wrap,input:input,value:function(){return Math.max(0,Math.min(max,Math.floor(+input.value||0)))}};
+    function current(){return Math.max(0,Math.min(max,Math.floor(+input.value||0)))}function step(direction){input.value=String(Math.max(0,Math.min(max,current()+direction))).padStart(2,'0')}
+    input.addEventListener('wheel',function(e){e.preventDefault();step(e.deltaY<0?-1:1)},{passive:false});input.addEventListener('keydown',function(e){if(e.key==='ArrowUp'){e.preventDefault();step(-1)}else if(e.key==='ArrowDown'){e.preventDefault();step(1)}});input.onfocus=function(){try{input.select()}catch(e){}};return {element:wrap,input:input,value:current};
   }
   if(window.StretchUI&&!window.StretchUI.buildTimeNumberInput)window.StretchUI.buildTimeNumberInput=buildTaskTimeInput;
   function openTimePicker(){

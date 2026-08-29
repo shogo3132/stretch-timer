@@ -76,7 +76,7 @@ if(/goBack\s*=\s*function/.test(fs.readFileSync(path.join(root,'ux-v52-scroll-re
 requireText('ux-v52-scroll-restore.js','registerBackEffect','scroll restoration is not registered with the shared back lifecycle');
 requireText('ux-v106-tasks.js','<span>全タスク</span>','task list heading is not renamed');
 requireText('ux-v106-tasks.js','state.tasks.unshift','new tasks are not inserted at the top');
-requireText('ux-v113-daily-schedule.js','<span id="dailyPoolTitle">今日のタスク</span>','daily task pool heading is not available for day switching');
+requireText('ux-v113-daily-schedule.js','全タスクをカレンダーへ長押しして追加できます','daily calendar is not the direct task drop target');
 requireText('ux-v113-daily-schedule.js','function assignMissingTimes','daily tasks are not automatically placed on the schedule');
 if(fs.readFileSync(path.join(root,'ux-v18.js'),'utf8').includes("addEventListener('touchmove'"))failures.push('legacy stretch touch reorder is still present');
 if(fs.readFileSync(path.join(root,'ux-v113-daily-schedule.js'),'utf8').includes('createTaskGhost'))failures.push('legacy task reorder is still present');
