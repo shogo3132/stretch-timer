@@ -52,6 +52,8 @@ for(const file of ['ux-v18.js','ux-v110-recipes.js','ux-v113-daily-schedule.js']
 requireText('ux-v110-recipes.js','state.recipes.forEach(function(x,i){x.order=i})','recipe reorder can be undone by stale order values');
 requireText('ux-v110-recipes.js','StretchUI.setupSectionHeader','recipe section header is not shared');
 requireText('ux-v56-browser-history.js','if(isTopLevel(id))history.replaceState','top-level navigation still creates a parent-child history');
+requireText('ux-v56-browser-history.js','history.pushState(guardedState(activeScreen())','top-level back gesture can leave the app');
+requireText('ux-v56-browser-history.js','if(blockRootPop)return','top-level popstate is not blocked');
 if(sw.includes('ux-v46-desktop-dnd.js'))failures.push('legacy desktop drag is still loaded');
 if(fs.readFileSync(path.join(root,'ux-v18.js'),'utf8').includes("addEventListener('touchmove'"))failures.push('legacy stretch touch reorder is still present');
 if(fs.readFileSync(path.join(root,'ux-v113-daily-schedule.js'),'utf8').includes('createTaskGhost'))failures.push('legacy task reorder is still present');

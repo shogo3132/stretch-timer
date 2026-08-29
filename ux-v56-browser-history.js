@@ -4,6 +4,7 @@
 
   var fromPopstate=false;
   var suppressPush=false;
+  var blockRootPop=false;
 
   function activeScreen(){
     var el=document.querySelector('.screen.active');
@@ -26,16 +27,25 @@
   }
   function isTopLevel(screen){return ['home','tasks','recipes','settings'].indexOf(screen)>=0}
 
+  function guardedState(screen){var next=makeState(screen,0);next.stretchTimerGuard=true;return next}
+  function baseState(screen){var next=makeState(screen,0);next.stretchTimerGuard=false;return next}
+
   try{
-    if(!(history.state&&history.state.stretchTimerApp)){
-      history.replaceState(makeState(activeScreen(),0),'',location.href);
+    if(!(history.state&&history.state.stretchTimerApp&&history.state.stretchTimerGuard)){
+      history.replaceState(baseState(activeScreen()),'',location.href);
+      history.pushState(guardedState(activeScreen()),'',location.href);
     }
   }catch(e){}
 
-  window.addEventListener('popstate',function(){
+  window.addEventListener('popstate',function(e){
     fromPopstate=true;
     suppressPush=true;
-    setTimeout(function(){fromPopstate=false;suppressPush=false},0);
+    var incoming=e.state;
+    blockRootPop=!!(incoming&&incoming.stretchTimerApp&&currentDepth()===0&&!incoming.stretchTimerGuard&&isTopLevel(activeScreen()));
+    if(blockRootPop){
+      try{history.pushState(guardedState(activeScreen()),'',location.href)}catch(err){}
+    }
+    setTimeout(function(){fromPopstate=false;suppressPush=false;blockRootPop=false},0);
   },true);
 
   var previousShow=typeof show==='function'?show:null;
@@ -56,6 +66,7 @@
   var previousGoBack=typeof goBack==='function'?goBack:null;
   if(previousGoBack){
     goBack=function(){
+      if(blockRootPop)return;
       if(!fromPopstate){
         var s=history.state;
         if(s&&s.stretchTimerApp&&currentDepth()>0){
