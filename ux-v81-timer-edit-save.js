@@ -147,8 +147,7 @@ body.paused-routine-away .screen.active{padding-bottom:170px!important}\
     renderDock();
   }
 
-  var previousShow=typeof show==='function'?show:null;
-  if(previousShow)show=function(){var r=previousShow.apply(this,arguments);setTimeout(renderDock,0);return r};
+  if(window.StretchUI&&StretchUI.registerScreenHook)StretchUI.registerScreenHook({key:'paused-routine-dock',after:function(){setTimeout(renderDock,0)}});
 
   var previousRenderTimer=typeof renderTimer==='function'?renderTimer:null;
   if(previousRenderTimer)renderTimer=function(){

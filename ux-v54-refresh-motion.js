@@ -26,8 +26,7 @@
     }
   }
 
-  var oldShow=typeof show==='function'?show:null;
-  if(oldShow){show=function(){var r=oldShow.apply(this,arguments);setTimeout(polish,0);return r}}
+  if(window.StretchUI&&StretchUI.registerScreenHook)StretchUI.registerScreenHook({key:'refresh-icon',after:function(){setTimeout(polish,0)}});
   polish();
   setTimeout(polish,100);
 })();

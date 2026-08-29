@@ -37,10 +37,7 @@ body.timer-active .prestart .first{color:#54d0b0!important}\
     var app=document.querySelector('.app');if(app)app.classList.toggle('timer-active',on);
   }
 
-  var prevShow=typeof show==='function'?show:null;
-  if(prevShow){
-    show=function(){var r=prevShow.apply(this,arguments);syncTimerTheme();return r};
-  }
+  if(window.StretchUI&&StretchUI.registerScreenHook)StretchUI.registerScreenHook({key:'timer-theme',after:syncTimerTheme});
   document.addEventListener('visibilitychange',syncTimerTheme);
   setTimeout(syncTimerTheme,0);
 })();

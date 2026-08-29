@@ -69,8 +69,7 @@ body.native-pip .prestart #doneBtn{display:none!important}\
   if(previousFinish)finishTimer=function(){var result=previousFinish.apply(this,arguments);completed=true;syncNative(true);return result};
   var previousStop=typeof stopTimer==='function'?stopTimer:null;
   if(previousStop)stopTimer=function(){completed=false;var result=previousStop.apply(this,arguments);syncNative(true);return result};
-  var previousShow=typeof show==='function'?show:null;
-  if(previousShow)show=function(){var screen=arguments[0],result=previousShow.apply(this,arguments);if(screen!=='timer'&&!timerState)completed=false;syncNative(false);return result};
+  if(window.StretchUI&&StretchUI.registerScreenHook)StretchUI.registerScreenHook({key:'native-pip',after:function(screen){if(screen!=='timer'&&!timerState)completed=false;syncNative(false)}});
 
   window.__stretchTimerSetPipModeV96=function(enabled){document.body.classList.toggle('native-pip',!!enabled);if(typeof renderTimer==='function'&&timerState)renderTimer();else syncPipImageLayout();syncNative(true)};
   window.__stretchTimerPipActionV96=function(action){if(action==='toggle'&&timerState){timerState.paused=!timerState.paused;if(typeof renderTimer==='function')renderTimer();return true}return false};

@@ -59,6 +59,12 @@ requireText('ux-v56-browser-history.js','blockRootPop=isTopLevel(screen)','top-l
 requireText('ux-v56-browser-history.js','var screen=activeScreen(),top=isTopLevel(screen)','direct native back calls do not inspect the current screen');
 requireText('ux-v56-browser-history.js','if(top)return','direct native back calls can leave a top-level screen');
 if(sw.includes('ux-v46-desktop-dnd.js'))failures.push('legacy desktop drag is still loaded');
+if(sw.includes('ux-v79-transition-stability.js'))failures.push('duplicate transition stability wrapper is still loaded');
+for(const file of ['ux-v22.js','ux-v34-timer.js','ux-v35-history.js','ux-v38-polish.js','ux-v41-timer-compact.js','ux-v51-update-watch.js','ux-v54-refresh-motion.js','ux-v81-timer-edit-save.js','ux-v82-timer-runtime.js','ux-v96-native-pip.js']){
+  const source=fs.readFileSync(path.join(root,file),'utf8');
+  if(/show\s*=\s*function/.test(source))failures.push(`legacy screen wrapper: ${file}`);
+  if(!source.includes('registerScreenHook'))failures.push(`screen hook registration missing: ${file}`);
+}
 if(fs.readFileSync(path.join(root,'ux-v18.js'),'utf8').includes("addEventListener('touchmove'"))failures.push('legacy stretch touch reorder is still present');
 if(fs.readFileSync(path.join(root,'ux-v113-daily-schedule.js'),'utf8').includes('createTaskGhost'))failures.push('legacy task reorder is still present');
 const indexSource=fs.readFileSync(path.join(root,'index.html'),'utf8');

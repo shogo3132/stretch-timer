@@ -114,6 +114,5 @@ body.timer-active .prestart .first{color:#27ae8b!important}\
     syncThemeColor();
   };
 
-  var oldShow=typeof show==='function'?show:null;
-  if(oldShow){show=function(){var r=oldShow.apply(this,arguments);setTimeout(syncThemeColor,0);return r}}
+  if(window.StretchUI&&StretchUI.registerScreenHook)StretchUI.registerScreenHook({key:'timer-theme-color',after:function(){setTimeout(syncThemeColor,0)}});
 })();

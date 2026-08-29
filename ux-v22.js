@@ -50,7 +50,7 @@
   function decorateItemCards(){document.querySelectorAll('.item').forEach(function(el){if(el.dataset.unifiedReady!=='1')decorateCard(el,'item')})}
   var prevHome=typeof renderHome==='function'?renderHome:null;if(prevHome)renderHome=function(){var r=prevHome.apply(this,arguments);setTimeout(function(){setupStaticUi();ensureRefreshButton();decorateRoutineCards()},0);return r};
   var prevItems=typeof renderItems==='function'?renderItems:null;if(prevItems)renderItems=function(){var r=prevItems.apply(this,arguments);setTimeout(decorateItemCards,0);return r};
-  var prevShow=typeof show==='function'?show:null;if(prevShow)show=function(){var r=prevShow.apply(this,arguments);setTimeout(function(){setupStaticUi();ensureRefreshButton();decorateRoutineCards();decorateItemCards()},0);return r};
+  if(window.StretchUI&&StretchUI.registerScreenHook)StretchUI.registerScreenHook({key:'base-card-ui',after:function(){setTimeout(function(){setupStaticUi();ensureRefreshButton();decorateRoutineCards();decorateItemCards()},0)}});
   document.addEventListener('pointerdown',function(e){if(!e.target.closest('.menu-card,.item'))closeAll()},true);
 
   function storedState(){return localStorage.getItem('stretchTimer.v2')||''}

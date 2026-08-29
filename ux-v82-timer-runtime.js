@@ -43,8 +43,7 @@ body.timer-active.timer-rest .timer-count{color:#628171!important}\
 
   var oldRender=typeof renderTimer==='function'?renderTimer:null;
   if(oldRender){renderTimer=function(){var r=oldRender.apply(this,arguments);syncRestClass();snapshot();return r}}
-  var oldShow=typeof show==='function'?show:null;
-  if(oldShow){show=function(){var r=oldShow.apply(this,arguments);syncRestClass();if(arguments[0]==='timer')snapshot();return r}}
+  if(window.StretchUI&&StretchUI.registerScreenHook)StretchUI.registerScreenHook({key:'timer-runtime',after:function(id){syncRestClass();if(id==='timer')snapshot()}});
   var oldFinish=typeof finishTimer==='function'?finishTimer:null;
   if(oldFinish){finishTimer=function(){clearSnapshot();return oldFinish.apply(this,arguments)}}
   var oldStop=typeof stopTimer==='function'?stopTimer:null;

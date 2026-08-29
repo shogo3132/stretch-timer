@@ -163,14 +163,7 @@
     new MutationObserver(function(){setTimeout(render,0)}).observe(title,{childList:true,characterData:true,subtree:true});
   }
 
-  var oldShow=typeof show==='function'?show:null;
-  if(oldShow){
-    show=function(){
-      var r=oldShow.apply(this,arguments);
-      if(arguments[0]==='routineDetail')setTimeout(function(){wireMonthObserver();render()},0);
-      return r;
-    };
-  }
+  if(window.StretchUI&&StretchUI.registerScreenHook)StretchUI.registerScreenHook({key:'history-graph',after:function(id){if(id==='routineDetail')setTimeout(function(){wireMonthObserver();render()},0)}});
 
   document.addEventListener('click',function(e){
     if(e.target&&e.target.closest&&e.target.closest('.record-btn'))setTimeout(function(){wireMonthObserver();render()},40);

@@ -43,14 +43,7 @@
     }
   }
 
-  var oldShow=typeof show==='function'?show:null;
-  if(oldShow){
-    show=function(){
-      var r=oldShow.apply(this,arguments);
-      setTimeout(syncHeader,0);
-      return r;
-    };
-  }
+  if(window.StretchUI&&StretchUI.registerScreenHook)StretchUI.registerScreenHook({key:'detail-header-total',after:function(){setTimeout(syncHeader,0)}});
 
   var oldOpen=window.openRoutineDetail;
   if(typeof oldOpen==='function'){
