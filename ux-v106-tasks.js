@@ -367,5 +367,5 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
   rolloverTimer=setInterval(function(){rolloverIfNeeded();if(currentScreen==='tasks')renderTaskLists()},60000);
   updateNav(currentScreen);
 
-  window.__stretchTimerTasksV106={render:renderTasks,rollover:rolloverIfNeeded,dayKey:dayKey,history:renderTaskHistory};
+  window.__stretchTimerTasksV106={render:renderTasks,rollover:rolloverIfNeeded,dayKey:dayKey,history:renderTaskHistory,openDetail:openTaskDetail};
 })();

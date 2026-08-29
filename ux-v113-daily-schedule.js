@@ -2,7 +2,7 @@
   if(window.__dailyScheduleV113)return;
   window.__dailyScheduleV113=true;
 
-  var SNAP=15,HOUR_PX=56,DEFAULT_START=9*60,DEFAULT_DURATION=60;
+  var SNAP=15,HOUR_PX=28,DEFAULT_START=9*60,DEFAULT_DURATION=60,DEFAULT_VIEW_START=8*60,DEFAULT_VIEW_END=18*60;
   var COLORS=[
     {bg:'#fde8e7',line:'#e16b64',text:'#8f3833'},
     {bg:'#e5f0fb',line:'#5b9bd5',text:'#315f88'},
@@ -20,10 +20,11 @@
 .daily-schedule-card{padding:13px 12px 12px;overflow:hidden}\
 .daily-schedule-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}\
 .daily-schedule-title{font-size:16px;font-weight:850;color:#252b31}\
-.daily-schedule-date{font-size:12px;font-weight:700;color:#7d8791}\
+.daily-schedule-date{font-size:16px;font-weight:850;color:#252b31}\
+.daily-schedule-range{border:0;border-radius:10px;background:#f0f3f5;color:#69747d;padding:7px 9px;font-size:12px;font-weight:750;font-variant-numeric:tabular-nums}\
 .daily-schedule-empty{padding:20px 10px;text-align:center;color:#87919a;font-size:13px;line-height:1.55}\
 .daily-timeline-scroll{position:relative;overflow:hidden;border-radius:16px;background:#fbfcfc;border:1px solid #edf0f2}\
-.daily-timeline{position:relative;min-height:504px}\
+.daily-timeline{position:relative;min-height:0}\
 .daily-hour{position:absolute;left:0;right:0;height:1px;background:#e1e6e9}\
 .daily-hour.half{background:#f0f2f4}\
 .daily-hour-label{position:absolute;left:7px;top:-8px;width:39px;color:#8a949d;font-size:10px;text-align:right;font-variant-numeric:tabular-nums}\
@@ -34,8 +35,8 @@
 .daily-event-title{display:block;font-size:11px;font-weight:800;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\
 .daily-event-time{display:block;margin-top:2px;font-size:9px;font-weight:700;opacity:.78;font-variant-numeric:tabular-nums}\
 .daily-event-handle{position:absolute;left:7px;right:7px;height:9px;z-index:2}\
-.daily-event-handle.top{top:-2px;cursor:ns-resize}\
-.daily-event-handle.bottom{bottom:-2px;cursor:ns-resize}\
+.daily-event-handle.resize-top{top:-2px;cursor:ns-resize;background:transparent}\
+.daily-event-handle.resize-bottom{bottom:-2px;cursor:ns-resize;background:transparent}\
 .daily-event.moving{z-index:20;box-shadow:0 8px 20px rgba(29,39,48,.22)}\
 .daily-now{position:absolute;left:45px;right:0;height:2px;background:#ef5a5a;z-index:25;pointer-events:none}\
 .daily-now::before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:#ef5a5a}\
@@ -68,7 +69,8 @@
 .schedule-time-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:9px}\
 .schedule-time-actions button{min-height:45px}\
 .schedule-remove{width:100%;min-height:40px;margin-top:9px;border:0;border-radius:12px;background:transparent;color:#b94b54;font-weight:750}\
-@media(min-width:780px){.schedule-time-overlay{align-items:center}.daily-schedule-card{padding:16px}.daily-timeline{min-height:560px}}\
+.schedule-range-panel .schedule-time-fields{grid-template-columns:1fr auto 1fr}\
+@media(min-width:780px){.schedule-time-overlay{align-items:center}.daily-schedule-card{padding:16px}}\
 ';
   document.head.appendChild(style);
 
@@ -91,7 +93,9 @@
   }
   function cleanSchedule(source){
     source=source&&typeof source==='object'?source:{};var today=dayKey(Date.now()),same=String(source.day||today)===today;
-    return {day:today,nextOrder:Math.max(0,Math.floor(+source.nextOrder||0)),entries:same&&Array.isArray(source.entries)?source.entries.map(cleanEntry).filter(function(x){return x.taskId}):[]};
+    var viewStart=clamp(snap(source.viewStart==null?DEFAULT_VIEW_START:+source.viewStart),0,1425),viewEnd=clamp(snap(source.viewEnd==null?DEFAULT_VIEW_END:+source.viewEnd),15,1440);
+    if(viewEnd<=viewStart)viewEnd=Math.min(1440,viewStart+60);
+    return {day:today,nextOrder:Math.max(0,Math.floor(+source.nextOrder||0)),viewStart:viewStart,viewEnd:viewEnd,entries:same&&Array.isArray(source.entries)?source.entries.map(cleanEntry).filter(function(x){return x.taskId}):[]};
   }
   function ensureData(saveReset){
     var old=state.taskSchedule,clean=cleanSchedule(old);state.taskSchedule=clean;
@@ -114,7 +118,7 @@
     if(openEditorAfter)openEditor(existing.id);
   }
   function removeEntry(id){var data=ensureData(false),before=data.entries.length,entry=data.entries.find(function(x){return x.id===id});data.entries=data.entries.filter(function(x){return x.id!==id});closeEditor();saveAndRender();logSchedule('remove-saved',{entryId:id,taskId:entry&&entry.taskId||'',before:before,after:data.entries.length})}
-  function scheduleRange(entries){var starts=entries.filter(function(x){return x.start!=null}).map(function(x){return x.start});var min=starts.length?Math.min.apply(Math,starts):360;return {start:min<360?0:360,end:1440}}
+  function scheduleRange(entries){var data=ensureData(false),start=data.viewStart,end=data.viewEnd;entries.forEach(function(entry){if(entry.start!=null)start=Math.min(start,entry.start);if(entry.end!=null)end=Math.max(end,entry.end)});return {start:clamp(Math.floor(start/30)*30,0,1410),end:clamp(Math.ceil(end/30)*30,30,1440)}}
   function eventLayout(entries){
     var sorted=entries.slice().sort(function(a,b){return a.start-b.start||a.end-b.end}),groups=[],group=[];var groupEnd=-1;
     sorted.forEach(function(e){if(group.length&&e.start>=groupEnd){groups.push(group);group=[];groupEnd=-1}group.push(e);groupEnd=Math.max(groupEnd,e.end)});if(group.length)groups.push(group);
@@ -122,17 +126,17 @@
   }
   function ensureUi(){
     var page=document.querySelector('#tasks .task-page');if(!page)return null;var root=document.getElementById('dailySchedule');
-    if(!root){root=document.createElement('section');root.id='dailySchedule';root.className='daily-schedule';root.innerHTML='<div class="card daily-schedule-card"><div class="daily-schedule-head"><div class="daily-schedule-title">今日のスケジュール</div><div id="dailyScheduleDate" class="daily-schedule-date"></div></div><div id="dailyTimelineScroll" class="daily-timeline-scroll"><div id="dailyTimeline" class="daily-timeline"><div id="dailyEvents" class="daily-events"></div><div id="dailyNow" class="daily-now" hidden></div></div></div><div id="dailyTimelineEmpty" class="daily-schedule-empty">全タスクから長押しして追加できます</div></div><div id="dailyPool" class="daily-pool"><div class="daily-pool-head"><span>今日のタスク</span><span class="daily-pool-hint">タスクを長押し</span></div><div id="dailyPoolList" class="daily-pool-list"></div></div>';page.insertBefore(root,page.firstChild)}
+    if(!root){root=document.createElement('section');root.id='dailySchedule';root.className='daily-schedule';root.innerHTML='<div class="card daily-schedule-card"><div class="daily-schedule-head"><div id="dailyScheduleDate" class="daily-schedule-date"></div><button id="dailyScheduleRange" class="daily-schedule-range" type="button"></button></div><div id="dailyTimelineScroll" class="daily-timeline-scroll"><div id="dailyTimeline" class="daily-timeline"><div id="dailyEvents" class="daily-events"></div><div id="dailyNow" class="daily-now" hidden></div></div></div><div id="dailyTimelineEmpty" class="daily-schedule-empty">全タスクから長押しして追加できます</div></div><div id="dailyPool" class="daily-pool"><div class="daily-pool-head"><span>今日のタスク</span><span class="daily-pool-hint">タスクを長押し</span></div><div id="dailyPoolList" class="daily-pool-list"></div></div>';page.insertBefore(root,page.firstChild);root.querySelector('#dailyScheduleRange').onclick=openRangeEditor}
     return root;
   }
   function renderSchedule(){
     var root=ensureUi();if(!root)return;var data=ensureData(true),assigned=assignMissingTimes(data.entries);if(assigned&&typeof save==='function')save();var entries=data.entries.slice().sort(function(a,b){return a.order-b.order}),scheduled=entries.filter(function(x){return x.start!=null&&x.end!=null}),range=scheduleRange(scheduled),height=(range.end-range.start)/60*HOUR_PX;
-    document.getElementById('dailyScheduleDate').textContent=formatDate();var timeline=document.getElementById('dailyTimeline'),events=document.getElementById('dailyEvents'),empty=document.getElementById('dailyTimelineEmpty');timeline.style.height=height+'px';events.innerHTML='';
+    document.getElementById('dailyScheduleDate').textContent=formatDate();var dataView=ensureData(false);document.getElementById('dailyScheduleRange').textContent=Math.floor(dataView.viewStart/60)+'時〜'+Math.ceil(dataView.viewEnd/60)+'時';var timeline=document.getElementById('dailyTimeline'),events=document.getElementById('dailyEvents'),empty=document.getElementById('dailyTimelineEmpty');timeline.style.height=height+'px';events.innerHTML='';
     timeline.querySelectorAll('.daily-hour').forEach(function(x){x.remove()});for(var minute=range.start;minute<=range.end;minute+=30){var line=document.createElement('div');line.className='daily-hour'+(minute%60?' half':'');line.style.top=((minute-range.start)/60*HOUR_PX)+'px';if(minute%60===0&&minute<range.end){var label=document.createElement('span');label.className='daily-hour-label';label.textContent=timeText(minute);line.appendChild(label)}timeline.insertBefore(line,events)}
-    var layout=eventLayout(scheduled);scheduled.forEach(function(entry){var task=taskById(entry.taskId);if(!task)return;var pos=layout[entry.id]||{col:0,cols:1},event=document.createElement('button');event.type='button';event.className='daily-event'+(task.completedAt?' completed':'');event.dataset.entryId=entry.id;event.style.top=((entry.start-range.start)/60*HOUR_PX)+'px';event.style.height=Math.max(22,(entry.end-entry.start)/60*HOUR_PX-2)+'px';event.style.left='calc('+(pos.col/pos.cols*100)+'% + 2px)';event.style.width='calc('+(100/pos.cols)+'% - 4px)';applyPalette(event,entry);event.innerHTML='<span class="daily-event-handle top" data-resize="top"></span><span class="daily-event-title"></span><span class="daily-event-time"></span><span class="daily-event-handle bottom" data-resize="bottom"></span>';event.querySelector('.daily-event-title').textContent=(task.completedAt?'✓ ':'')+task.title;event.querySelector('.daily-event-time').textContent=timeText(entry.start)+'〜'+timeText(entry.end);event.onclick=function(e){if(event.dataset.moved==='1'){event.dataset.moved='';return}openEditor(entry.id)};wireEvent(event,entry,range);events.appendChild(event)});
+    var layout=eventLayout(scheduled);scheduled.forEach(function(entry){var task=taskById(entry.taskId);if(!task)return;var pos=layout[entry.id]||{col:0,cols:1},event=document.createElement('button');event.type='button';event.className='daily-event'+(task.completedAt?' completed':'');event.dataset.entryId=entry.id;event.style.top=((entry.start-range.start)/60*HOUR_PX)+'px';event.style.height=Math.max(22,(entry.end-entry.start)/60*HOUR_PX-2)+'px';event.style.left='calc('+(pos.col/pos.cols*100)+'% + 2px)';event.style.width='calc('+(100/pos.cols)+'% - 4px)';applyPalette(event,entry);event.innerHTML='<span class="daily-event-handle resize-top" data-resize="top"></span><span class="daily-event-title"></span><span class="daily-event-time"></span><span class="daily-event-handle resize-bottom" data-resize="bottom"></span>';event.querySelector('.daily-event-title').textContent=(task.completedAt?'✓ ':'')+task.title;event.querySelector('.daily-event-time').textContent=timeText(entry.start)+'〜'+timeText(entry.end);event.onclick=function(e){if(event.dataset.moved==='1'){event.dataset.moved='';return}openEditor(entry.id)};wireEvent(event,entry,range);events.appendChild(event)});
     empty.textContent=entries.length?'今日のタスクをタップして開始・終了時間を調整できます':'全タスクから長押しして追加できます';empty.style.display=scheduled.length?'none':'block';document.getElementById('dailyTimelineScroll').style.display=scheduled.length?'block':'none';renderNow(range);renderPool(entries);decorateRows(entries);
   }
-  function renderPool(entries){var list=document.getElementById('dailyPoolList');if(!list)return;list.innerHTML='';if(!entries.length){list.innerHTML='<div class="daily-pool-empty">左のハンドルを長押しして追加</div>';return}entries.forEach(function(entry){var task=taskById(entry.taskId);if(!task)return;var chip=document.createElement('button');chip.type='button';chip.className='daily-chip';chip.dataset.entryId=entry.id;chip.title='タップで時間設定・長押しして枠外へ戻す';applyPalette(chip,entry);chip.innerHTML='<span class="daily-chip-title"></span><span class="daily-chip-time"></span>';chip.querySelector('.daily-chip-title').textContent=task.title;chip.querySelector('.daily-chip-time').textContent=entry.start==null?'タップで時間設定・長押しで戻す':timeText(entry.start)+'〜'+timeText(entry.end)+'・長押しで戻す';wireChipReturn(chip,entry);list.appendChild(chip)})}
+  function renderPool(entries){var list=document.getElementById('dailyPoolList');if(!list)return;list.innerHTML='';if(!entries.length){list.innerHTML='<div class="daily-pool-empty">左のハンドルを長押しして追加</div>';return}entries.forEach(function(entry){var task=taskById(entry.taskId);if(!task)return;var chip=document.createElement('button');chip.type='button';chip.className='daily-chip';chip.dataset.entryId=entry.id;chip.title='タップで詳細・長押しして枠外へ戻す';applyPalette(chip,entry);chip.innerHTML='<span class="daily-chip-title"></span><span class="daily-chip-time"></span>';chip.querySelector('.daily-chip-title').textContent=task.title;chip.querySelector('.daily-chip-time').textContent=entry.start==null?'タップで詳細・長押しで戻す':timeText(entry.start)+'〜'+timeText(entry.end)+'・長押しで戻す';wireChipReturn(chip,entry);list.appendChild(chip)})}
   function wireChipReturn(chip,entry){
     var timer=null,startX=0,startY=0,currentX=0,currentY=0,suppress=false,active=false,ghost=null;
     function pool(){return document.getElementById('dailyPool')}
@@ -148,8 +152,10 @@
     chip.addEventListener('touchend',function(e){var t=e.changedTouches&&e.changedTouches[0];if(t){currentX=t.clientX;currentY=t.clientY}finish(e)},{passive:false});chip.addEventListener('touchcancel',function(e){clear();suppress=true;if(e.cancelable)e.preventDefault()},{passive:false});
     chip.addEventListener('pointerdown',function(e){if(e.pointerType==='touch'||(e.button!=null&&e.button!==0))return;begin(e.clientX,e.clientY,e);chip.setPointerCapture&&chip.setPointerCapture(e.pointerId)});
     chip.addEventListener('pointermove',function(e){if(e.pointerType==='touch')return;move(e.clientX,e.clientY,e)});chip.addEventListener('pointerup',function(e){if(e.pointerType!=='touch')finish(e)});chip.addEventListener('pointercancel',clear);
-    chip.addEventListener('click',function(e){if(suppress){e.preventDefault();e.stopImmediatePropagation();return}openEditor(entry.id)})
+    chip.addEventListener('click',function(e){if(suppress){e.preventDefault();e.stopImmediatePropagation();return}if(window.__stretchTimerTasksV106&&window.__stretchTimerTasksV106.openDetail)window.__stretchTimerTasksV106.openDetail(entry.taskId)})
   }
+
+  function openRangeEditor(){var data=ensureData(false),overlay=document.createElement('div');overlay.id='scheduleRangeOverlay';overlay.className='schedule-time-overlay';overlay.innerHTML='<div class="schedule-time-panel schedule-range-panel"><div class="schedule-time-title">表示時間</div><div class="schedule-time-sub">今日のスケジュールに表示する基本範囲</div><div class="schedule-time-fields"><label class="schedule-time-field">開始<input id="scheduleRangeStart" class="schedule-time-input" inputmode="numeric" maxlength="5"></label><span class="schedule-time-sep">〜</span><label class="schedule-time-field">終了<input id="scheduleRangeEnd" class="schedule-time-input" inputmode="numeric" maxlength="5"></label></div><div id="scheduleRangeError" class="schedule-time-error"></div><div class="schedule-time-actions"><button type="button" class="btn sub" data-act="cancel">キャンセル</button><button type="button" class="btn" data-act="save">設定</button></div></div>';overlay.querySelector('#scheduleRangeStart').value=timeText(data.viewStart);overlay.querySelector('#scheduleRangeEnd').value=timeText(data.viewEnd);overlay.onclick=function(e){if(e.target===overlay||e.target.closest('[data-act="cancel"]'))overlay.remove();var saveButton=e.target.closest('[data-act="save"]');if(!saveButton)return;var start=parseTime(overlay.querySelector('#scheduleRangeStart').value),end=parseTime(overlay.querySelector('#scheduleRangeEnd').value),error=overlay.querySelector('#scheduleRangeError');if(start==null||end==null){error.textContent='時刻は「08:00」の形式で入力してください';return}start=snap(start);end=snap(end);if(end<=start){error.textContent='終了時刻は開始時刻より後にしてください';return}data.viewStart=clamp(start,0,1425);data.viewEnd=clamp(end,data.viewStart+SNAP,1440);overlay.remove();saveAndRender()};document.body.appendChild(overlay)}
   function decorateRows(entries){var map={};entries.forEach(function(x){map[x.taskId]=x});document.querySelectorAll('#taskOpenList .task-row').forEach(function(row){var entry=map[row.dataset.id];row.classList.toggle('in-daily-schedule',!!entry);if(entry)row.style.setProperty('--schedule-line',palette(entry).line);else row.style.removeProperty('--schedule-line')})}
   function renderNow(range){var now=document.getElementById('dailyNow');if(!now)return;var d=new Date(),mins=d.getHours()*60+d.getMinutes();if(mins<range.start||mins>range.end){now.hidden=true;return}now.hidden=false;now.style.top=((mins-range.start)/60*HOUR_PX)+'px'}
   function pointInPool(y){var pool=document.getElementById('dailyPool');if(!pool)return false;var r=pool.getBoundingClientRect();return y>=r.top-8&&y<=r.bottom+8}
