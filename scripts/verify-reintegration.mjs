@@ -44,6 +44,7 @@ if(fs.readFileSync(path.join(root,'ux-v106-tasks.js'),'utf8').includes("handle.c
 requireText('ux-v18.js',"key:'routine-cards'",'routine cards are not registered with unified reorder');
 requireText('ux-v18.js',"key:'item-cards'",'item cards are not registered with unified reorder');
 requireText('ux-v113-daily-schedule.js',"key:'task-cards'",'task cards are not registered with unified reorder');
+requireText('ux-v110-recipes.js',"key:'recipe-cards'",'recipe cards are not registered with unified reorder');
 if(sw.includes('ux-v46-desktop-dnd.js'))failures.push('legacy desktop drag is still loaded');
 if(fs.readFileSync(path.join(root,'ux-v18.js'),'utf8').includes("addEventListener('touchmove'"))failures.push('legacy stretch touch reorder is still present');
 if(fs.readFileSync(path.join(root,'ux-v113-daily-schedule.js'),'utf8').includes('createTaskGhost'))failures.push('legacy task reorder is still present');
