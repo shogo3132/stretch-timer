@@ -81,6 +81,7 @@ requireText('ux-v113-daily-schedule.js','function assignMissingTimes','daily tas
 requireText('ux-v113-daily-schedule.js','daily-event-check','calendar tasks do not provide a completion control');
 requireText('ux-v113-daily-schedule.js','function openEntryTask','calendar task taps do not open task details');
 requireText('ux-v113-daily-schedule.js','setTimeout(activate,420)','calendar event editing is not protected by a long press');
+requireText('ux-v113-daily-schedule.js','DAY_END=30*60','calendar schedule does not support the next-day range');
 requireText('ux-v113-daily-schedule.js','function syncDailyNext','daily calendar recurrence is not preserved');
 requireText('ux-v106-tasks.js','function applyScheduleRollover','scheduled completion is not finalized during day rollover');
 requireText('ux-v106-tasks.js','!x.completedAt&&!allocated[x.id]','calendar-assigned tasks are not removed from the full task list');
