@@ -1,6 +1,7 @@
 package com.shogo.stretchtimer;
 
 import android.app.Activity;
+import android.Manifest;
 import android.content.ActivityNotFoundException;
 import android.app.PendingIntent;
 import android.app.PictureInPictureParams;
@@ -16,6 +17,7 @@ import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.content.pm.PackageManager;
 import android.provider.MediaStore;
 import android.util.Rational;
 import android.view.View;
@@ -38,6 +40,7 @@ import com.dropbox.core.android.Auth;
 import com.dropbox.core.oauth.DbxCredential;
 
 import org.json.JSONObject;
+import org.json.JSONArray;
 
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -48,6 +51,7 @@ public class MainActivity extends Activity {
     private static final String DROPBOX_APP_KEY = "yf8bmab58g823cb";
     private static final int FILE_CHOOSER_REQUEST = 501;
     private static final String ACTION_PIP_TOGGLE = "com.shogo.stretchtimer.PIP_TOGGLE";
+    private static final int NOTIFICATION_PERMISSION_REQUEST = 502;
 
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
@@ -85,6 +89,25 @@ public class MainActivity extends Activity {
                 });
             } catch (Exception ignored) {
             }
+        }
+
+        @JavascriptInterface
+        public void syncScheduledNotifications(String raw) {
+            try {
+                JSONObject value = new JSONObject(raw == null ? "{}" : raw);
+                JSONArray notifications = value.optJSONArray("notifications");
+                ScheduledNotificationStore.sync(MainActivity.this, notifications == null ? new JSONArray() : notifications);
+            } catch (Exception ignored) {
+            }
+        }
+
+        @JavascriptInterface
+        public void requestNotificationPermission() {
+            runOnUiThread(() -> {
+                if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION_REQUEST);
+                }
+            });
         }
     }
 
@@ -137,7 +160,7 @@ public class MainActivity extends Activity {
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         settings.setBuiltInZoomControls(false);
         settings.setDisplayZoomControls(false);
-        settings.setUserAgentString(settings.getUserAgentString() + " StretchTimerApp/0.12.17");
+        settings.setUserAgentString(settings.getUserAgentString() + " StretchTimerApp/0.16.0");
 
         IntentFilter pipFilter = new IntentFilter();
         pipFilter.addAction(ACTION_PIP_TOGGLE);
