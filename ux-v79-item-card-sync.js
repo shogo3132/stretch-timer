@@ -8,7 +8,7 @@
   function duplicateById(id){
     var m=currentMenu();if(!m||!Array.isArray(m.items))return;
     var i=m.items.findIndex(function(x){return x.id===id});if(i<0)return;
-    var copy=JSON.parse(JSON.stringify(m.items[i]));copy.id=uid2();copy.name=(copy.name||'種目')+' コピー';
+    var copy=JSON.parse(JSON.stringify(m.items[i]));copy.id=uid2();copy.name=(copy.name||'項目')+' コピー';
     m.items.splice(i+1,0,copy);if(typeof save==='function')save();if(typeof renderItems==='function')renderItems();if(typeof updateDuration==='function')updateDuration();
   }
   function closeCard(el){if(el)el.classList.remove('swipe-open','swipe-copy-open')}
