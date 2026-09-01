@@ -98,7 +98,7 @@ body.timer-active .prestart .first{color:#27ae8b!important}\
       return;
     }
     if(timerState.phase==='rest'){
-      var nextItem=m.items[timerState.index+1],reverseTarget=timerState.restTarget==='reverse',previewItem=reverseTarget?m.items[timerState.index]:nextItem;
+      var nextItem=timerState.restTarget==='next'?m.items[timerState.index]:m.items[timerState.index+1],reverseTarget=timerState.restTarget==='reverse',previewItem=reverseTarget?m.items[timerState.index]:nextItem;
       box.innerHTML='<div class="timer-name">休憩</div>'+
         (previewItem&&previewItem.photo?'<img class="timer-img timer-next-img'+(reverseTarget?' reverse-side-image':'')+'" src="'+previewItem.photo+'" alt="'+esc(reverseTarget?(previewItem.name||'種目')+'（逆側）':(previewItem.name||'次の種目'))+'">':'')+
         compactCore()+
