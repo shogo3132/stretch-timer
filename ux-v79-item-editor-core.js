@@ -246,7 +246,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
   }
   function makeTimeField(kind,labelText,value,max,last){
     var field=document.createElement('div');field.className='item-time-field';var row=document.createElement('div');row.className='item-time-label-row';var label=document.createElement('div');label.className='item-time-label';label.textContent=labelText;row.appendChild(label);field.appendChild(row);
-    if(last){var box=document.createElement('div');box.className='item-time-last';box.textContent='最後の種目のため休憩なし';field.appendChild(box);return field}
+    if(last){var box=document.createElement('div');box.className='item-time-last';box.textContent='最初の種目のため休憩なし';field.appendChild(box);return field}
     var mode=document.createElement('button');mode.type='button';mode.className='item-time-mode';mode.textContent='⌨';mode.title='キーボード入力に切り替え';mode.setAttribute('aria-label',labelText+'をキーボード入力');row.appendChild(mode);
     var body=buildWheel(kind,value,max);field.appendChild(body);var inputMode=false;
     mode.onclick=function(){if(!draft)return;inputMode=!inputMode;var current=kind==='rest'?draft.value.restSeconds:draft.value.seconds;var next=inputMode?buildInput(kind,current):buildWheel(kind,current,max);body.replaceWith(next);body=next;if(!inputMode)activateWheel(body,kind);mode.textContent=inputMode?'↕':'⌨';mode.title=inputMode?'ホイール入力に戻す':'キーボード入力に切り替え';mode.setAttribute('aria-label',inputMode?'ホイール入力に戻す':labelText+'をキーボード入力')};
@@ -254,11 +254,11 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
   }
   function renderTimeFields(){
     var host=document.getElementById('itemTimeFields');if(!host||!draft)return;host.innerHTML='';
-    var m=currentMenuSafe(),idx=m&&Array.isArray(m.items)?m.items.findIndex(function(x){return x.id===draft.itemId}):-1,last=!!(m&&idx>=0&&idx===m.items.length-1);
+    var m=currentMenuSafe(),idx=m&&Array.isArray(m.items)?m.items.findIndex(function(x){return x.id===draft.itemId}):-1,first=!!(m&&idx===0);
     var workMax=Math.max(DEFAULT_WORK_MAX,Math.min(MAX_WORK,draft.value.seconds));
-    var work=makeTimeField('work','運動時間',draft.value.seconds,workMax,false),rest=makeTimeField('rest','休憩時間',draft.value.restSeconds,MAX_REST,last);
-    host.append(work,rest);
-    activateWheel(work,'work');if(!last)activateWheel(rest,'rest');
+    var work=makeTimeField('work','運動時間',draft.value.seconds,workMax,false),rest=makeTimeField('rest','開始前の休憩時間',draft.value.restSeconds,MAX_REST,first);
+    host.append(rest,work);
+    if(!first)activateWheel(rest,'rest');activateWheel(work,'work');
   }
 
   function updateResumeBar(){var bar=document.getElementById('timerResumeEditBar');if(bar)bar.classList.toggle('active',!!editContext)}
@@ -331,8 +331,8 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
       x.seconds=clampWork(x.seconds);x.restSeconds=clampRest(x.restSeconds);
       var el=document.createElement('div');el.className='card item';el.dataset.id=x.id;
       var img=document.createElement('img');img.className='thumb';img.src=x.photo||(typeof svgPlaceholder==='function'?svgPlaceholder():'');
-      var info=document.createElement('div'),title=document.createElement('div'),meta=document.createElement('div');title.className='item-title';title.textContent=(i+1)+'. '+x.name;meta.className='muted';meta.textContent=i===m.items.length-1?x.seconds+'秒':x.seconds+'秒 ・ 休憩'+x.restSeconds+'秒';info.append(title,meta);
-      var times=document.createElement('div');times.className='desktop-item-times';times.appendChild(makeDesktopField(x,'work'));if(i<m.items.length-1)times.appendChild(makeDesktopField(x,'rest'));
+      var info=document.createElement('div'),title=document.createElement('div'),meta=document.createElement('div');title.className='item-title';title.textContent=(i+1)+'. '+x.name;meta.className='muted';meta.textContent=i===0?x.seconds+'秒':'休憩'+x.restSeconds+'秒 ・ '+x.seconds+'秒';info.append(title,meta);
+      var times=document.createElement('div');times.className='desktop-item-times';if(i>0)times.appendChild(makeDesktopField(x,'rest'));times.appendChild(makeDesktopField(x,'work'));
       var actions=document.createElement('div');actions.className='item-actions';var more=document.createElement('button');more.type='button';more.className='item-action-btn item-more';more.textContent='…';more.setAttribute('aria-label','種目の操作');more.title='種目の操作';var open=document.createElement('button');open.type='button';open.className='item-action-btn item-open';open.setAttribute('aria-label','種目設定を開く');open.title='種目設定を開く';open.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
       more.onclick=function(e){e.preventDefault();e.stopPropagation();openActionMenu(more,x.id)};open.onclick=function(e){e.preventDefault();e.stopPropagation();closeActionMenu();openItemCore(x.id)};actions.append(more,open);
       el.append(img,info,times,actions);box.appendChild(el);
