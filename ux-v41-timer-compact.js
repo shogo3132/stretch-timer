@@ -98,9 +98,9 @@ body.timer-active .prestart .first{color:#27ae8b!important}\
       return;
     }
     if(timerState.phase==='rest'){
-      var nextItem=m.items[timerState.index+1];
+      var nextItem=m.items[timerState.index+1],reverseTarget=timerState.restTarget==='reverse',previewItem=reverseTarget?m.items[timerState.index]:nextItem;
       box.innerHTML='<div class="timer-name">休憩</div>'+
-        (nextItem&&nextItem.photo?'<img class="timer-img timer-next-img" src="'+nextItem.photo+'" alt="'+esc(nextItem.name||'次の種目')+'">':'')+
+        (previewItem&&previewItem.photo?'<img class="timer-img timer-next-img'+(reverseTarget?' reverse-side-image':'')+'" src="'+previewItem.photo+'" alt="'+esc(reverseTarget?(previewItem.name||'種目')+'（逆側）':(previewItem.name||'次の種目'))+'">':'')+
         compactCore()+
         '<div class="compact-meta"><div class="compact-rest-next">次：'+esc(nextItem&&nextItem.name||'完了')+'</div><div class="timer-count">'+(timerState.index+1)+' / '+m.items.length+'</div></div>'+routineProgressHtml(m);
     }else{
