@@ -51,7 +51,7 @@ body.native-pip .prestart #doneBtn{display:none!important}\
     if(timerState){
       var name='開始まで';
       if(timerState.phase==='rest')name='休憩';
-      else if(timerState.phase==='item'&&m&&Array.isArray(m.items)&&m.items[timerState.index])name=m.items[timerState.index].name||'種目';
+      else if(timerState.phase==='item'&&m&&Array.isArray(m.items)&&m.items[timerState.index])name=m.items[timerState.index].name||'項目';
       return {active:true,completed:false,paused:!!timerState.paused,phase:timerState.phase||'item',name:name,remaining:Math.max(0,+timerState.remaining||0)};
     }
     return {active:false,completed:completed,paused:false,phase:completed?'complete':'idle',name:completed?'おつかれさまでした':'',remaining:0};
