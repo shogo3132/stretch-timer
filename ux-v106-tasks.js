@@ -224,7 +224,7 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
     }
     if(!document.getElementById('modeNav')){
       var nav=document.createElement('nav');nav.id='modeNav';nav.setAttribute('aria-label','機能の切り替え');
-      nav.innerHTML='<button type="button" class="mode-nav-btn" data-mode="routine"><span class="mode-nav-icon">◷</span><span>ストレッチ</span></button><button type="button" class="mode-nav-btn" data-mode="tasks"><span class="mode-nav-icon">✓</span><span>タスク</span></button>';
+      nav.innerHTML='<button type="button" class="mode-nav-btn" data-mode="routine"><span class="mode-nav-icon">◷</span><span>ルーティン</span></button><button type="button" class="mode-nav-btn" data-mode="tasks"><span class="mode-nav-icon">✓</span><span>タスク</span></button>';
       app.appendChild(nav);
       nav.querySelector('[data-mode="routine"]').onclick=function(){settingsReturn='home';renderHome()};
       nav.querySelector('[data-mode="tasks"]').onclick=renderTasks;
