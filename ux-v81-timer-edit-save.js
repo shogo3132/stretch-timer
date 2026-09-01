@@ -104,7 +104,7 @@ body.paused-routine-away .screen.active{padding-bottom:170px!important}\
     if(!session)return false;
     if(typeof releaseAwake==='function')releaseAwake();
     if(typeof renderHome==='function')renderHome();
-    else if(typeof show==='function')show('home','ストレッチ');
+    else if(typeof show==='function')show('home','ルーティン');
     renderDock();
     return true;
   }
