@@ -13,7 +13,7 @@ function patchHtml(html){
 
   if(!html.includes('id="appVersion"')){
     html=html.replace(
-      '<h1 id="title">ストレッチ</h1>',
+      '<h1 id="title">ルーティン</h1>',
       `<h1 id="title">ルーティン</h1><span id="appVersion" style="font-size:11px;color:#8a929c;white-space:nowrap">v${APP_VERSION}</span>`
     );
   }else{
