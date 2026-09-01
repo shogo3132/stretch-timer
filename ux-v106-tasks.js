@@ -15,6 +15,7 @@
   var detailNotifyMinutes=10;
   var detailViewDate=new Date();
   var taskSwipeClickUntil=0;
+  function normalizeRoutineTerminology(){var add=document.getElementById('addItemBtn');if(add)add.textContent='＋ 項目追加';var section=document.querySelector('#menuEdit .section-title');if(section)section.textContent='項目';var name=document.getElementById('menuName'),desc=document.getElementById('menuDesc'),del=document.getElementById('deleteMenuBtn');if(name&&name.parentNode)name.parentNode.firstChild.nodeValue='メニュー名';if(desc){desc.placeholder='このメニューの目的や内容など';if(desc.parentNode)desc.parentNode.firstChild.nodeValue='説明・メモ'}if(del)del.textContent='このメニューを削除'}
 
   var style=document.createElement('style');
   style.setAttribute('data-tasks-v106','');
@@ -360,7 +361,7 @@ body.mode-nav-visible.paused-routine-away #appToast{bottom:218px!important}\
     ensureTaskData();rolloverIfNeeded();var card=settingsCard();if(!card)return;card.querySelector('#taskCutoffHour').value=String(state.taskSettings.cutoffHour);card.querySelector('#taskHistoryCount').textContent=historyEntries().length+'件 ›';card.querySelector('#dailyTaskCount').textContent=state.tasks.filter(function(x){return x.repeatDaily}).length+'件 ›';
   }
 
-  ensureTaskData();ensureScreens();rolloverIfNeeded();
+  ensureTaskData();ensureScreens();rolloverIfNeeded();normalizeRoutineTerminology();setTimeout(normalizeRoutineTerminology,0);setTimeout(normalizeRoutineTerminology,250);
 
   if(window.StretchUI&&StretchUI.registerDataProvider)StretchUI.registerDataProvider({key:'tasks',write:function(payload){payload.tasks=state.tasks.map(cleanTask);payload.taskHistory=state.taskHistory.map(cleanHistory);payload.taskSettings={cutoffHour:state.taskSettings.cutoffHour,lastDay:state.taskSettings.lastDay}},read:function(remote){installTaskData(state,remote);rolloverIfNeeded();if(typeof save==='function')save(false)}});
 
