@@ -10,8 +10,8 @@ android {
         applicationId 'com.shogo.stretchtimer'
         minSdk 26
         targetSdk 35
-        versionCode 29
-        versionName '0.12.17'
+        versionCode 30
+        versionName '0.16.0'
     }
 
     signingConfigs {
@@ -25,7 +25,9 @@ android {
 
     buildTypes {
         debug {
-            signingConfig signingConfigs.fixed
+            if (System.getenv('STRETCH_KEYSTORE_PATH')) {
+                signingConfig signingConfigs.fixed
+            }
         }
         release {
             signingConfig signingConfigs.fixed
