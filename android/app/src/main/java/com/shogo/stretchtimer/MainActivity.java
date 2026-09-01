@@ -48,6 +48,8 @@ public class MainActivity extends Activity {
     private static final String DROPBOX_APP_KEY = "yf8bmab58g823cb";
     private static final int FILE_CHOOSER_REQUEST = 501;
     private static final String ACTION_PIP_TOGGLE = "com.shogo.stretchtimer.PIP_TOGGLE";
+    private static final String ACTION_PIP_PREVIOUS = "com.shogo.stretchtimer.PIP_PREVIOUS";
+    private static final String ACTION_PIP_NEXT = "com.shogo.stretchtimer.PIP_NEXT";
 
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
@@ -62,7 +64,11 @@ public class MainActivity extends Activity {
     private final BroadcastReceiver pipActionReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent != null && ACTION_PIP_TOGGLE.equals(intent.getAction())) runPipAction("toggle");
+            if (intent == null) return;
+            String action = intent.getAction();
+            if (ACTION_PIP_TOGGLE.equals(action)) runPipAction("toggle");
+            else if (ACTION_PIP_PREVIOUS.equals(action)) runPipAction("previous");
+            else if (ACTION_PIP_NEXT.equals(action)) runPipAction("next");
         }
     };
 
@@ -135,9 +141,12 @@ public class MainActivity extends Activity {
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         settings.setBuiltInZoomControls(false);
         settings.setDisplayZoomControls(false);
-        settings.setUserAgentString(settings.getUserAgentString() + " StretchTimerApp/0.12.17");
+        settings.setUserAgentString(settings.getUserAgentString() + " StretchTimerApp/0.12.18");
 
-        IntentFilter pipFilter = new IntentFilter(ACTION_PIP_TOGGLE);
+        IntentFilter pipFilter = new IntentFilter();
+        pipFilter.addAction(ACTION_PIP_TOGGLE);
+        pipFilter.addAction(ACTION_PIP_PREVIOUS);
+        pipFilter.addAction(ACTION_PIP_NEXT);
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(pipActionReceiver, pipFilter, Context.RECEIVER_NOT_EXPORTED);
         else registerReceiver(pipActionReceiver, pipFilter);
 
@@ -282,6 +291,19 @@ public class MainActivity extends Activity {
                 .setAspectRatio(new Rational(16, 9));
         List<RemoteAction> actions = new ArrayList<>();
         if (timerActive && !timerCompleted) {
+            Intent previousIntent = new Intent(ACTION_PIP_PREVIOUS).setPackage(getPackageName());
+            PendingIntent previousPending = PendingIntent.getBroadcast(
+                    this,
+                    699,
+                    previousIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+            actions.add(new RemoteAction(
+                    Icon.createWithResource(this, android.R.drawable.ic_media_previous),
+                    "前の種目",
+                    "前の種目",
+                    previousPending
+            ));
             Intent toggleIntent = new Intent(ACTION_PIP_TOGGLE).setPackage(getPackageName());
             PendingIntent pending = PendingIntent.getBroadcast(
                     this,
@@ -292,6 +314,19 @@ public class MainActivity extends Activity {
             int iconId = timerPaused ? android.R.drawable.ic_media_play : android.R.drawable.ic_media_pause;
             String label = timerPaused ? "再開" : "一時停止";
             actions.add(new RemoteAction(Icon.createWithResource(this, iconId), label, label, pending));
+            Intent nextIntent = new Intent(ACTION_PIP_NEXT).setPackage(getPackageName());
+            PendingIntent nextPending = PendingIntent.getBroadcast(
+                    this,
+                    701,
+                    nextIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+            actions.add(new RemoteAction(
+                    Icon.createWithResource(this, android.R.drawable.ic_media_next),
+                    "次の種目",
+                    "次の種目",
+                    nextPending
+            ));
         }
         builder.setActions(actions);
         if (Build.VERSION.SDK_INT >= 31) {
