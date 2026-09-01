@@ -12,7 +12,9 @@ body.timer-active #topBar #backBtn{background:#f3f5f7!important;color:#4d5661!im
 body.timer-active #timer{height:calc(100dvh - 74px)!important;min-height:0!important;overflow:hidden!important;background:#fff!important;color:#1b1f24!important;padding:10px 20px max(12px,env(safe-area-inset-bottom))!important}\
 body.timer-active #timerContent{position:relative;height:100%!important;max-width:680px;margin:0 auto;padding-bottom:48px;display:grid!important;grid-template-rows:auto auto auto auto;align-content:start;gap:10px!important;overflow:hidden!important;text-align:center}\
 body.timer-active .timer-name{font-size:25px!important;line-height:1.2!important;margin:0!important;color:#1b1f24!important}\
+body.timer-active .timer-image-wrap{position:relative;width:100%;line-height:0}\
 body.timer-active .timer-img{width:100%!important;height:clamp(190px,31vh,250px)!important;object-fit:cover!important;border-radius:20px!important;margin:0!important;background:#eef1f3!important;box-shadow:none!important}\
+body.timer-active .timer-side-label{position:absolute;top:10px;left:10px;z-index:1;display:inline-flex;align-items:center;justify-content:center;min-width:36px;min-height:28px;padding:3px 9px;border-radius:999px;background:rgba(20,28,36,.78);color:#fff;font-size:14px;font-weight:800;line-height:1;letter-spacing:.06em;box-shadow:0 1px 5px rgba(0,0,0,.18);pointer-events:none}\
 body.timer-active .compact-timer-core{display:grid;grid-template-columns:52px 1fr 52px;align-items:center;gap:10px;margin:0}\
 body.timer-active .compact-skip{border:0;background:transparent;color:#a5adb6;font-size:38px;line-height:1;min-height:88px;padding:0;display:grid;place-items:center;opacity:.9}\
 body.timer-active .compact-skip:active{color:#69737e;transform:scale(.96)}\
@@ -48,6 +50,10 @@ body.timer-active .prestart .first{color:#27ae8b!important}\
   }
   function itemWorkSeconds(x){return Math.max(1,Math.round(+x.seconds||1))}
   function itemRestSeconds(x){return Math.max(1,Math.min(60,Math.round(+x.restSeconds||20)))}
+  function timerImage(x,side,reverse,alt){
+    if(!x||!x.photo)return '';
+    return '<div class="timer-image-wrap"><img class="timer-img timer-next-img'+(reverse?' reverse-side-image':'')+'" src="'+x.photo+'" alt="'+esc(alt||x.name||'種目')+'">'+(side?'<span class="timer-side-label">'+side+'</span>':'')+'</div>';
+  }
   function routineProgress(m){
     var items=m&&Array.isArray(m.items)?m.items:[],total=0,elapsed=0,idx=Math.max(0,Math.min(items.length-1,+timerState.index||0));
     items.forEach(function(x,i){total+=itemWorkSeconds(x);if(i<items.length-1)total+=itemRestSeconds(x)});
@@ -100,13 +106,13 @@ body.timer-active .prestart .first{color:#27ae8b!important}\
     if(timerState.phase==='rest'){
       var nextItem=timerState.restTarget==='next'?m.items[timerState.index]:m.items[timerState.index+1],reverseTarget=timerState.restTarget==='reverse',previewItem=reverseTarget?m.items[timerState.index]:nextItem;
       box.innerHTML='<div class="timer-name">休憩</div>'+
-        (previewItem&&previewItem.photo?'<img class="timer-img timer-next-img'+(reverseTarget?' reverse-side-image':'')+'" src="'+previewItem.photo+'" alt="'+esc(reverseTarget?(previewItem.name||'種目')+'（逆側）':(previewItem.name||'次の種目'))+'">':'')+
+        timerImage(previewItem,reverseTarget?'左':(previewItem&&previewItem.reverseSide?'右':''),reverseTarget,reverseTarget?(previewItem.name||'種目')+'（逆側）':(previewItem&&previewItem.name||'次の種目'))+
         compactCore()+
         '<div class="compact-meta"><div class="compact-rest-next">次：'+esc(nextItem&&nextItem.name||'完了')+'</div><div class="timer-count">'+(timerState.index+1)+' / '+m.items.length+'</div></div>'+routineProgressHtml(m);
     }else{
       var x=m.items[timerState.index];
       box.innerHTML='<div class="timer-name">'+esc(x.name)+'</div>'+
-        (x.photo?'<img class="timer-img" src="'+x.photo+'">':'')+
+        timerImage(x,x.reverseSide?'右':'',false,x.name||'種目')+
         compactCore()+
         '<div class="compact-meta">'+(x.desc?'<div class="timer-desc">'+esc(x.desc)+'</div>':'')+'<div class="timer-count">'+(timerState.index+1)+' / '+m.items.length+'</div></div>'+routineProgressHtml(m);
     }
