@@ -54,7 +54,7 @@
       var name=textValue(row[0]);
       var desc=textValue(row[1]);
       var videoUrl=textValue(row[4]);
-      if(!name)errors.push(rowNumber+'行目：A列に種目名を入力してください');
+      if(!name)errors.push(rowNumber+'行目：A列に項目名を入力してください');
       var seconds=numberValue(row[2],1,3600,'C列の運動時間（秒）',rowNumber,errors);
       var restSeconds=numberValue(row[3],1,60,'D列の休憩時間（秒）',rowNumber,errors,20);
       if(videoUrl&&!isYouTubeUrl(videoUrl))errors.push(rowNumber+'行目：E列にはYouTubeのURLを入力してください');
@@ -68,8 +68,8 @@
       if(errors.length>shown.length)shown.push('ほか'+(errors.length-shown.length)+'件');
       throw new Error(shown.join('\n'));
     }
-    if(!items.length)throw new Error('読み込める種目がありません。A～E列の1行目から入力してください。');
-    if(items.length>MAX_ITEMS)throw new Error('一度に追加できる種目は'+MAX_ITEMS+'件までです。');
+    if(!items.length)throw new Error('読み込める項目がありません。A～E列の1行目から入力してください。');
+    if(items.length>MAX_ITEMS)throw new Error('一度に追加できる項目は'+MAX_ITEMS+'件までです。');
     return items;
   }
 
@@ -78,7 +78,7 @@
       return (index+1)+'. '+item.name+'（'+item.seconds+'秒・休憩'+item.restSeconds+'秒）';
     });
     if(items.length>lines.length)lines.push('ほか'+(items.length-lines.length)+'件');
-    return 'ルーティン「'+(routine.name||'名称未設定')+'」の末尾に'+items.length+'種目を追加します。\n\n'+lines.join('\n')+'\n\n追加してよろしいですか？';
+    return 'メニュー「'+(routine.name||'名称未設定')+'」の末尾に'+items.length+'項目を追加します。\n\n'+lines.join('\n')+'\n\n追加してよろしいですか？';
   }
 
   function appendItems(routine,items){
@@ -127,7 +127,7 @@
       if(typeof save==='function')save();
       if(typeof renderItems==='function')renderItems();
       if(typeof updateDuration==='function')updateDuration();
-      alert(items.length+'種目を追加しました。');
+      alert(items.length+'項目を追加しました。');
     }catch(error){
       console.error(error);
       alert(error&&error.message?error.message:'ファイルを読み込めませんでした。');
@@ -151,7 +151,7 @@
     button.id='xlsxImportBtn';
     button.type='button';
     button.className='btn sub';
-    button.textContent='ファイルから種目を追加';
+    button.textContent='ファイルから項目を追加';
     var input=document.createElement('input');
     input.id='xlsxImportInput';
     input.type='file';
@@ -159,7 +159,7 @@
     input.hidden=true;
     var tip=document.createElement('div');
     tip.className='tip';
-    tip.textContent='A列：種目名　B列：説明　C列：運動秒数　D列：休憩秒数　E列：参考動画URL';
+    tip.textContent='A列：項目名　B列：説明　C列：実行秒数　D列：休憩秒数　E列：参考動画URL';
     button.onclick=function(){input.click()};
     input.onchange=function(){var file=input.files&&input.files[0];if(file)handleFile(file,button,input)};
     wrap.append(button,input,tip);
