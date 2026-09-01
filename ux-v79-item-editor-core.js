@@ -2,7 +2,7 @@
   if(window.__itemEditorCoreV79)return;
   window.__itemEditorCoreV79=true;
 
-  var DEFAULT_REST=20,MIN_REST=1,MAX_REST=60,MIN_WORK=1,DEFAULT_WORK_MAX=600,MAX_WORK=3600,ROW_H=40;
+  var DEFAULT_REST=20,MIN_REST=1,MAX_REST=24*60*60,MIN_WORK=1,DEFAULT_WORK_MAX=600,MAX_WORK=24*60*60,ROW_H=40;
   var MAX_SIDE=960,TARGET_BYTES=110*1024,MIN_QUALITY=.58,START_QUALITY=.82;
   var MIGRATION_KEY='stretchTimer.imageCompressionV48';
   var draft=null,committed=false,navigating=false,editContext=null;
@@ -35,6 +35,7 @@
 .item-time-input-wrap{height:120px;border-radius:15px;background:#fff;outline:1px solid #edf0f2;display:flex;align-items:center;justify-content:center;gap:5px;padding:12px}\
 .item-time-input{width:78px;border:0!important;outline:0!important;background:#f4f6f7!important;border-radius:12px!important;padding:12px 8px!important;text-align:center;font-size:22px!important;font-weight:800;color:#1b1f24}\
 .item-time-input-unit{font-size:12px;color:#6e7680}\
+.item-time-input-wrap.time-hms{gap:4px;padding:10px 6px}.item-time-input-wrap.time-hms .item-time-input{width:40px;padding:10px 3px!important;font-size:17px!important}.item-time-input-wrap.time-hms .item-time-input-unit{margin-right:1px}\
 .item-time-last{height:120px;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;border-radius:15px;background:#f1f3f5;color:#6e7680;font-size:12px;line-height:1.45}\
 #itemCommitBtn{width:100%;margin-top:16px}\
 #itemEdit .item-delete-row-spaced{margin-top:8px!important}\
@@ -160,8 +161,8 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
     var screen=document.getElementById('itemEdit');if(!screen)return;
     screen.innerHTML='<div class="stack">'+
       '<div id="timerResumeEditBar"><button type="button" class="btn" id="resumeEditedTimerBtn">▶ タイマーを再開</button></div>'+
-      '<div class="headline">種目</div>'+
-      '<label class="field">種目名<input id="itemName"></label>'+
+      '<div class="headline">ステップ</div>'+
+      '<label class="field">ステップ名<input id="itemName"></label>'+
       '<div class="field item-photo-field"><div class="item-photo-preview-wrap" role="button" tabindex="0" aria-label="写真を設定または変更"><img id="photoPreview" class="photo-preview" alt="写真プレビュー"><button type="button" id="itemPhotoDeleteX" aria-label="画像を削除" title="画像を削除">×</button></div><input id="photoInput" type="file" accept="image/*" capture="environment"></div>'+
       '<label class="field">説明・メモ<textarea id="itemDesc" placeholder="フォームや注意点など"></textarea></label>'+
       '<label class="field">参考動画URL<input id="itemVideoUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://youtu.be/…?t=90"></label>'+
@@ -244,13 +245,14 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
     wheel.addEventListener('scroll',onScroll,{passive:true});
   }
   function buildInput(kind,value){
-    var wrap=document.createElement('div');wrap.className='item-time-input-wrap';var input=document.createElement('input');input.className='item-time-input';input.type='number';input.inputMode='numeric';input.min='1';input.max=kind==='rest'?String(MAX_REST):String(MAX_WORK);input.value=String(kind==='rest'?clampRest(value):clampWork(value));var unit=document.createElement('span');unit.className='item-time-input-unit';unit.textContent='秒';wrap.append(input,unit);
-    function commit(){var next=kind==='rest'?clampRest(input.value):clampWork(input.value);input.value=String(next);updateDraftTime(kind,next)}
-    input.addEventListener('input',commit);input.addEventListener('change',commit);setTimeout(function(){try{input.focus();input.select()}catch(e){}},0);return wrap;
+    value=kind==='rest'?clampRest(value):clampWork(value);var wrap=document.createElement('div');wrap.className='item-time-input-wrap time-hms';var h=document.createElement('input'),m=document.createElement('input'),s=document.createElement('input');[h,m,s].forEach(function(input){input.className='item-time-input';input.type='number';input.inputMode='numeric';input.min='0'});h.max='24';m.max='59';s.max='59';h.value=String(Math.floor(value/3600));m.value=String(Math.floor(value%3600/60));s.value=String(value%60);function unit(text){var el=document.createElement('span');el.className='item-time-input-unit';el.textContent=text;return el}wrap.append(h,unit('時'),m,unit('分'),s,unit('秒'));
+    function number(input,max){return Math.max(0,Math.min(max,Math.floor(+input.value||0)))}function commit(){var next=number(h,24)*3600+number(m,59)*60+number(s,59);next=kind==='rest'?clampRest(next):clampWork(next);h.value=String(Math.floor(next/3600));m.value=String(Math.floor(next%3600/60));s.value=String(next%60);updateDraftTime(kind,next)}
+    [h,m,s].forEach(function(input){input.addEventListener('input',commit);input.addEventListener('change',commit)});setTimeout(function(){try{s.focus();s.select()}catch(e){}},0);return wrap;
   }
   function makeTimeField(kind,labelText,value,max,last){
     var field=document.createElement('div');field.className='item-time-field';var row=document.createElement('div');row.className='item-time-label-row';var label=document.createElement('div');label.className='item-time-label';label.textContent=labelText;row.appendChild(label);field.appendChild(row);
     if(last){var box=document.createElement('div');box.className='item-time-last';box.textContent='最初の種目のため休憩なし';field.appendChild(box);return field}
+    if(value>max){field.appendChild(buildInput(kind,value));return field}
     var mode=document.createElement('button');mode.type='button';mode.className='item-time-mode';mode.textContent='⌨';mode.title='キーボード入力に切り替え';mode.setAttribute('aria-label',labelText+'をキーボード入力');row.appendChild(mode);
     var body=buildWheel(kind,value,max);field.appendChild(body);var inputMode=false;
     mode.onclick=function(){if(!draft)return;inputMode=!inputMode;var current=kind==='rest'?draft.value.restSeconds:draft.value.seconds;var next=inputMode?buildInput(kind,current):buildWheel(kind,current,max);body.replaceWith(next);body=next;if(!inputMode)activateWheel(body,kind);mode.textContent=inputMode?'↕':'⌨';mode.title=inputMode?'ホイール入力に戻す':'キーボード入力に切り替え';mode.setAttribute('aria-label',inputMode?'ホイール入力に戻す':labelText+'をキーボード入力')};
@@ -259,8 +261,8 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
   function renderTimeFields(){
     var host=document.getElementById('itemTimeFields');if(!host||!draft)return;host.innerHTML='';
     var m=currentMenuSafe(),idx=m&&Array.isArray(m.items)?m.items.findIndex(function(x){return x.id===draft.itemId}):-1,first=!!(m&&idx===0);
-    var workMax=Math.max(DEFAULT_WORK_MAX,Math.min(MAX_WORK,draft.value.seconds));
-    var work=makeTimeField('work','運動時間',draft.value.seconds,workMax,false),rest=makeTimeField('rest','開始前の休憩時間',draft.value.restSeconds,MAX_REST,first);
+    var workMax=Math.max(DEFAULT_WORK_MAX,Math.min(DEFAULT_WORK_MAX,draft.value.seconds));
+    var work=makeTimeField('work','実行時間',draft.value.seconds,workMax,false),rest=makeTimeField('rest','開始前の休憩時間',draft.value.restSeconds,Math.min(60,MAX_REST),first);
     host.append(rest,work);
     if(!first)activateWheel(rest,'rest');activateWheel(work,'work');
   }
@@ -279,7 +281,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
   function openItemCore(id){
     if(!beginDraft(id))return;
     renderTimeFields();
-    if(typeof show==='function')show('itemEdit','種目設定');
+    if(typeof show==='function')show('itemEdit','ステップ設定');
     document.querySelectorAll('#itemTimeFields .item-time-wheel').forEach(function(wheel){var v=+(wheel.dataset.initialValue||1);wheel.scrollTop=(v-1)*ROW_H});
   }
   openItem=openItemCore;
@@ -298,7 +300,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
     return true;
   }
   function deleteCurrentItem(){
-    if(!draft)return;if(!confirm('この種目を削除しますか？'))return;
+    if(!draft)return;if(!confirm('このステップを削除しますか？'))return;
     var m=state&&Array.isArray(state.menus)?state.menus.find(function(v){return v.id===draft.menuId}):null;if(!m)return;
     m.items=m.items.filter(function(x){return x.id!==draft.itemId});var menuId=draft.menuId;draft=null;committed=true;
     if(editContext){editContext=null;if(timerState){try{clearInterval(timerState.interval)}catch(e){}timerState=null;if(typeof releaseAwake==='function')releaseAwake()}updateResumeBar()}
@@ -308,13 +310,13 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
     if(!draft)return;
     var m=state&&Array.isArray(state.menus)?state.menus.find(function(v){return v.id===draft.menuId}):null;if(!m)return;
     var i=m.items.findIndex(function(x){return x.id===draft.itemId});if(i<0)return;
-    var copy=clone(draft.value);copy.id=typeof uid==='function'?uid():Date.now()+Math.random().toString(16).slice(2);copy.name=(copy.name||'種目')+' コピー';m.items.splice(i+1,0,copy);
+    var copy=clone(draft.value);copy.id=typeof uid==='function'?uid():Date.now()+Math.random().toString(16).slice(2);copy.name=(copy.name||'ステップ')+' コピー';m.items.splice(i+1,0,copy);
     if(typeof save==='function')save();draft=null;committed=true;openItemCore(copy.id);
   }
 
   function makeId(){return typeof uid==='function'?uid():(Date.now()+Math.random().toString(16).slice(2))}
   function closeActionMenu(){var p=document.getElementById('itemActionPop');if(p)p.remove()}
-  function duplicateById(id){var m=currentMenuSafe();if(!m||!Array.isArray(m.items))return;var i=m.items.findIndex(function(x){return x.id===id});if(i<0)return;var copy=clone(m.items[i]);copy.id=makeId();copy.name=(copy.name||'種目')+' コピー';m.items.splice(i+1,0,copy);if(typeof save==='function')save();renderItems();if(typeof updateDuration==='function')updateDuration()}
+  function duplicateById(id){var m=currentMenuSafe();if(!m||!Array.isArray(m.items))return;var i=m.items.findIndex(function(x){return x.id===id});if(i<0)return;var copy=clone(m.items[i]);copy.id=makeId();copy.name=(copy.name||'ステップ')+' コピー';m.items.splice(i+1,0,copy);if(typeof save==='function')save();renderItems();if(typeof updateDuration==='function')updateDuration()}
   function deleteById(id){var m=currentMenuSafe();if(!m||!Array.isArray(m.items))return;var i=m.items.findIndex(function(x){return x.id===id});if(i<0)return;m.items.splice(i,1);if(typeof save==='function')save();renderItems();if(typeof updateDuration==='function')updateDuration()}
   function openActionMenu(anchor,id){
     closeActionMenu();var pop=document.createElement('div');pop.id='itemActionPop';pop.className='item-action-pop';pop.innerHTML='<button type="button" data-act="edit">編集</button><button type="button" data-act="copy">複製</button><button type="button" data-act="delete" class="danger">削除</button>';document.body.appendChild(pop);
@@ -330,20 +332,20 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
   }
   renderItems=function(){
     var m=currentMenuSafe(),box=document.getElementById('itemList');if(!m||!box)return;box.innerHTML='';closeActionMenu();
-    if(!m.items.length){box.innerHTML='<div class="empty">種目がありません。</div>';return}
+    if(!m.items.length){box.innerHTML='<div class="empty">ステップがありません。</div>';return}
     m.items.forEach(function(x,i){
       x.seconds=clampWork(x.seconds);x.restSeconds=clampRest(x.restSeconds);
       var el=document.createElement('div');el.className='card item';el.dataset.id=x.id;
       var thumbWrap=document.createElement('div');thumbWrap.className='item-thumb-wrap';var img=document.createElement('img');img.className='thumb';img.src=x.photo||(typeof svgPlaceholder==='function'?svgPlaceholder():'');thumbWrap.appendChild(img);if(x.reverseSide){var sides=document.createElement('div');sides.className='item-side-labels';sides.innerHTML='<span class="item-side-label">右・左</span>';thumbWrap.appendChild(sides)}
       var info=document.createElement('div'),title=document.createElement('div'),meta=document.createElement('div');title.className='item-title';title.textContent=(i+1)+'. '+x.name;meta.className='muted';meta.textContent=i===0?x.seconds+'秒':'休憩'+x.restSeconds+'秒 ・ '+x.seconds+'秒';info.append(title,meta);
       var times=document.createElement('div');times.className='desktop-item-times';if(i>0)times.appendChild(makeDesktopField(x,'rest'));times.appendChild(makeDesktopField(x,'work'));
-      var actions=document.createElement('div');actions.className='item-actions';var more=document.createElement('button');more.type='button';more.className='item-action-btn item-more';more.textContent='…';more.setAttribute('aria-label','種目の操作');more.title='種目の操作';var open=document.createElement('button');open.type='button';open.className='item-action-btn item-open';open.setAttribute('aria-label','種目設定を開く');open.title='種目設定を開く';open.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+      var actions=document.createElement('div');actions.className='item-actions';var more=document.createElement('button');more.type='button';more.className='item-action-btn item-more';more.textContent='…';more.setAttribute('aria-label','ステップの操作');more.title='ステップの操作';var open=document.createElement('button');open.type='button';open.className='item-action-btn item-open';open.setAttribute('aria-label','ステップ設定を開く');open.title='ステップ設定を開く';open.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
       more.onclick=function(e){e.preventDefault();e.stopPropagation();openActionMenu(more,x.id)};open.onclick=function(e){e.preventDefault();e.stopPropagation();closeActionMenu();openItemCore(x.id)};actions.append(more,open);
       el.append(thumbWrap,info,times,actions);box.appendChild(el);
     });
   };
 
-  var add=document.getElementById('addItemBtn');if(add)add.onclick=function(){var m=currentMenuSafe();if(!m)return;var x={id:makeId(),name:'新しい種目',seconds:30,restSeconds:DEFAULT_REST,desc:'',videoUrl:'',photo:''};m.items.push(x);if(typeof save==='function')save();openItemCore(x.id)};
+  var add=document.getElementById('addItemBtn');if(add)add.onclick=function(){var m=currentMenuSafe();if(!m)return;var x={id:makeId(),name:'新しいステップ',seconds:30,restSeconds:DEFAULT_REST,desc:'',videoUrl:'',photo:''};m.items.push(x);if(typeof save==='function')save();openItemCore(x.id)};
 
   function currentTimerItem(){if(!timerState||timerState.phase!=='item')return null;var m=currentMenuSafe();return m&&Array.isArray(m.items)?m.items[timerState.index]||null:null}
   function openCurrentEdit(){var x=currentTimerItem();if(!x||!timerState||!timerState.paused)return;editContext={menuId:currentMenuId,itemId:x.id,index:timerState.index};openItemCore(x.id)}
