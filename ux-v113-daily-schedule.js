@@ -96,16 +96,16 @@
     if(start!=null&&end!=null&&end<=start)end=Math.min(DAY_END,start+DEFAULT_DURATION);
     return {id:String(x.id||uid2()),taskId:String(x.taskId||''),title:String(x.title||''),color:Math.abs(Math.floor(+x.color||0))%COLORS.length,order:Math.max(0,Math.floor(+x.order||index||0)),start:start,end:end,completedAt:Math.max(0,+x.completedAt||0)};
   }
-  function cleanDay(source,key){
-    source=source&&typeof source==='object'?source:{};var viewStart=clamp(snap(source.viewStart==null?DEFAULT_VIEW_START:+source.viewStart),0,DAY_END-SNAP),viewEnd=clamp(snap(source.viewEnd==null?DEFAULT_VIEW_END:+source.viewEnd),SNAP,DAY_END);
+  function cleanDay(source,key,upgradeDefaultRange){
+    source=source&&typeof source==='object'?source:{};var legacyDefault=upgradeDefaultRange&&+source.viewStart===8*60&&+source.viewEnd===18*60,viewStart=clamp(snap(legacyDefault?DEFAULT_VIEW_START:(source.viewStart==null?DEFAULT_VIEW_START:+source.viewStart)),0,DAY_END-SNAP),viewEnd=clamp(snap(legacyDefault?DEFAULT_VIEW_END:(source.viewEnd==null?DEFAULT_VIEW_END:+source.viewEnd)),SNAP,DAY_END);
     if(viewEnd<=viewStart)viewEnd=Math.min(DAY_END,viewStart+60);
     return {day:key,nextOrder:Math.max(0,Math.floor(+source.nextOrder||0)),viewStart:viewStart,viewEnd:viewEnd,entries:Array.isArray(source.entries)?source.entries.map(cleanEntry).filter(function(x){return x.taskId}):[]};
   }
   function cleanSchedule(source){
-    source=source&&typeof source==='object'?source:{};var today=dayKey(Date.now()),allowed=[shiftDay(today,-1),today,shiftDay(today,1)],days={};
-    if(source.days&&typeof source.days==='object')allowed.forEach(function(key){if(source.days[key])days[key]=cleanDay(source.days[key],key)});
-    else if(Array.isArray(source.entries)){var legacyKey=String(source.day||today);if(allowed.indexOf(legacyKey)>=0)days[legacyKey]=cleanDay(source,legacyKey)}
-    allowed.forEach(function(key){if(!days[key])days[key]=cleanDay({},key)});return {version:3,days:days};
+    source=source&&typeof source==='object'?source:{};var upgradeDefaultRange=(+source.version||0)<4,today=dayKey(Date.now()),allowed=[shiftDay(today,-1),today,shiftDay(today,1)],days={};
+    if(source.days&&typeof source.days==='object')allowed.forEach(function(key){if(source.days[key])days[key]=cleanDay(source.days[key],key,upgradeDefaultRange)});
+    else if(Array.isArray(source.entries)){var legacyKey=String(source.day||today);if(allowed.indexOf(legacyKey)>=0)days[legacyKey]=cleanDay(source,legacyKey,upgradeDefaultRange)}
+    allowed.forEach(function(key){if(!days[key])days[key]=cleanDay({},key)});return {version:4,days:days};
   }
   function ensureData(saveReset){
     var old=state.taskSchedule,clean=cleanSchedule(old);state.taskSchedule=clean;var data=clean.days[selectedDay()]||cleanDay({},selectedDay());clean.days[data.day]=data;
