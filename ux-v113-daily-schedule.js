@@ -11,7 +11,7 @@
     {bg:'#eee8fb',line:'#8b72cf',text:'#59469a'},
     {bg:'#dff3f4',line:'#45aeb3',text:'#276f73'}
   ];
-  var editorId='',actionTaskId='',clockTimer=null,observer=null,selectedDayOffset=0,anchorToday='';
+  var editorId='',actionTaskId='',clockTimer=null,observer=null,selectedDayOffset=0,anchorToday='',nativeNotificationHash='';
 
   var style=document.createElement('style');
   style.setAttribute('data-daily-schedule-v113','');
@@ -117,7 +117,16 @@
   function taskForEntry(entry){return taskById(entry&&entry.taskId)||{id:entry&&entry.taskId||'',title:entry&&entry.title||'削除済みのタスク',completedAt:0,historical:true}}
   function palette(entry){return COLORS[(entry&&entry.color)||0]}
   function applyPalette(el,entry){var c=palette(entry);el.style.setProperty('--event-bg',c.bg);el.style.setProperty('--event-line',c.line);el.style.setProperty('--event-text',c.text)}
-  function saveAndRender(){if(typeof save==='function')save();renderSchedule()}
+  function notificationDate(day,minutes){var p=String(day||'').split('-'),extra=Math.floor(minutes/1440),m=minutes%1440;return new Date(+p[0],(+p[1]||1)-1,(+p[2]||1)+extra,Math.floor(m/60),m%60,0,0)}
+  function syncNativeNotifications(requestPermission){
+    var bridge=window.StretchTimerNative;if(!bridge||typeof bridge.syncScheduledNotifications!=='function')return;
+    var schedule=cleanSchedule(state.taskSchedule),items=[];
+    Object.keys(schedule.days||{}).forEach(function(day){var data=schedule.days[day];(data.entries||[]).forEach(function(entry){var task=taskById(entry.taskId);if(!task||task.completedAt||entry.completedAt||entry.start==null)return;var at=notificationDate(day,entry.start).getTime(),title=task.title||entry.title||'予定の時間です';items.push({id:'start-'+day+'-'+entry.id,at:at,title:title,body:'予定の開始時刻です'});if(task.notifyBeforeEnabled){var minutes=Math.max(1,Math.min(180,Math.round(+task.notifyBeforeMinutes||10)));items.push({id:'before-'+day+'-'+entry.id,at:at-minutes*60000,title:title,body:'あと'+minutes+'分で開始です'})}})});
+    var raw=JSON.stringify({notifications:items}),hash=raw;
+    if(hash!==nativeNotificationHash){nativeNotificationHash=hash;try{bridge.syncScheduledNotifications(raw)}catch(e){}}
+    if(requestPermission&&items.length&&typeof bridge.requestNotificationPermission==='function'&&!localStorage.getItem('stretchTimer.nativeNotificationPermissionAsked')){localStorage.setItem('stretchTimer.nativeNotificationPermissionAsked','1');try{bridge.requestNotificationPermission()}catch(e){}}
+  }
+  function saveAndRender(){if(typeof save==='function')save();syncNativeNotifications(true);renderSchedule()}
   function refreshTaskLists(){var api=window.__stretchTimerTasksV106;if(api&&api.renderLists)api.renderLists()}
   function syncDailyNext(entry){var task=taskForEntry(entry);if(!task.repeatDaily||selectedDayOffset>=1)return;var schedule=state.taskSchedule,from=ensureData(false),nextKey=shiftDay(from.day,1),next=schedule.days[nextKey];if(!next){next=cleanDay({},nextKey);schedule.days[nextKey]=next}var copy=next.entries.find(function(x){return x.taskId===entry.taskId});if(!copy){var order=next.nextOrder++;copy={id:uid2(),taskId:entry.taskId,title:task.title,color:entry.color,order:order,start:entry.start,end:entry.end,completedAt:0};next.entries.push(copy)}else{copy.start=entry.start;copy.end=entry.end;copy.title=task.title}}
   function assignMissingTimes(entries){var changed=false,cursor=entries.filter(function(x){return x.start!=null&&x.end!=null}).reduce(function(max,x){return Math.max(max,x.end)},DEFAULT_START);entries.slice().sort(function(a,b){return a.order-b.order}).forEach(function(entry){if(entry.start!=null&&entry.end!=null)return;var start=clamp(snap(cursor),0,DAY_END-DEFAULT_DURATION);entry.start=start;entry.end=start+DEFAULT_DURATION;cursor=entry.end;changed=true});return changed}
@@ -186,10 +195,10 @@
   function closeEditor(){var overlay=document.getElementById('scheduleTimeOverlay');if(overlay)overlay.remove();editorId=''}
   function enhanceActionMenu(){setTimeout(function(){var pop=document.getElementById('taskActionPop'),taskId=actionTaskId;if(!pop||!taskId||pop.querySelector('[data-act="schedule"]'))return;var button=document.createElement('button');button.type='button';button.dataset.act='schedule';button.textContent=entryByTask(taskId)?'予定時間を設定':dayLabel(selectedDayOffset)+'の予定に追加';button.onclick=function(e){e.stopPropagation();pop.remove();addTask(taskId,true)};pop.insertBefore(button,pop.firstChild)},0)}
 
-  ensureData(false);ensureUi();
+  ensureData(false);ensureUi();syncNativeNotifications(false);
   if(window.StretchUI&&StretchUI.registerScreenHook)StretchUI.registerScreenHook({key:'daily-schedule',after:function(id){if(id==='tasks')setTimeout(renderSchedule,0)}});
   if(window.StretchUI&&StretchUI.registerDataProvider)StretchUI.registerDataProvider({key:'task-schedule',write:function(payload){payload.taskSchedule=cleanSchedule(state.taskSchedule)},read:function(remote){state.taskSchedule=cleanSchedule(remote.taskSchedule);if(typeof save==='function')save(false);if(typeof currentScreen!=='undefined'&&currentScreen==='tasks')renderSchedule()}});
-  window.__stretchTimerDailyScheduleV113={countTaskOnSelectedDay:function(taskId){return ensureData(false).entries.filter(function(entry){return entry.taskId===taskId}).length},removeTaskFromSelectedDay:removeTaskFromSelectedDay};
+  window.__stretchTimerDailyScheduleV113={countTaskOnSelectedDay:function(taskId){return ensureData(false).entries.filter(function(entry){return entry.taskId===taskId}).length},removeTaskFromSelectedDay:removeTaskFromSelectedDay,syncNotifications:syncNativeNotifications};
   bindUnifiedTaskDrag();
   document.addEventListener('click',function(e){var more=e.target.closest('#taskOpenList .task-more');if(more){var row=more.closest('.task-row');actionTaskId=row&&row.dataset.id||'';enhanceActionMenu()}},true);
   var openList=document.getElementById('taskOpenList'),doneList=document.getElementById('taskDoneList');if(window.MutationObserver&&openList){observer=new MutationObserver(function(){if(typeof currentScreen!=='undefined'&&currentScreen==='tasks')renderSchedule()});observer.observe(openList,{childList:true});if(doneList)observer.observe(doneList,{childList:true})}
