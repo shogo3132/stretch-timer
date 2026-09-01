@@ -112,7 +112,7 @@ body.timer-active .prestart .first{color:#27ae8b!important}\
     }else{
       var x=m.items[timerState.index];
       box.innerHTML='<div class="timer-name">'+esc(x.name)+'</div>'+
-        timerImage(x,x.reverseSide?'右側':'',false,x.name||'種目')+
+        timerImage(x,x.reverseSide?(timerState.reverseSide?'左側':'右側'):'',false,x.name||'種目')+
         compactCore()+
         '<div class="compact-meta">'+(x.desc?'<div class="timer-desc">'+esc(x.desc)+'</div>':'')+'<div class="timer-count">'+(timerState.index+1)+' / '+m.items.length+'</div></div>'+routineProgressHtml(m);
     }
