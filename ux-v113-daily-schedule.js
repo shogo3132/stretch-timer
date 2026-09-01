@@ -2,7 +2,7 @@
   if(window.__dailyScheduleV113)return;
   window.__dailyScheduleV113=true;
 
-  var SNAP=15,HOUR_PX=28,DAY_END=30*60,DEFAULT_START=9*60,DEFAULT_DURATION=60,DEFAULT_VIEW_START=8*60,DEFAULT_VIEW_END=18*60;
+  var SNAP=15,HOUR_PX=28,DAY_END=30*60,DEFAULT_START=9*60,DEFAULT_DURATION=60,DEFAULT_VIEW_START=7*60,DEFAULT_VIEW_END=22*60;
   var COLORS=[
     {bg:'#fde8e7',line:'#e16b64',text:'#8f3833'},
     {bg:'#e5f0fb',line:'#5b9bd5',text:'#315f88'},
