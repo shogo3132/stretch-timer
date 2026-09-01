@@ -1,7 +1,7 @@
-const CACHE='stretch-timer-v181';
-const APP_VERSION='0.15.5';
+const CACHE='stretch-timer-v182';
+const APP_VERSION='0.15.6';
 const ITEM_MEDIA_CACHE='stretch-timer-item-media-v1';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./favicon.svg','./vendor/xlsx.mini.min.js?v=96','./ux-v22.js?v=162','./ux-v18.js?v=157','./ux-v26-detail.js?v=96','./ux-v34-timer.js?v=162','./ux-v35-history.js?v=162','./ux-v36-sample.js?v=96','./ux-v38-polish.js?v=162','./ux-v41-timer-compact.js?v=164','./ux-v43-timer-back.js?v=163','./ux-v79-item-editor-core.js?v=164','./ux-v79-item-card-sync.js?v=96','./ux-v52-scroll-restore.js?v=164','./ux-v51-update-watch.js?v=162','./ux-v54-refresh-motion.js?v=162','./ux-v56-browser-history.js?v=160','./ux-v81-timer-edit-save.js?v=162','./ux-v82-timer-runtime.js?v=162','./ux-v85-xlsx-import.js?v=96','./ux-v86-video-reference.js?v=96','./ux-v88-focus-variants.js?v=152','./ux-v96-native-pip.js?v=162','./ux-v106-tasks.js?v=169','./ux-v107-timer-exit.js?v=163','./ux-v108-small-fixes.js?v=153','./ux-v109-item-media.js?v=152','./ux-v110-recipes.js?v=157','./ux-v113-daily-schedule.js?v=178','./ux-v116-device-lock.js?v=138','./ux-v118-diagnostics.js?v=154','./ux-v130-integration.js?v=165'];
+const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./favicon.svg','./vendor/xlsx.mini.min.js?v=96','./ux-v22.js?v=162','./ux-v18.js?v=157','./ux-v26-detail.js?v=96','./ux-v34-timer.js?v=162','./ux-v35-history.js?v=162','./ux-v36-sample.js?v=96','./ux-v38-polish.js?v=162','./ux-v41-timer-compact.js?v=165','./ux-v43-timer-back.js?v=163','./ux-v79-item-editor-core.js?v=165','./ux-v79-item-card-sync.js?v=96','./ux-v52-scroll-restore.js?v=164','./ux-v51-update-watch.js?v=162','./ux-v54-refresh-motion.js?v=162','./ux-v56-browser-history.js?v=160','./ux-v81-timer-edit-save.js?v=162','./ux-v82-timer-runtime.js?v=162','./ux-v85-xlsx-import.js?v=96','./ux-v86-video-reference.js?v=96','./ux-v88-focus-variants.js?v=152','./ux-v96-native-pip.js?v=162','./ux-v106-tasks.js?v=169','./ux-v107-timer-exit.js?v=163','./ux-v108-small-fixes.js?v=153','./ux-v109-item-media.js?v=152','./ux-v110-recipes.js?v=157','./ux-v113-daily-schedule.js?v=178','./ux-v116-device-lock.js?v=138','./ux-v118-diagnostics.js?v=154','./ux-v130-integration.js?v=165'];
 
 function patchHtml(html){
   if(!html.includes('rel="icon"')){
@@ -55,9 +55,9 @@ function patchHtml(html){
     '<script src="./ux-v35-history.js?v=162"></script>'+
     '<script src="./ux-v36-sample.js?v=96"></script>'+
     '<script src="./ux-v38-polish.js?v=162"></script>'+
-    '<script src="./ux-v41-timer-compact.js?v=164"></script>'+
+    '<script src="./ux-v41-timer-compact.js?v=165"></script>'+
     '<script src="./ux-v43-timer-back.js?v=163"></script>'+
-    '<script src="./ux-v79-item-editor-core.js?v=164"></script>'+
+    '<script src="./ux-v79-item-editor-core.js?v=165"></script>'+
     '<script src="./ux-v79-item-card-sync.js?v=96"></script>'+
     '<script src="./ux-v52-scroll-restore.js?v=164"></script>'+
     '<script src="./ux-v51-update-watch.js?v=162"></script>'+
