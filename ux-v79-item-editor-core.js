@@ -161,8 +161,8 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
     var screen=document.getElementById('itemEdit');if(!screen)return;
     screen.innerHTML='<div class="stack">'+
       '<div id="timerResumeEditBar"><button type="button" class="btn" id="resumeEditedTimerBtn">▶ タイマーを再開</button></div>'+
-      '<div class="headline">ステップ</div>'+
-      '<label class="field">ステップ名<input id="itemName"></label>'+
+      '<div class="headline">項目</div>'+
+      '<label class="field">項目名<input id="itemName"></label>'+
       '<div class="field item-photo-field"><div class="item-photo-preview-wrap" role="button" tabindex="0" aria-label="写真を設定または変更"><img id="photoPreview" class="photo-preview" alt="写真プレビュー"><button type="button" id="itemPhotoDeleteX" aria-label="画像を削除" title="画像を削除">×</button></div><input id="photoInput" type="file" accept="image/*" capture="environment"></div>'+
       '<label class="field">説明・メモ<textarea id="itemDesc" placeholder="フォームや注意点など"></textarea></label>'+
       '<label class="field">参考動画URL<input id="itemVideoUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://youtu.be/…?t=90"></label>'+
@@ -251,7 +251,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
   }
   function makeTimeField(kind,labelText,value,max,last){
     var field=document.createElement('div');field.className='item-time-field';var row=document.createElement('div');row.className='item-time-label-row';var label=document.createElement('div');label.className='item-time-label';label.textContent=labelText;row.appendChild(label);field.appendChild(row);
-    if(last){var box=document.createElement('div');box.className='item-time-last';box.textContent='最初の種目のため休憩なし';field.appendChild(box);return field}
+    if(last){var box=document.createElement('div');box.className='item-time-last';box.textContent='最初の項目のため休憩なし';field.appendChild(box);return field}
     if(value>max){field.appendChild(buildInput(kind,value));return field}
     var mode=document.createElement('button');mode.type='button';mode.className='item-time-mode';mode.textContent='⌨';mode.title='キーボード入力に切り替え';mode.setAttribute('aria-label',labelText+'をキーボード入力');row.appendChild(mode);
     var body=buildWheel(kind,value,max);field.appendChild(body);var inputMode=false;
@@ -281,7 +281,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
   function openItemCore(id){
     if(!beginDraft(id))return;
     renderTimeFields();
-    if(typeof show==='function')show('itemEdit','ステップ設定');
+    if(typeof show==='function')show('itemEdit','項目設定');
     document.querySelectorAll('#itemTimeFields .item-time-wheel').forEach(function(wheel){var v=+(wheel.dataset.initialValue||1);wheel.scrollTop=(v-1)*ROW_H});
   }
   openItem=openItemCore;
@@ -300,7 +300,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
     return true;
   }
   function deleteCurrentItem(){
-    if(!draft)return;if(!confirm('このステップを削除しますか？'))return;
+    if(!draft)return;if(!confirm('この項目を削除しますか？'))return;
     var m=state&&Array.isArray(state.menus)?state.menus.find(function(v){return v.id===draft.menuId}):null;if(!m)return;
     m.items=m.items.filter(function(x){return x.id!==draft.itemId});var menuId=draft.menuId;draft=null;committed=true;
     if(editContext){editContext=null;if(timerState){try{clearInterval(timerState.interval)}catch(e){}timerState=null;if(typeof releaseAwake==='function')releaseAwake()}updateResumeBar()}
@@ -310,13 +310,13 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
     if(!draft)return;
     var m=state&&Array.isArray(state.menus)?state.menus.find(function(v){return v.id===draft.menuId}):null;if(!m)return;
     var i=m.items.findIndex(function(x){return x.id===draft.itemId});if(i<0)return;
-    var copy=clone(draft.value);copy.id=typeof uid==='function'?uid():Date.now()+Math.random().toString(16).slice(2);copy.name=(copy.name||'ステップ')+' コピー';m.items.splice(i+1,0,copy);
+    var copy=clone(draft.value);copy.id=typeof uid==='function'?uid():Date.now()+Math.random().toString(16).slice(2);copy.name=(copy.name||'項目')+' コピー';m.items.splice(i+1,0,copy);
     if(typeof save==='function')save();draft=null;committed=true;openItemCore(copy.id);
   }
 
   function makeId(){return typeof uid==='function'?uid():(Date.now()+Math.random().toString(16).slice(2))}
   function closeActionMenu(){var p=document.getElementById('itemActionPop');if(p)p.remove()}
-  function duplicateById(id){var m=currentMenuSafe();if(!m||!Array.isArray(m.items))return;var i=m.items.findIndex(function(x){return x.id===id});if(i<0)return;var copy=clone(m.items[i]);copy.id=makeId();copy.name=(copy.name||'ステップ')+' コピー';m.items.splice(i+1,0,copy);if(typeof save==='function')save();renderItems();if(typeof updateDuration==='function')updateDuration()}
+  function duplicateById(id){var m=currentMenuSafe();if(!m||!Array.isArray(m.items))return;var i=m.items.findIndex(function(x){return x.id===id});if(i<0)return;var copy=clone(m.items[i]);copy.id=makeId();copy.name=(copy.name||'項目')+' コピー';m.items.splice(i+1,0,copy);if(typeof save==='function')save();renderItems();if(typeof updateDuration==='function')updateDuration()}
   function deleteById(id){var m=currentMenuSafe();if(!m||!Array.isArray(m.items))return;var i=m.items.findIndex(function(x){return x.id===id});if(i<0)return;m.items.splice(i,1);if(typeof save==='function')save();renderItems();if(typeof updateDuration==='function')updateDuration()}
   function openActionMenu(anchor,id){
     closeActionMenu();var pop=document.createElement('div');pop.id='itemActionPop';pop.className='item-action-pop';pop.innerHTML='<button type="button" data-act="edit">編集</button><button type="button" data-act="copy">複製</button><button type="button" data-act="delete" class="danger">削除</button>';document.body.appendChild(pop);
@@ -332,7 +332,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
   }
   renderItems=function(){
     var m=currentMenuSafe(),box=document.getElementById('itemList');if(!m||!box)return;box.innerHTML='';closeActionMenu();
-    if(!m.items.length){box.innerHTML='<div class="empty">ステップがありません。</div>';return}
+    if(!m.items.length){box.innerHTML='<div class="empty">項目がありません。</div>';return}
     m.items.forEach(function(x,i){
       x.seconds=clampWork(x.seconds);x.restSeconds=clampRest(x.restSeconds);
       var el=document.createElement('div');el.className='card item';el.dataset.id=x.id;
@@ -345,7 +345,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
     });
   };
 
-  var add=document.getElementById('addItemBtn');if(add)add.onclick=function(){var m=currentMenuSafe();if(!m)return;var x={id:makeId(),name:'新しいステップ',seconds:30,restSeconds:DEFAULT_REST,desc:'',videoUrl:'',photo:''};m.items.push(x);if(typeof save==='function')save();openItemCore(x.id)};
+  var add=document.getElementById('addItemBtn');if(add)add.onclick=function(){var m=currentMenuSafe();if(!m)return;var x={id:makeId(),name:'新しい項目',seconds:30,restSeconds:DEFAULT_REST,desc:'',videoUrl:'',photo:''};m.items.push(x);if(typeof save==='function')save();openItemCore(x.id)};
 
   function currentTimerItem(){if(!timerState||timerState.phase!=='item')return null;var m=currentMenuSafe();return m&&Array.isArray(m.items)?m.items[timerState.index]||null:null}
   function openCurrentEdit(){var x=currentTimerItem();if(!x||!timerState||!timerState.paused)return;editContext={menuId:currentMenuId,itemId:x.id,index:timerState.index};openItemCore(x.id)}
