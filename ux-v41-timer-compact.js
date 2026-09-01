@@ -14,7 +14,7 @@ body.timer-active #timerContent{position:relative;height:100%!important;max-widt
 body.timer-active .timer-name{font-size:25px!important;line-height:1.2!important;margin:0!important;color:#1b1f24!important}\
 body.timer-active .timer-image-wrap{position:relative;width:100%;line-height:0}\
 body.timer-active .timer-img{width:100%!important;height:clamp(190px,31vh,250px)!important;object-fit:cover!important;border-radius:20px!important;margin:0!important;background:#eef1f3!important;box-shadow:none!important}\
-body.timer-active .timer-side-label{position:absolute;top:10px;left:10px;z-index:1;display:inline-flex;align-items:center;justify-content:center;min-width:36px;min-height:28px;padding:3px 9px;border-radius:999px;background:rgba(20,28,36,.78);color:#fff;font-size:14px;font-weight:800;line-height:1;letter-spacing:.06em;box-shadow:0 1px 5px rgba(0,0,0,.18);pointer-events:none}\
+body.timer-active .timer-side-label{position:absolute;left:50%;bottom:10px;z-index:1;display:inline-flex;align-items:center;justify-content:center;min-width:64px;min-height:32px;padding:4px 12px;border-radius:999px;background:rgba(20,28,36,.78);color:#fff;font-size:16px;font-weight:800;line-height:1;letter-spacing:.04em;box-shadow:0 1px 5px rgba(0,0,0,.18);pointer-events:none;transform:translateX(-50%)}\
 body.timer-active .compact-timer-core{display:grid;grid-template-columns:52px 1fr 52px;align-items:center;gap:10px;margin:0}\
 body.timer-active .compact-skip{border:0;background:transparent;color:#a5adb6;font-size:38px;line-height:1;min-height:88px;padding:0;display:grid;place-items:center;opacity:.9}\
 body.timer-active .compact-skip:active{color:#69737e;transform:scale(.96)}\
@@ -106,13 +106,13 @@ body.timer-active .prestart .first{color:#27ae8b!important}\
     if(timerState.phase==='rest'){
       var nextItem=timerState.restTarget==='next'?m.items[timerState.index]:m.items[timerState.index+1],reverseTarget=timerState.restTarget==='reverse',previewItem=reverseTarget?m.items[timerState.index]:nextItem;
       box.innerHTML='<div class="timer-name">休憩</div>'+
-        timerImage(previewItem,reverseTarget?'左':(previewItem&&previewItem.reverseSide?'右':''),reverseTarget,reverseTarget?(previewItem.name||'種目')+'（逆側）':(previewItem&&previewItem.name||'次の種目'))+
+        timerImage(previewItem,reverseTarget?'左側':(previewItem&&previewItem.reverseSide?'右側':''),reverseTarget,reverseTarget?(previewItem.name||'種目')+'（逆側）':(previewItem&&previewItem.name||'次の種目'))+
         compactCore()+
         '<div class="compact-meta"><div class="compact-rest-next">次：'+esc(nextItem&&nextItem.name||'完了')+'</div><div class="timer-count">'+(timerState.index+1)+' / '+m.items.length+'</div></div>'+routineProgressHtml(m);
     }else{
       var x=m.items[timerState.index];
       box.innerHTML='<div class="timer-name">'+esc(x.name)+'</div>'+
-        timerImage(x,x.reverseSide?'右':'',false,x.name||'種目')+
+        timerImage(x,x.reverseSide?'右側':'',false,x.name||'種目')+
         compactCore()+
         '<div class="compact-meta">'+(x.desc?'<div class="timer-desc">'+esc(x.desc)+'</div>':'')+'<div class="timer-count">'+(timerState.index+1)+' / '+m.items.length+'</div></div>'+routineProgressHtml(m);
     }
