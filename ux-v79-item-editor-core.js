@@ -45,8 +45,8 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
 #menuEdit .item{grid-template-columns:78px 1fr auto!important;gap:14px!important}\
 #menuEdit .item-thumb-wrap{position:relative;width:78px;height:78px;line-height:0}\
 #menuEdit .item-thumb-wrap .thumb{width:78px;height:78px}\
-#menuEdit .item-side-labels{position:absolute;top:5px;left:5px;right:5px;z-index:1;display:flex;justify-content:space-between;pointer-events:none}\
-#menuEdit .item-side-label{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:22px;padding:2px 5px;border-radius:999px;background:rgba(20,28,36,.78);color:#fff;font-size:11px;font-weight:800;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.18)}\
+#menuEdit .item-side-labels{position:absolute;top:5px;right:5px;z-index:1;pointer-events:none}\
+#menuEdit .item-side-label{display:inline-flex;align-items:center;justify-content:center;min-width:38px;height:22px;padding:2px 6px;border-radius:999px;background:rgba(20,28,36,.78);color:#fff;font-size:11px;font-weight:800;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.18)}\
 #menuEdit .item-actions{display:flex;align-items:center;justify-content:flex-end;gap:2px;align-self:center;position:relative;z-index:40}\
 #menuEdit .item-action-btn{width:38px;height:38px;min-width:38px;border:0;border-radius:11px;background:#fff;color:#69727d;display:grid;place-items:center;padding:0;box-shadow:none;cursor:pointer;-webkit-tap-highlight-color:transparent}\
 #menuEdit .item-action-btn:active{background:#f4f6f7}\
@@ -334,7 +334,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
     m.items.forEach(function(x,i){
       x.seconds=clampWork(x.seconds);x.restSeconds=clampRest(x.restSeconds);
       var el=document.createElement('div');el.className='card item';el.dataset.id=x.id;
-      var thumbWrap=document.createElement('div');thumbWrap.className='item-thumb-wrap';var img=document.createElement('img');img.className='thumb';img.src=x.photo||(typeof svgPlaceholder==='function'?svgPlaceholder():'');thumbWrap.appendChild(img);if(x.reverseSide){var sides=document.createElement('div');sides.className='item-side-labels';sides.innerHTML='<span class="item-side-label">右</span><span class="item-side-label">左</span>';thumbWrap.appendChild(sides)}
+      var thumbWrap=document.createElement('div');thumbWrap.className='item-thumb-wrap';var img=document.createElement('img');img.className='thumb';img.src=x.photo||(typeof svgPlaceholder==='function'?svgPlaceholder():'');thumbWrap.appendChild(img);if(x.reverseSide){var sides=document.createElement('div');sides.className='item-side-labels';sides.innerHTML='<span class="item-side-label">右・左</span>';thumbWrap.appendChild(sides)}
       var info=document.createElement('div'),title=document.createElement('div'),meta=document.createElement('div');title.className='item-title';title.textContent=(i+1)+'. '+x.name;meta.className='muted';meta.textContent=i===0?x.seconds+'秒':'休憩'+x.restSeconds+'秒 ・ '+x.seconds+'秒';info.append(title,meta);
       var times=document.createElement('div');times.className='desktop-item-times';if(i>0)times.appendChild(makeDesktopField(x,'rest'));times.appendChild(makeDesktopField(x,'work'));
       var actions=document.createElement('div');actions.className='item-actions';var more=document.createElement('button');more.type='button';more.className='item-action-btn item-more';more.textContent='…';more.setAttribute('aria-label','種目の操作');more.title='種目の操作';var open=document.createElement('button');open.type='button';open.className='item-action-btn item-open';open.setAttribute('aria-label','種目設定を開く');open.title='種目設定を開く';open.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
