@@ -21,7 +21,8 @@ body.timer-active .compact-skip:active{color:#69737e;transform:scale(.96)}\
 body.timer-active .compact-time{position:relative;text-align:center;min-height:104px;display:grid;place-items:center;align-content:center;border-radius:18px;transition:background .15s ease,color .15s ease;cursor:pointer;-webkit-tap-highlight-color:transparent}\
 body.timer-active .compact-time.paused{background:#f1f3f5}\
 body.timer-active .compact-pause-label{height:18px;font-size:12px;letter-spacing:.08em;color:#8a929c;margin-bottom:1px}\
-body.timer-active .compact-seconds{font-size:64px;font-weight:800;line-height:.95;letter-spacing:-1px;color:#161b22}\
+body.timer-active .compact-seconds{font-size:64px;font-weight:800;line-height:.95;letter-spacing:-1px;color:#161b22;font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}\
+body.timer-active .compact-seconds.is-clock{font-size:clamp(44px,11vw,58px);letter-spacing:-1.5px}\
 body.timer-active .compact-time.paused .compact-seconds{color:#6f7882}\
 body.timer-active .compact-progress{height:7px;border-radius:999px;background:#e8ecef;overflow:hidden;margin:0 2px}\
 body.timer-active .compact-progress-fill{height:100%;background:#27ae8b;border-radius:999px;transition:width .15s linear}\
@@ -63,7 +64,13 @@ body.timer-active .prestart .first{color:#27ae8b!important}\
     else elapsed+=Math.max(0,itemWorkSeconds(items[idx])-Math.max(0,+timerState.remaining||0));
     elapsed=Math.max(0,Math.min(total,elapsed));return {pct:elapsed/total*100,total:total,elapsed:elapsed};
   }
-  function routineTimeText(seconds){seconds=Math.max(0,Math.round(+seconds||0));return String(Math.floor(seconds/60)).padStart(2,'0')+'分'+String(seconds%60).padStart(2,'0')+'秒'}
+  function timerTimeText(seconds){
+    seconds=Math.max(0,Math.round(+seconds||0));
+    if(seconds>=3600)return String(Math.floor(seconds/3600))+':'+String(Math.floor(seconds%3600/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
+    if(seconds>=60)return String(Math.floor(seconds/60))+':'+String(seconds%60).padStart(2,'0');
+    return String(seconds);
+  }
+  function routineTimeText(seconds){return timerTimeText(seconds)}
   function routineProgressHtml(m){
     var p=routineProgress(m),pct=Math.max(0,Math.min(100,p.pct));
     var time=routineTimeText(p.elapsed)+' / '+routineTimeText(p.total);
@@ -71,11 +78,12 @@ body.timer-active .prestart .first{color:#27ae8b!important}\
   }
   function compactCore(){
     var paused=!!timerState.paused;
+    var timeText=timerTimeText(timerState.remaining);
     return '<div class="compact-timer-core">'+
       '<button class="compact-skip compact-prev" type="button" aria-label="前の種目">‹</button>'+
       '<div class="compact-time'+(paused?' paused':'')+'" role="button" tabindex="0" aria-label="'+(paused?'再開':'一時停止')+'">'+
         '<div class="compact-pause-label">'+(paused?'一時停止中':'')+'</div>'+
-        '<div class="compact-seconds">'+timerState.remaining+'</div>'+
+        '<div class="compact-seconds'+(timeText.indexOf(':')>=0?' is-clock':'')+'">'+timeText+'</div>'+
       '</div>'+
       '<button class="compact-skip compact-next" type="button" aria-label="次の種目">›</button>'+
     '</div><div class="compact-progress"><div class="compact-progress-fill" style="width:'+progressPct().toFixed(2)+'%"></div></div>';
