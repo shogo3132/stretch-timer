@@ -28,6 +28,7 @@ body.native-pip .compact-skip{display:none!important}\
 body.native-pip .compact-time{min-height:0!important;height:100%!important;padding:0!important;border-radius:10px!important;align-content:center!important;background:transparent!important}\
 body.native-pip .compact-pause-label{height:auto!important;min-height:12px!important;margin:0!important;font-size:clamp(9px,4vh,12px)!important;line-height:1!important;color:#718078!important}\
 body.native-pip .compact-seconds{font-size:clamp(36px,22vh,58px)!important;line-height:.9!important;color:#161b22!important}\
+body.native-pip .compact-seconds.is-clock{font-size:clamp(24px,14vh,42px)!important;letter-spacing:-1px!important}\
 body.native-pip .compact-progress{display:none!important}\
 body.native-pip .compact-progress-fill{background:#27ae8b!important}\
 body.native-pip .routine-total-progress{position:absolute!important;left:0!important;right:0!important;bottom:0!important;z-index:2!important;display:grid!important;gap:3px!important;width:100%!important;padding:0!important;background:transparent!important}\
