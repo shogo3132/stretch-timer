@@ -50,7 +50,7 @@ body.timer-active .prestart .first{color:#27ae8b!important}\
     return Math.max(0,Math.min(100,(1-remain/total)*100));
   }
   function itemWorkSeconds(x){return Math.max(1,Math.round(+x.seconds||1))}
-  function itemRestSeconds(x){return Math.max(1,Math.min(60,Math.round(+x.restSeconds||20)))}
+  function itemRestSeconds(x){return Math.max(0,Math.min(24*60*60,Math.round(+x.restSeconds||0)))}
   function timerImage(x,side,reverse,alt){
     if(!x||!x.photo)return '';
     return '<div class="timer-image-wrap"><img class="timer-img timer-next-img'+(reverse?' reverse-side-image':'')+'" src="'+x.photo+'" alt="'+esc(alt||x.name||'種目')+'">'+(side?'<span class="timer-side-label">'+side+'</span>':'')+'</div>';
