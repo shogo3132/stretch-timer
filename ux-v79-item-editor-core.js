@@ -19,6 +19,7 @@
 #itemPhotoDeleteX{position:absolute;top:10px;right:10px;z-index:5;width:42px;height:42px;border:0;border-radius:50%;background:rgba(20,24,28,.72);color:#fff;font-size:25px;font-weight:400;line-height:1;display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.18);-webkit-tap-highlight-color:transparent}\
 #itemPhotoDeleteX.show{display:flex}\
 #itemTimeFields{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}\
+.menu-duration-mode{display:grid;gap:8px;margin:-2px 0 2px}.menu-duration-mode-title{font-size:13px;color:#48505a}.menu-duration-mode-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}.menu-duration-mode-option{display:flex;align-items:center;justify-content:center;gap:7px;min-height:44px;border:1px solid #e2e7eb;border-radius:13px;background:#fff;color:#5d6872;font-size:13px;font-weight:750;cursor:pointer}.menu-duration-mode-option:has(input:checked){border-color:#27ae8b;background:#eaf7f3;color:#14785f}.menu-duration-mode-option input{width:17px;height:17px;margin:0;accent-color:#27ae8b}\
 .item-time-field{display:grid;gap:7px;min-width:0}\
 .item-time-label-row{display:flex;align-items:center;justify-content:flex-start;gap:4px;min-height:22px}\
 .item-time-label{color:#48505a;font-size:13px;text-align:left;white-space:nowrap}\
@@ -36,6 +37,7 @@
 .item-time-input{width:78px;border:0!important;outline:0!important;background:#f4f6f7!important;border-radius:12px!important;padding:12px 8px!important;text-align:center;font-size:22px!important;font-weight:800;color:#1b1f24}\
 .item-time-input-unit{font-size:12px;color:#6e7680}\
 .item-time-input-wrap.time-hms{gap:4px;padding:10px 6px}.item-time-input-wrap.time-hms .item-time-input{width:40px;padding:10px 3px!important;font-size:17px!important}.item-time-input-wrap.time-hms .item-time-input-unit{margin-right:1px}\
+.item-time-input-wrap.time-hm{gap:5px;padding:10px}.item-time-input-wrap.time-hm .item-time-input{width:58px;padding:10px 4px!important;font-size:19px!important}\
 .item-time-last{height:120px;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;border-radius:15px;background:#f1f3f5;color:#6e7680;font-size:12px;line-height:1.45}\
 #itemCommitBtn{width:100%;margin-top:16px}\
 #itemEdit .item-delete-row-spaced{margin-top:8px!important}\
@@ -66,6 +68,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
   .desktop-item-time-field input{width:58px;height:36px;border:1px solid #e2e7eb;border-radius:10px;background:#fff;color:#1b1f24;text-align:center;font-size:15px;font-weight:700;padding:4px 5px;outline:none}\
   .desktop-item-time-field input:focus{border-color:#27ae8b;box-shadow:0 0 0 2px rgba(39,174,139,.12)}\
   .desktop-item-time-unit{color:#7a838d;font-size:11px}\
+  .desktop-item-time-parts{display:flex;align-items:center;gap:3px}.desktop-item-time-parts input{width:42px!important}\
 }\
 @media(max-width:380px){#itemTimeFields{gap:8px}.item-time-label{font-size:12px}.item-time-option.selected{font-size:21px}.item-time-mode{font-size:13px}}\
 ';
@@ -76,6 +79,9 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
   function clamp(v,min,max,fallback){v=Math.round(+v);if(!Number.isFinite(v)||!v)v=fallback;return Math.max(min,Math.min(max,v))}
   function clampRest(v){return clamp(v,MIN_REST,MAX_REST,DEFAULT_REST)}
   function clampWork(v){return clamp(v,MIN_WORK,MAX_WORK,30)}
+  function isLongMenu(m){return !!m&&m.durationMode==='long'}
+  function minuteDuration(v,fallback){return Math.max(60,Math.min(MAX_WORK,Math.round((+v||fallback)/60)*60))}
+  function durationText(v,m){v=Math.max(0,Math.round(+v||0));if(isLongMenu(m))return Math.floor(v/3600)+'時間'+Math.floor(v%3600/60)+'分';return v+'秒'}
   function currentMenuSafe(){try{return typeof menu==='function'?menu():null}catch(e){return null}}
   function currentItemSafe(){try{return typeof item==='function'?item():null}catch(e){return null}}
   function isYouTubeUrl(value){
@@ -249,9 +255,15 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
     function number(input,max){return Math.max(0,Math.min(max,Math.floor(+input.value||0)))}function commit(){var next=number(h,24)*3600+number(m,59)*60+number(s,59);next=kind==='rest'?clampRest(next):clampWork(next);h.value=String(Math.floor(next/3600));m.value=String(Math.floor(next%3600/60));s.value=String(next%60);updateDraftTime(kind,next)}
     [h,m,s].forEach(function(input){input.addEventListener('input',commit);input.addEventListener('change',commit)});setTimeout(function(){try{s.focus();s.select()}catch(e){}},0);return wrap;
   }
+  function buildLongInput(kind,value){
+    value=kind==='rest'?clampRest(value):clampWork(value);var wrap=document.createElement('div');wrap.className='item-time-input-wrap time-hm';var h=document.createElement('input'),m=document.createElement('input');[h,m].forEach(function(input){input.className='item-time-input';input.type='number';input.inputMode='numeric';input.min='0'});h.max='24';m.max='59';h.value=String(Math.floor(value/3600));m.value=String(Math.floor(value%3600/60));function unit(text){var el=document.createElement('span');el.className='item-time-input-unit';el.textContent=text;return el}wrap.append(h,unit('時間'),m,unit('分'));
+    function number(input,max){return Math.max(0,Math.min(max,Math.floor(+input.value||0)))}function commit(){var next=number(h,24)*3600+number(m,59)*60;next=Math.max(60,next);next=kind==='rest'?clampRest(next):clampWork(next);h.value=String(Math.floor(next/3600));m.value=String(Math.floor(next%3600/60));updateDraftTime(kind,next)}
+    [h,m].forEach(function(input){input.addEventListener('input',commit);input.addEventListener('change',commit)});return wrap;
+  }
   function makeTimeField(kind,labelText,value,max,last){
     var field=document.createElement('div');field.className='item-time-field';var row=document.createElement('div');row.className='item-time-label-row';var label=document.createElement('div');label.className='item-time-label';label.textContent=labelText;row.appendChild(label);field.appendChild(row);
     if(last){var box=document.createElement('div');box.className='item-time-last';box.textContent='最初の項目のため休憩なし';field.appendChild(box);return field}
+    if(isLongMenu(currentMenuSafe())){field.appendChild(buildLongInput(kind,value));return field}
     if(value>max){field.appendChild(buildInput(kind,value));return field}
     var mode=document.createElement('button');mode.type='button';mode.className='item-time-mode';mode.textContent='⌨';mode.title='キーボード入力に切り替え';mode.setAttribute('aria-label',labelText+'をキーボード入力');row.appendChild(mode);
     var body=buildWheel(kind,value,max);field.appendChild(body);var inputMode=false;
@@ -262,7 +274,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
     var host=document.getElementById('itemTimeFields');if(!host||!draft)return;host.innerHTML='';
     var m=currentMenuSafe(),idx=m&&Array.isArray(m.items)?m.items.findIndex(function(x){return x.id===draft.itemId}):-1,first=!!(m&&idx===0);
     var workMax=Math.max(DEFAULT_WORK_MAX,Math.min(DEFAULT_WORK_MAX,draft.value.seconds));
-    var work=makeTimeField('work','実行時間',draft.value.seconds,workMax,false),rest=makeTimeField('rest','開始前の休憩時間',draft.value.restSeconds,Math.min(60,MAX_REST),first);
+    var work=makeTimeField('work','実行時間',draft.value.seconds,workMax,false),rest=makeTimeField('rest','休憩時間',draft.value.restSeconds,Math.min(60,MAX_REST),first);
     host.append(rest,work);
     if(!first)activateWheel(rest,'rest');activateWheel(work,'work');
   }
@@ -327,8 +339,9 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
 
   function commitDesktopInput(input,x,kind){var key=kind==='work'?'seconds':'restSeconds',next=kind==='work'?clampWork(input.value):clampRest(input.value);input.value=String(next);if(+x[key]===next)return;x[key]=next;if(typeof save==='function')save();if(typeof updateDuration==='function')updateDuration()}
   function makeDesktopField(x,kind){
-    var field=document.createElement('label');field.className='desktop-item-time-field';var text=document.createElement('span');text.textContent=kind==='work'?'運動':'休憩';var input=document.createElement('input');input.type='number';input.inputMode='numeric';input.min=String(kind==='work'?MIN_WORK:MIN_REST);input.max=String(kind==='work'?MAX_WORK:MAX_REST);input.step='1';input.value=String(kind==='work'?clampWork(x.seconds):clampRest(x.restSeconds));input.setAttribute('aria-label',(kind==='work'?'運動時間':'休憩時間')+' 秒');var unit=document.createElement('span');unit.className='desktop-item-time-unit';unit.textContent='秒';field.append(text,input,unit);
-    ['pointerdown','mousedown','touchstart','click'].forEach(function(name){field.addEventListener(name,function(e){e.stopPropagation()},{passive:name==='touchstart'})});input.addEventListener('change',function(){commitDesktopInput(input,x,kind)});input.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();commitDesktopInput(input,x,kind);input.blur()}});return field;
+    var field=document.createElement('label');field.className='desktop-item-time-field';var text=document.createElement('span');text.textContent=kind==='work'?'実行':'休憩';field.appendChild(text);var value=kind==='work'?clampWork(x.seconds):clampRest(x.restSeconds);
+    if(isLongMenu(currentMenuSafe())){var parts=document.createElement('span');parts.className='desktop-item-time-parts';var h=document.createElement('input'),m=document.createElement('input');[h,m].forEach(function(input){input.type='number';input.inputMode='numeric';input.min='0'});h.max='24';m.max='59';h.value=String(Math.floor(value/3600));m.value=String(Math.floor(value%3600/60));var hu=document.createElement('span'),mu=document.createElement('span');hu.className=mu.className='desktop-item-time-unit';hu.textContent='時間';mu.textContent='分';parts.append(h,hu,m,mu);function commitLong(){var next=Math.max(60,Math.min(MAX_WORK,Math.floor(+h.value||0)*3600+Math.floor(+m.value||0)*60));h.value=String(Math.floor(next/3600));m.value=String(Math.floor(next%3600/60));if(kind==='work')x.seconds=next;else x.restSeconds=next;if(typeof save==='function')save();if(typeof updateDuration==='function')updateDuration()}[h,m].forEach(function(input){input.addEventListener('change',commitLong);input.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();commitLong();input.blur()}})});field.appendChild(parts)}else{var input=document.createElement('input');input.type='number';input.inputMode='numeric';input.min=String(kind==='work'?MIN_WORK:MIN_REST);input.max=String(kind==='work'?MAX_WORK:MAX_REST);input.step='1';input.value=String(value);input.setAttribute('aria-label',(kind==='work'?'実行時間':'休憩時間')+' 秒');var unit=document.createElement('span');unit.className='desktop-item-time-unit';unit.textContent='秒';field.append(input,unit);input.addEventListener('change',function(){commitDesktopInput(input,x,kind)});input.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();commitDesktopInput(input,x,kind);input.blur()}})}
+    ['pointerdown','mousedown','touchstart','click'].forEach(function(name){field.addEventListener(name,function(e){e.stopPropagation()},{passive:name==='touchstart'})});return field;
   }
   renderItems=function(){
     var m=currentMenuSafe(),box=document.getElementById('itemList');if(!m||!box)return;box.innerHTML='';closeActionMenu();
@@ -337,7 +350,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
       x.seconds=clampWork(x.seconds);x.restSeconds=clampRest(x.restSeconds);
       var el=document.createElement('div');el.className='card item';el.dataset.id=x.id;
       var thumbWrap=document.createElement('div');thumbWrap.className='item-thumb-wrap';var img=document.createElement('img');img.className='thumb';img.src=x.photo||(typeof svgPlaceholder==='function'?svgPlaceholder():'');thumbWrap.appendChild(img);if(x.reverseSide){var sides=document.createElement('div');sides.className='item-side-labels';sides.innerHTML='<span class="item-side-label">右・左</span>';thumbWrap.appendChild(sides)}
-      var info=document.createElement('div'),title=document.createElement('div'),meta=document.createElement('div');title.className='item-title';title.textContent=(i+1)+'. '+x.name;meta.className='muted';meta.textContent=i===0?x.seconds+'秒':'休憩'+x.restSeconds+'秒 ・ '+x.seconds+'秒';info.append(title,meta);
+      var info=document.createElement('div'),title=document.createElement('div'),meta=document.createElement('div');title.className='item-title';title.textContent=(i+1)+'. '+x.name;meta.className='muted';meta.textContent=i===0?'実行 '+durationText(x.seconds,m):'休憩 '+durationText(x.restSeconds,m)+' ・ 実行 '+durationText(x.seconds,m);info.append(title,meta);
       var times=document.createElement('div');times.className='desktop-item-times';if(i>0)times.appendChild(makeDesktopField(x,'rest'));times.appendChild(makeDesktopField(x,'work'));
       var actions=document.createElement('div');actions.className='item-actions';var more=document.createElement('button');more.type='button';more.className='item-action-btn item-more';more.textContent='…';more.setAttribute('aria-label','ステップの操作');more.title='ステップの操作';var open=document.createElement('button');open.type='button';open.className='item-action-btn item-open';open.setAttribute('aria-label','ステップ設定を開く');open.title='ステップ設定を開く';open.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
       more.onclick=function(e){e.preventDefault();e.stopPropagation();openActionMenu(more,x.id)};open.onclick=function(e){e.preventDefault();e.stopPropagation();closeActionMenu();openItemCore(x.id)};actions.append(more,open);
@@ -345,7 +358,13 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
     });
   };
 
-  var add=document.getElementById('addItemBtn');if(add)add.onclick=function(){var m=currentMenuSafe();if(!m)return;var x={id:makeId(),name:'新しい項目',seconds:30,restSeconds:DEFAULT_REST,desc:'',videoUrl:'',photo:''};m.items.push(x);if(typeof save==='function')save();openItemCore(x.id)};
+  var add=document.getElementById('addItemBtn');if(add)add.onclick=function(){var m=currentMenuSafe();if(!m)return;var x={id:makeId(),name:'新しい項目',seconds:isLongMenu(m)?60:30,restSeconds:isLongMenu(m)?60:DEFAULT_REST,desc:'',videoUrl:'',photo:''};m.items.push(x);if(typeof save==='function')save();openItemCore(x.id)};
+
+  function renderMenuDurationMode(){
+    var m=currentMenuSafe(),name=document.getElementById('menuName');if(!m||!name)return;var old=document.getElementById('menuDurationMode');if(old)old.remove();var wrap=document.createElement('div');wrap.id='menuDurationMode';wrap.className='menu-duration-mode';wrap.innerHTML='<div class="menu-duration-mode-title">時間の設定方法</div><div class="menu-duration-mode-options"><label class="menu-duration-mode-option"><input type="radio" name="menuDurationMode" value="short">短時間（秒）</label><label class="menu-duration-mode-option"><input type="radio" name="menuDurationMode" value="long">長時間（時間・分）</label></div>';name.closest('label').insertAdjacentElement('beforebegin',wrap);var selected=wrap.querySelector('input[value="'+(isLongMenu(m)?'long':'short')+'"]');if(selected)selected.checked=true;wrap.onchange=function(e){var next=e.target&&e.target.value;if(next!=='short'&&next!=='long')return;if(next==='long'&&!isLongMenu(m)){(m.items||[]).forEach(function(x){x.seconds=minuteDuration(x.seconds,30);x.restSeconds=minuteDuration(x.restSeconds,DEFAULT_REST)})}m.durationMode=next==='long'?'long':'short';if(typeof save==='function')save();if(typeof renderItems==='function')renderItems();if(typeof updateDuration==='function')updateDuration()};
+  }
+  var baseOpenMenu=typeof openMenu==='function'?openMenu:null;
+  if(baseOpenMenu)openMenu=function(id){var result=baseOpenMenu.apply(this,arguments);setTimeout(function(){var title=document.getElementById('title');if(title&&typeof currentScreen!=='undefined'&&currentScreen==='menuEdit')title.textContent='メニュー設定';renderMenuDurationMode()},0);return result};
 
   function currentTimerItem(){if(!timerState||timerState.phase!=='item')return null;var m=currentMenuSafe();return m&&Array.isArray(m.items)?m.items[timerState.index]||null:null}
   function openCurrentEdit(){var x=currentTimerItem();if(!x||!timerState||!timerState.paused)return;editContext={menuId:currentMenuId,itemId:x.id,index:timerState.index};openItemCore(x.id)}
