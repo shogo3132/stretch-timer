@@ -15,7 +15,7 @@
   var detailNotifyMinutes=10;
   var detailViewDate=new Date();
   var taskSwipeClickUntil=0;
-  function normalizeRoutineTerminology(){var add=document.getElementById('addItemBtn');if(add)add.textContent='＋ 項目追加';var section=document.querySelector('#menuEdit .section-title');if(section)section.textContent='項目';var name=document.getElementById('menuName'),desc=document.getElementById('menuDesc'),del=document.getElementById('deleteMenuBtn');if(name&&name.parentNode)name.parentNode.firstChild.nodeValue='メニュー名';if(desc){desc.placeholder='このメニューの目的や内容など';if(desc.parentNode)desc.parentNode.firstChild.nodeValue='説明・メモ'}if(del)del.textContent='このメニューを削除'}
+  function normalizeRoutineTerminology(){var add=document.getElementById('addItemBtn');if(add)add.textContent='＋ 項目追加';var section=document.querySelector('#menuEdit .section-title');if(section)section.textContent='項目';var name=document.getElementById('menuName'),desc=document.getElementById('menuDesc'),del=document.getElementById('deleteMenuBtn');if(name&&name.parentNode)name.parentNode.firstChild.nodeValue='メニュー名';if(desc){desc.placeholder='このメニューの目的や内容など';if(desc.parentNode)desc.parentNode.firstChild.nodeValue='説明・メモ'}if(del)del.textContent='このメニューを削除';if(typeof currentScreen!=='undefined'&&currentScreen==='menuEdit'){var title=document.getElementById('title');if(title)title.textContent='メニュー設定'}}
 
   var style=document.createElement('style');
   style.setAttribute('data-tasks-v106','');
