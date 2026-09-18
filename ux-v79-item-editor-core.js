@@ -136,6 +136,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
         if(+x.restSeconds!==r){x.restSeconds=r;changed=true}
         if(typeof x.videoUrl!=='string'){x.videoUrl='';changed=true}
         if(typeof x.reverseSide!=='boolean'){x.reverseSide=false;changed=true}
+        if(typeof x.enabled!=='boolean'){x.enabled=true;changed=true}
       })});
       if(changed&&typeof save==='function')save(false);
     }catch(e){console.error(e)}
@@ -158,7 +159,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
   if(window.StretchUI&&StretchUI.registerDataProvider)StretchUI.registerDataProvider({key:'menus',write:function(payload){
     payload.schemaVersion=2;payload.updatedAt=state.updatedAt||Date.now();payload.menus=state.menus.map(function(m){
       var copy={};Object.keys(m).forEach(function(k){if(k!=='items')copy[k]=m[k]});
-      copy.items=(m.items||[]).map(function(x){return {id:x.id,name:x.name,seconds:clampWork(x.seconds),restSeconds:clampRest(x.restSeconds),desc:x.desc,videoUrl:x.videoUrl||'',photoPath:x.photoPath||'',photoData:x.photoPath?'':x.photo||'',reverseSide:!!x.reverseSide}});
+      copy.items=(m.items||[]).map(function(x){return {id:x.id,name:x.name,seconds:clampWork(x.seconds),restSeconds:clampRest(x.restSeconds),desc:x.desc,videoUrl:x.videoUrl||'',photoPath:x.photoPath||'',photoData:x.photoPath?'':x.photo||'',reverseSide:!!x.reverseSide,enabled:x.enabled!==false}});
       return copy;
     });
   }});
@@ -174,6 +175,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
       '<label class="field">参考動画URL<input id="itemVideoUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://youtu.be/…?t=90"></label>'+
       '<div class="tip" style="margin-top:-13px">YouTubeの時間指定付きURLを入力できます。</div>'+
       '<label class="item-reverse-side"><input id="itemReverseSide" type="checkbox"><span><strong>逆サイドあり</strong><small>休憩後に同じ時間でもう一度行います</small></span></label>'+
+      '<label class="item-enabled-setting"><span><strong>この項目を実行する</strong><small>OFFの項目は実行と合計時間から外れます</small></span><input id="itemEnabled" type="checkbox" checked aria-label="この項目を実行する"></label>'+
       '<div id="itemTimeFields"></div>'+
       '<button id="itemCommitBtn" type="button" class="btn">決定</button>'+
       '<div class="row item-delete-row-spaced"><button id="duplicateItemBtn" class="btn sub" type="button">複製</button><button id="deleteItemBtn" class="btn danger" type="button">削除</button></div>'+
@@ -188,6 +190,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
     document.getElementById('itemDesc').oninput=function(e){if(draft)draft.value.desc=e.target.value};
     document.getElementById('itemVideoUrl').oninput=function(e){if(draft)draft.value.videoUrl=e.target.value.trim()};
     document.getElementById('itemReverseSide').onchange=function(e){if(draft)draft.value.reverseSide=!!e.target.checked};
+    document.getElementById('itemEnabled').onchange=function(e){if(draft)draft.value.enabled=!!e.target.checked};
     document.getElementById('itemCommitBtn').onclick=commitAndBack;
     document.getElementById('deleteItemBtn').onclick=deleteCurrentItem;
     document.getElementById('duplicateItemBtn').onclick=duplicateCurrentItem;
@@ -282,9 +285,9 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
   function updateResumeBar(){var bar=document.getElementById('timerResumeEditBar');if(bar)bar.classList.toggle('active',!!editContext)}
   function beginDraft(id){
     currentItemId=id;var x=currentItemSafe();if(!x)return false;
-    draft={menuId:currentMenuId,itemId:x.id,value:clone(x)};draft.value.seconds=clampWork(draft.value.seconds);draft.value.restSeconds=clampRest(draft.value.restSeconds);draft.value.reverseSide=!!draft.value.reverseSide;committed=false;navigating=false;
+    draft={menuId:currentMenuId,itemId:x.id,value:clone(x)};draft.value.seconds=clampWork(draft.value.seconds);draft.value.restSeconds=clampRest(draft.value.restSeconds);draft.value.reverseSide=!!draft.value.reverseSide;draft.value.enabled=draft.value.enabled!==false;committed=false;navigating=false;
     draft.value.videoUrl=typeof draft.value.videoUrl==='string'?draft.value.videoUrl.trim():'';
-    var name=document.getElementById('itemName'),desc=document.getElementById('itemDesc'),video=document.getElementById('itemVideoUrl'),reverse=document.getElementById('itemReverseSide');if(name)name.value=draft.value.name||'';if(desc)desc.value=draft.value.desc||'';if(video)video.value=draft.value.videoUrl;if(reverse)reverse.checked=!!draft.value.reverseSide;refreshPhoto();updateResumeBar();return true;
+    var name=document.getElementById('itemName'),desc=document.getElementById('itemDesc'),video=document.getElementById('itemVideoUrl'),reverse=document.getElementById('itemReverseSide'),enabledInput=document.getElementById('itemEnabled');if(name)name.value=draft.value.name||'';if(desc)desc.value=draft.value.desc||'';if(video)video.value=draft.value.videoUrl;if(reverse)reverse.checked=!!draft.value.reverseSide;if(enabledInput)enabledInput.checked=draft.value.enabled!==false;refreshPhoto();updateResumeBar();return true;
   }
   function isDirty(){if(!draft)return false;var x=currentItemSafe();return !!x&&!same(draft.value,x)}
   function discardDraft(){draft=null;committed=false}
@@ -304,7 +307,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
     if(!isYouTubeUrl(draft.value.videoUrl)){alert('参考動画URLにはYouTubeのURLを入力してください。');var video=document.getElementById('itemVideoUrl');if(video)video.focus();return false}
     var m=state&&Array.isArray(state.menus)?state.menus.find(function(v){return v.id===draft.menuId}):null;if(!m)return false;
     var i=(m.items||[]).findIndex(function(v){return v.id===draft.itemId});if(i<0)return false;
-    var before=clone(m.items[i]),next=clone(draft.value);next.seconds=clampWork(next.seconds);next.restSeconds=clampRest(next.restSeconds);m.items[i]=next;
+    var before=clone(m.items[i]),next=clone(draft.value);next.seconds=clampWork(next.seconds);next.restSeconds=clampRest(next.restSeconds);next.enabled=next.enabled!==false;m.items[i]=next;
     committed=true;
     var ok=typeof save==='function'?save():true;
     if(ok===false){m.items[i]=before;committed=false;return false}
@@ -358,7 +361,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
     });
   };
 
-  var add=document.getElementById('addItemBtn');if(add)add.onclick=function(){var m=currentMenuSafe();if(!m)return;var x={id:makeId(),name:'新しい項目',seconds:isLongMenu(m)?60:30,restSeconds:isLongMenu(m)?60:DEFAULT_REST,desc:'',videoUrl:'',photo:''};m.items.push(x);if(typeof save==='function')save();openItemCore(x.id)};
+  var add=document.getElementById('addItemBtn');if(add)add.onclick=function(){var m=currentMenuSafe();if(!m)return;var x={id:makeId(),name:'新しい項目',seconds:isLongMenu(m)?60:30,restSeconds:isLongMenu(m)?60:DEFAULT_REST,desc:'',videoUrl:'',photo:'',enabled:true};m.items.push(x);if(typeof save==='function')save();openItemCore(x.id)};
 
   function renderMenuDurationMode(){
     var m=currentMenuSafe(),name=document.getElementById('menuName');if(!m||!name)return;var old=document.getElementById('menuDurationMode');if(old)old.remove();var wrap=document.createElement('div');wrap.id='menuDurationMode';wrap.className='menu-duration-mode';wrap.innerHTML='<div class="menu-duration-mode-title">時間の設定方法</div><div class="menu-duration-mode-options"><label class="menu-duration-mode-option"><input type="radio" name="menuDurationMode" value="short">短時間（秒）</label><label class="menu-duration-mode-option"><input type="radio" name="menuDurationMode" value="long">長時間（時間・分）</label></div>';name.closest('label').insertAdjacentElement('beforebegin',wrap);var selected=wrap.querySelector('input[value="'+(isLongMenu(m)?'long':'short')+'"]');if(selected)selected.checked=true;wrap.onchange=function(e){var next=e.target&&e.target.value;if(next!=='short'&&next!=='long')return;if(next==='long'&&!isLongMenu(m)){(m.items||[]).forEach(function(x){x.seconds=minuteDuration(x.seconds,30);x.restSeconds=+x.restSeconds?minuteDuration(x.restSeconds,DEFAULT_REST):0})}m.durationMode=next==='long'?'long':'short';if(typeof save==='function')save();if(typeof renderItems==='function')renderItems();if(typeof updateDuration==='function')updateDuration()};
