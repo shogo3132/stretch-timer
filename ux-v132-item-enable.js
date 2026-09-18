@@ -44,6 +44,8 @@
 
   function addSettingToggle(){
     var reverse=document.getElementById('itemReverseSide');if(!reverse||document.getElementById('itemEnabled'))return;
+    var m=rawMenu(),id=typeof currentItemId!=='undefined'?currentItemId:'';
+    window.__itemEnableDraftV132=m&&m.items.find(function(x){return x.id===id})||null;
     var label=document.createElement('label');label.className='item-enabled-setting';label.innerHTML='<span><strong>この項目を実行する</strong><small>OFFの項目は実行と合計時間から外れます</small></span><input id="itemEnabled" type="checkbox" checked aria-label="この項目を実行する">';
     reverse.closest('label').insertAdjacentElement('beforebegin',label);
     var input=label.querySelector('input');
@@ -79,8 +81,23 @@
     }
   });
 
-  function decorateListState(card){var m=rawMenu(),x=card&&m&&m.items.find(function(v){return v.id===card.dataset.id});if(x)card.classList.toggle('item-disabled',!enabled(x))}
+  function decorateListState(card){
+    var m=rawMenu(),x=card&&m&&m.items.find(function(v){return v.id===card.dataset.id});if(!x)return;
+    var off=!enabled(x),title=card.querySelector('.item-title'),meta=card.querySelector('.muted'),thumb=card.querySelector('.thumb');
+    card.classList.toggle('item-disabled',off);
+    card.style.backgroundColor=off?'#edf0f2':'';
+    card.style.borderColor=off?'#e1e5e8':'';
+    if(title)title.style.color=off?'#889199':'';
+    if(meta)meta.style.color=off?'#889199':'';
+    if(thumb){thumb.style.filter=off?'grayscale(1)':'';thumb.style.opacity=off?'.58':''}
+  }
   var oldRender=typeof renderItems==='function'?renderItems:null;
   if(oldRender)renderItems=function(){var r=oldRender.apply(this,arguments);document.querySelectorAll('#menuEdit #itemList .item').forEach(decorateListState);return r};
-  setTimeout(function(){document.querySelectorAll('#menuEdit #itemList .item').forEach(decorateListState);addSettingToggle()},0);
+  function syncVisibleItemUi(){
+    var editor=document.getElementById('itemEdit');
+    if(editor&&editor.classList.contains('active'))addSettingToggle();
+    document.querySelectorAll('#menuEdit #itemList .item').forEach(decorateListState);
+  }
+  new MutationObserver(function(){syncVisibleItemUi()}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+  setTimeout(syncVisibleItemUi,0);
 })();
