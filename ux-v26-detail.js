@@ -31,7 +31,6 @@
 .detail-day.done1{background:#87d8c3;color:#114d3f;font-weight:700}\
 .detail-day.done2{background:#27ae8b;color:#fff;font-weight:800}\
 .detail-day.today{box-shadow:inset 0 0 0 2px #168465}\
-.detail-day.today:not(.done1):not(.done2){background:#f1fbf7;color:#14785f;font-weight:800}\
 .detail-day.has-log{cursor:pointer}\
 .detail-complete{font-size:17px;font-weight:800;padding:2px 4px 0}\
 .detail-pop{position:fixed;z-index:9999;background:#20252b;color:#fff;border-radius:12px;padding:9px 12px;min-width:105px;max-width:190px;font-size:13px;box-shadow:0 5px 18px rgba(0,0,0,.22);transform:translate(-50%,-100%);pointer-events:none}\
