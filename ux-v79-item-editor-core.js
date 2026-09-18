@@ -174,7 +174,7 @@ body.timer-active .timer-edit-current{margin:2px auto 0;min-height:42px;padding:
       '<label class="field">説明・メモ<textarea id="itemDesc" placeholder="フォームや注意点など"></textarea></label>'+
       '<label class="field">参考動画URL<input id="itemVideoUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://youtu.be/…?t=90"></label>'+
       '<div class="tip" style="margin-top:-13px">YouTubeの時間指定付きURLを入力できます。</div>'+
-      '<label class="item-reverse-side"><input id="itemReverseSide" type="checkbox"><span><strong>逆サイドあり</strong><small>休憩後に同じ時間でもう一度行います</small></span></label>'+
+      '<label class="item-enabled-setting"><span><strong>逆サイドも実行する</strong><small>休憩後に同じ時間でもう一度行います</small></span><input id="itemReverseSide" type="checkbox" aria-label="逆サイドも実行する"></label>'+
       '<label class="item-enabled-setting"><span><strong>この項目を実行する</strong><small>OFFの項目は実行と合計時間から外れます</small></span><input id="itemEnabled" type="checkbox" checked aria-label="この項目を実行する"></label>'+
       '<div id="itemTimeFields"></div>'+
       '<button id="itemCommitBtn" type="button" class="btn">決定</button>'+
