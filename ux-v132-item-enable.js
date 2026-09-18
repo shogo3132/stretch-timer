@@ -5,14 +5,9 @@
   var style=document.createElement('style');
   style.setAttribute('data-item-enable-v132','');
   style.textContent='\
-#menuEdit .item-enabled-switch{width:38px;height:38px;min-width:38px;border:0;border-radius:11px;background:#fff;display:grid;place-items:center;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}\
-#menuEdit .item-enabled-switch:active{background:#f4f6f7}\
-#menuEdit .item-enabled-track{position:relative;width:31px;height:18px;border-radius:999px;background:#c8d0d6;transition:background .16s ease}\
-#menuEdit .item-enabled-track:after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .16s ease}\
-#menuEdit .item-enabled-switch.on .item-enabled-track{background:#27ae8b}\
-#menuEdit .item-enabled-switch.on .item-enabled-track:after{transform:translateX(13px)}\
-#menuEdit .item.item-disabled{opacity:.54}\
-#menuEdit .item.item-disabled .item-title{text-decoration:line-through;text-decoration-thickness:1px}\
+#menuEdit .item.item-disabled{opacity:1!important;background:#edf0f2!important;border-color:#e1e5e8!important}\
+#menuEdit .item.item-disabled .item-title,#menuEdit .item.item-disabled .muted{color:#889199!important}\
+#menuEdit .item.item-disabled .thumb{filter:grayscale(1);opacity:.58}\
 #itemEdit .item-enabled-setting{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 14px;border:1px solid #e2e7eb;border-radius:14px;background:#fff;cursor:pointer}\
 #itemEdit .item-enabled-setting span{display:grid;gap:3px;min-width:0}\
 #itemEdit .item-enabled-setting strong{font-size:15px;color:#26313a}\
@@ -71,16 +66,8 @@
     }
   });
 
-  function addListToggle(card){
-    if(!card||card.querySelector('.item-enabled-switch'))return;
-    var m=rawMenu(),x=m&&m.items.find(function(v){return v.id===card.dataset.id});if(!x)return;
-    card.classList.toggle('item-disabled',!enabled(x));
-    var actions=card.querySelector('.item-actions');if(!actions)return;
-    var b=document.createElement('button');b.type='button';b.className='item-enabled-switch'+(enabled(x)?' on':'');b.setAttribute('aria-label',(enabled(x)?'項目をOFFにする':'項目をONにする'));b.title=enabled(x)?'実行する':'実行しない';b.innerHTML='<span class="item-enabled-track" aria-hidden="true"></span>';
-    b.onclick=function(e){e.preventDefault();e.stopPropagation();x.enabled=!enabled(x);if(typeof save==='function')save();if(typeof renderItems==='function')renderItems();if(typeof updateDuration==='function')updateDuration()};
-    actions.insertBefore(b,actions.firstChild);
-  }
+  function decorateListState(card){var m=rawMenu(),x=card&&m&&m.items.find(function(v){return v.id===card.dataset.id});if(x)card.classList.toggle('item-disabled',!enabled(x))}
   var oldRender=typeof renderItems==='function'?renderItems:null;
-  if(oldRender)renderItems=function(){var r=oldRender.apply(this,arguments);document.querySelectorAll('#menuEdit #itemList .item').forEach(addListToggle);return r};
-  setTimeout(function(){document.querySelectorAll('#menuEdit #itemList .item').forEach(addListToggle);addSettingToggle()},0);
+  if(oldRender)renderItems=function(){var r=oldRender.apply(this,arguments);document.querySelectorAll('#menuEdit #itemList .item').forEach(decorateListState);return r};
+  setTimeout(function(){document.querySelectorAll('#menuEdit #itemList .item').forEach(decorateListState);addSettingToggle()},0);
 })();
