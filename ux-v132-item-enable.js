@@ -42,45 +42,6 @@
     startTimer=function(menuId){var m=typeof state!=='undefined'&&state&&Array.isArray(state.menus)?state.menus.find(function(x){return x.id===menuId}):null;if(m&&!activeItems(m).length){alert('実行する項目を1つ以上ONにしてください');return}return oldStart.apply(this,arguments)};
   }
 
-  function addSettingToggle(){
-    var reverse=document.getElementById('itemReverseSide');if(!reverse||document.getElementById('itemEnabled'))return;
-    var m=rawMenu(),id=typeof currentItemId!=='undefined'?currentItemId:'';
-    window.__itemEnableDraftV132=m&&m.items.find(function(x){return x.id===id})||null;
-    var label=document.createElement('label');label.className='item-enabled-setting';label.innerHTML='<span><strong>この項目を実行する</strong><small>OFFの項目は実行と合計時間から外れます</small></span><input id="itemEnabled" type="checkbox" checked aria-label="この項目を実行する">';
-    reverse.closest('label').insertAdjacentElement('beforebegin',label);
-    var input=label.querySelector('input');
-    input.checked=!(window.__itemEnableDraftV132&&window.__itemEnableDraftV132.enabled===false);
-    var commit=document.getElementById('itemCommitBtn');
-    if(commit){
-      if(commit.__itemEnableSaveV132)commit.removeEventListener('click',commit.__itemEnableSaveV132,true);
-      commit.__itemEnableSaveV132=function(){
-        var value=!!input.checked,id=typeof currentItemId!=='undefined'?currentItemId:'';
-        setTimeout(function(){
-          var m=rawMenu(),x=m&&m.items.find(function(v){return v.id===id});
-          if(!x||x.enabled===value)return;
-          x.enabled=value;
-          if(typeof save==='function')save();
-          if(typeof updateDuration==='function')updateDuration();
-        },0);
-      };
-      commit.addEventListener('click',commit.__itemEnableSaveV132,true);
-    }
-  }
-  var oldOpenItem=typeof openItem==='function'?openItem:null;
-  if(oldOpenItem)openItem=function(){var r=oldOpenItem.apply(this,arguments);try{var m=rawMenu(),id=typeof currentItemId!=='undefined'?currentItemId:'';window.__itemEnableDraftV132=m&&m.items.find(function(x){return x.id===id})||null;addSettingToggle()}catch(e){}return r};
-
-  if(window.StretchUI&&StretchUI.registerDataProvider)window.StretchUI.registerDataProvider({
-    key:'item-enable',
-    write:function(payload){
-      payload.itemEnable={};
-      (state.menus||[]).forEach(function(m){(m.items||[]).forEach(function(x){if(x.enabled===false)payload.itemEnable[x.id]=false})});
-    },
-    read:function(remote){
-      var values=remote&&remote.itemEnable||{};
-      (state.menus||[]).forEach(function(m){(m.items||[]).forEach(function(x){x.enabled=values[x.id]!==false})});
-    }
-  });
-
   function decorateListState(card){
     var m=rawMenu(),x=card&&m&&m.items.find(function(v){return v.id===card.dataset.id});if(!x)return;
     var off=!enabled(x),title=card.querySelector('.item-title'),meta=card.querySelector('.muted'),thumb=card.querySelector('.thumb');
@@ -93,11 +54,5 @@
   }
   var oldRender=typeof renderItems==='function'?renderItems:null;
   if(oldRender)renderItems=function(){var r=oldRender.apply(this,arguments);document.querySelectorAll('#menuEdit #itemList .item').forEach(decorateListState);return r};
-  function syncVisibleItemUi(){
-    var editor=document.getElementById('itemEdit');
-    if(editor&&editor.classList.contains('active'))addSettingToggle();
-    document.querySelectorAll('#menuEdit #itemList .item').forEach(decorateListState);
-  }
-  new MutationObserver(function(){syncVisibleItemUi()}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
-  setTimeout(syncVisibleItemUi,0);
+  setTimeout(function(){document.querySelectorAll('#menuEdit #itemList .item').forEach(decorateListState)},0);
 })();
